@@ -80,6 +80,7 @@ button, input, select, textarea {
   padding: 0.55rem 1.05rem;
   font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
   transition: transform 160ms ease, background 160ms ease, opacity 160ms ease;
 }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }

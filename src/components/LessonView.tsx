@@ -160,7 +160,7 @@ export function LessonView({
 
       <MappingStrip highlight={highlight} />
 
-      <div className="lesson-grid" style={{ marginTop: 12 }}>
+      <div className="lesson-grid" style={{ marginTop: 12, gridTemplateColumns: scene >= 6 ? undefined : "280px minmax(0, 1fr)" }}>
         <div>
           {person && (
             <ProfileCard person={person} highlight={highlight} onHighlight={setHighlight} reveal={scene === 1 ? reveal : 99} />
@@ -282,19 +282,21 @@ export function LessonView({
           )}
         </div>
 
-        <div className="surface" style={{ padding: "0.9rem" }}>
-          <div className="kicker">Documento MongoDB {docSource && `· ${docSource}`}</div>
-          {scene >= 6 && animStep > 0 && (
-            <p className="kicker">Passo animazione {animStep}/3: {["", "righe", "gruppi nidificati", "documento"][animStep]}</p>
-          )}
-          <div style={{ maxHeight: 520, overflow: "auto" }}>
-            {document ? (
-              <JsonDoc value={stripMongo(document)} highlight={mongoPath} />
-            ) : (
-              <p>Apri la scena 6 per la lettura del documento, oppure resta sulle tabelle.</p>
+        {scene >= 6 && (
+          <div className="surface" style={{ padding: "0.9rem" }}>
+            <div className="kicker">Documento MongoDB {docSource && `· ${docSource}`}</div>
+            {animStep > 0 && (
+              <p className="kicker">Passo animazione {animStep}/3: {["", "righe", "gruppi nidificati", "documento"][animStep]}</p>
             )}
+            <div style={{ maxHeight: 520, overflow: "auto" }}>
+              {document ? (
+                <JsonDoc value={stripMongo(document)} highlight={mongoPath} />
+              ) : (
+                <p>Premi «Lettura MongoDB» per il findOne reale.</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <p style={{ margin: "0.8rem 0 0", opacity: 0.85 }}>{meta.conclusion}</p>

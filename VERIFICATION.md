@@ -11,11 +11,17 @@ Eseguito su questa VM (2026-10-09). Materiali Mac assenti; palette MongoDB 2026 
 
 ## Flows (app)
 
-- Tab **La lezione**: 8 scene, Avanti/Indietro, progress, fullscreen, click campo → mapping tabella + path documento.
-- SQL reale eseguita da `node:sqlite`, una riga, foto/interessi aggregati.
-- Documento lesson: lettura `bootcamp_users` se Mongo è su, altrimenti sintesi SQL etichettata.
-- Tab **L’app live**: switch identità demo, discovery, like/pass, match unico, messaggi, edit profilo/prefs/sub con successo solo dopo risposta server, reset con conferma e dataset esplicito.
-- Persistenza: seed `datasetId=mvp|lesson` su `bootcamp_*` only.
+Eseguiti via API su `http://localhost:3000` e via browser (computer-use):
+
+- Home 200. `/api/status`: mode `embedded` (MongoMemoryServer, etichettato non-Atlas), seed ok, collection `bootcamp_*`.
+- SQL: 1 riga, 3 foto, 3 interessi, cartesiano ingenuo 9, nome Giulia Conti.
+- Documento: `source=embedded`, GeoJSON `[9.19, 45.4642]`.
+- Discovery Giulia: `luca`, `samuele`; esclusi self, Marco (distanza), Elena (hidden), Davide (paused).
+- Like Giulia→Luca created; repeat idempotent; Luca→Giulia `matchCreated` su `giulia|luca`.
+- Messaggio persistito; GET thread = 1.
+- PATCH bio confermato dal GET successivo.
+- Evolve hobbies flag true.
+- Browser: tab lezione scene 1–5, click mapping, SQL button; tab live identity switcher, like, match Luca, inspector filtro 2dsphere.
 
 ## Projection
 

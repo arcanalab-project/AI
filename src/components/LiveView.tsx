@@ -184,7 +184,9 @@ export function LiveView() {
                   <p className="kicker">{idx + 1}/{cards.length} · filtri: distanza, età, genere, no self/hidden/paused/già giudicati</p>
                 </>
               ) : (
-                <div className="empty" style={{ background: "white" }}>Nessuna carta. Allarga la distanza o resetta i like dello scenario.</div>
+                <div className="empty" style={{ background: "white", minHeight: 220, display: "flex", alignItems: "center" }}>
+                  Nessuna carta in discovery. Allarga la distanza, cambia identità, oppure «Prepara scenario Giulia ↔ Luca».
+                </div>
               )}
             </div>
           )}

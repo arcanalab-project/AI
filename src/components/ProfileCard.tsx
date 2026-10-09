@@ -175,7 +175,7 @@ export function MappingStrip({ highlight }: { highlight?: string | null }) {
   const color = CATEGORY_COLORS[field.category];
   return (
     <div className="code" style={{ background: color.bg, color: color.fg, borderRadius: 12, padding: "0.55rem 0.7rem" }}>
-      UI «{field.label}» → {field.sql.table}.{field.sql.column}
+      Campo «{field.label}» → {field.sql.table}.{field.sql.column}
       {field.sql.relation ? ` (${field.sql.relation})` : ""} → {field.mongo}
       {field.slide && field.slide !== `${field.sql.table}.${field.sql.column}` ? ` · slide ${field.slide}` : ""}
     </div>
