@@ -1,92 +1,64 @@
-⸻
+# TIN — Finding Love in Data
 
-Production AI is not a demo
+Demo interattiva per il bootcamp **Match your data**: due tab, **La lezione** (SQL → documento MongoDB) e **L’app live** (MVP persistito su MongoDB, database `TIN`).
 
-Lessons learned building real GenAI systems with MongoDB
+UI in italiano. Nomi di modello in inglese. Titoli corso in inglese dove servono alla continuità.
 
-Most GenAI demos work.
+## Stack
 
-Most production GenAI systems struggle.
+Next.js 15 + TypeScript + Tailwind · driver ufficiale MongoDB · SQLite in-process (`node:sqlite`) **solo per la lezione SQL**. Non è un secondo database di prodotto e non è un benchmark vs Atlas.
 
-The difference is not the model.
-It’s everything around it: data, retrieval, consistency, latency, and failure modes.
+## Avvio
 
-After working on real-world AI systems built on large document corpora, search-heavy workloads, and public-sector constraints, a few patterns became impossible to ignore.
+```bash
+npm install
+cp .env.example .env.local
+# inserisci MONGODB_URI (server-side). Non metterla nel frontend.
+npm run dev
+```
 
-⸻
+Apri [http://localhost:3000](http://localhost:3000).
 
-What breaks when AI goes to production
+Senza `MONGODB_URI` la lezione SQL funziona comunque. L’app live prova un MongoDB embedded di sviluppo e mostra chiaramente **offline / embedded / Atlas live**.
 
-Once users, data volume, and uptime expectations enter the picture:
-	•	Prompt engineering stops being the main problem
-	•	Vector search alone stops being sufficient
-	•	Latency becomes architectural, not accidental
-	•	Observability becomes mandatory, not optional
+### Seed e reset
 
-In production, retrieval quality defines output quality.
-The model is just the last step.
+- Seed idempotente all’avvio: collection `bootcamp_*` nel DB `TIN`.
+- In UI: **Prepara scenario Giulia ↔ Luca**, **Reset dataset MVP**, **Reset dataset lezione** (con conferma). Il reset cancella solo `datasetId` scelto in `bootcamp_*`. **Non droppa il database.**
 
-⸻
+Oppure:
 
-Why hybrid search matters
+```bash
+curl -X POST http://localhost:3000/api/live -H 'content-type: application/json' -d '{"action":"seed","dataset":"mvp"}'
+curl -X POST http://localhost:3000/api/live -H 'content-type: application/json' -d '{"action":"reset","dataset":"mvp"}'
+```
 
-Pure semantic search is powerful, but incomplete.
+### Test e build
 
-Real systems need:
-	•	exact matching on structured fields
-	•	full-text relevance
-	•	semantic similarity
-	•	predictable ranking behavior
+```bash
+npm test
+npm run typecheck
+npm run build
+```
 
-Hybrid search (full-text + vector) is not a “nice to have”.
-It’s the only approach that survives heterogeneous data and real users.
+## Dati
 
-⸻
+14 profili adulti sintetici, foto locali in `public/avatars/`. Fixture unica: `src/lib/canonical.ts` → tabelle SQL e documenti MongoDB con gli stessi id e valori.
 
-Data architecture beats clever prompts
+Collection: `bootcamp_users`, `bootcamp_interactions`, `bootcamp_matches`, `bootcamp_messages`, `bootcamp_events`. Dataset `lesson` e `mvp` separati.
 
-Most GenAI failures I see are rooted in data design:
-	•	embeddings stored without lifecycle rules
-	•	documents modeled for ingestion, not retrieval
-	•	no separation between operational and AI concerns
-	•	no clear ownership of search relevance
+## Mapping nomi
 
-Once these mistakes are baked in, scaling becomes painful.
+SQL `snake_case`, documenti `camelCase`. Tabella esplicita in `src/lib/naming.ts` (es. `user_settings.discovery_distance_km` → `settings.discoveryDistanceKm`).
 
-⸻
+GeoJSON: `coordinates: [longitude, latitude]`.
 
-Why MongoDB works well here
+## Documentazione demo
 
-MongoDB fits production AI systems because it naturally supports:
-	•	operational + AI workloads in the same platform
-	•	hybrid search (text + vector)
-	•	flexible document modeling for evolving schemas
-	•	predictable performance under mixed access patterns
+- [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) — 15–20 minuti
+- [`SCENE_PDF_MAP.md`](SCENE_PDF_MAP.md) — scene ↔ pagine PDF
+- [`VERIFICATION.md`](VERIFICATION.md) — check eseguiti
 
-Not because it’s trendy, but because it reduces architectural friction.
+## Sicurezza URI
 
-⸻
-
-Not a tutorial, a field report
-
-This is not a step-by-step guide.
-It’s a synthesis of mistakes, trade-offs, and lessons learned from systems that had to stay up, stay fast, and stay correct.
-
-If you are building GenAI systems meant to live longer than a demo, these constraints will find you sooner or later.
-
-⸻
-
-Further reading
-
-I expand these ideas in more detail here:
-
-Production AI with MongoDB￼
-
-⸻
-
-Author
-
-Mario Noioso
-Advisory Solution Architect
-Data, AI, and the Real World
-
+`MONGODB_URI` vive solo in `.env.local` / ambiente server. Non viene serializzata nelle API, nell’inspector, né nei log.

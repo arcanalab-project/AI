@@ -1,0 +1,368 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { Inspector } from "./Inspector";
+import { JsonDoc } from "./JsonDoc";
+import { ProfileCard, type CardPerson } from "./ProfileCard";
+import type { ConnectionState, InspectorRecord } from "@/lib/types";
+
+type Identity = { profileId: string; displayName: string; city: string; age: number; gender: string };
+type MatchRow = { matchId: string; other: CardPerson & { profileId: string }; pairKey: string };
+
+export function LiveView() {
+  const [identities, setIdentities] = useState<Identity[]>([]);
+  const [me, setMe] = useState<string>("giulia");
+  const [user, setUser] = useState<CardPerson | null>(null);
+  const [cards, setCards] = useState<(CardPerson & { profileId: string })[]>([]);
+  const [idx, setIdx] = useState(0);
+  const [matches, setMatches] = useState<MatchRow[]>([]);
+  const [matchId, setMatchId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<{ fromProfileId: string; body: string; createdAt: string }[]>([]);
+  const [inspector, setInspector] = useState<InspectorRecord | null>(null);
+  const [inspectOpen, setInspectOpen] = useState(false);
+  const [connection, setConnection] = useState<ConnectionState | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<null | "mvp" | "lesson">(null);
+  const [panel, setPanel] = useState<"discover" | "edit" | "prefs" | "sub" | "events">("discover");
+  const [behind, setBehind] = useState<unknown>(null);
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const flash = (t: string) => {
+    setSaved(t);
+    setTimeout(() => setSaved(null), 2500);
+  };
+
+  const loadMe = useCallback(async (id: string) => {
+    const res = await fetch(`/api/live?op=me&profileId=${id}`, { cache: "no-store" });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? "Profilo non disponibile");
+    setUser(json.user);
+    setConnection(json.connection);
+    setError(null);
+  }, []);
+
+  const loadDiscovery = useCallback(async (id: string) => {
+    const res = await fetch(`/api/live?op=discovery&profileId=${id}`, { cache: "no-store" });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? "Discovery non disponibile");
+    setCards(json.cards ?? []);
+    setIdx(0);
+    if (json.inspector) setInspector(json.inspector);
+    setBehind({ filter: json.filter, semantics: json.semantics });
+  }, []);
+
+  const loadMatches = useCallback(async (id: string) => {
+    const res = await fetch(`/api/live?op=matches&profileId=${id}`, { cache: "no-store" });
+    const json = await res.json();
+    setMatches(json.matches ?? []);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/status")
+      .then((r) => r.json())
+      .then((j) => setConnection(j.connection))
+      .catch(() => undefined);
+    fetch("/api/live?op=identities")
+      .then((r) => r.json())
+      .then((j) => setIdentities(j.identities ?? []))
+      .catch((e) => setError(String(e)));
+  }, []);
+
+  useEffect(() => {
+    loadMe(me).then(() => loadDiscovery(me)).then(() => loadMatches(me)).catch((e) => setError(e.message));
+  }, [me, loadMe, loadDiscovery, loadMatches]);
+
+  async function post(body: object) {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/live", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Errore");
+      if (json.inspector) {
+        setInspector(json.inspector);
+        setInspectOpen(true);
+      }
+      return json;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const card = cards[idx];
+
+  async function judge(type: "like" | "pass") {
+    if (!card) return;
+    const json = await post({ action: "like", fromProfileId: me, toProfileId: card.profileId, type });
+    flash(json.matchCreated ? "È un match!" : type === "like" ? "Like salvato" : "Pass salvato");
+    await loadDiscovery(me);
+    await loadMatches(me);
+  }
+
+  async function openThread(id: string) {
+    setMatchId(id);
+    const res = await fetch(`/api/live?op=messages&matchId=${id}`, { cache: "no-store" });
+    const json = await res.json();
+    setMessages(json.messages ?? []);
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+        <label style={{ color: "white" }}>
+          <span className="kicker">Identità demo — non è una registrazione</span>
+          <select value={me} onChange={(e) => setMe(e.target.value)} aria-label="Identità demo">
+            {identities.map((i) => (
+              <option key={i.profileId} value={i.profileId}>
+                {i.displayName} · {i.city} · {i.age}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-primary" onClick={() => post({ action: "prepare" }).then(() => { flash("Scenario match pronto"); loadDiscovery(me); loadMatches(me); })}>
+            Prepara scenario Giulia ↔ Luca
+          </button>
+          <button className="btn btn-ghost" onClick={() => setConfirm("mvp")}>Reset dataset MVP</button>
+          <button className="btn btn-ghost" onClick={() => setConfirm("lesson")}>Reset dataset lezione</button>
+        </div>
+      </div>
+
+      {connection && (
+        <div className={connection.mode === "offline" ? "error-banner" : "ok-banner"} style={{ marginBottom: 12 }}>
+          {connection.mode === "atlas" && `Atlas live · DB ${connection.db} · ${connection.host}`}
+          {connection.mode === "embedded" && `Offline embedded MongoDB (NON Atlas) · ${connection.host}. Imposta MONGODB_URI per federazionecup.7qr2i.mongodb.net / TIN.`}
+          {connection.mode === "offline" && `Offline: ${connection.error ?? "MONGODB_URI assente. Nessuna persistenza Atlas."}`}
+        </div>
+      )}
+      {error && <div className="error-banner" style={{ marginBottom: 12 }}>{error}</div>}
+      {saved && <div className="ok-banner" style={{ marginBottom: 12 }}>{saved}</div>}
+
+      {confirm && (
+        <div className="surface" style={{ padding: "1rem", marginBottom: 12 }}>
+          <strong>Conferma reset</strong>
+          <p>
+            Verranno cancellati e riseeded solo i documenti <code className="code">bootcamp_*</code> con
+            <code className="code"> datasetId={confirm}</code>. Il database TIN non viene droppato. Collection non demo intatte.
+          </p>
+          <button className="btn btn-primary" onClick={async () => { await post({ action: "reset", dataset: confirm }); setConfirm(null); flash(`Dataset ${confirm} ripristinato`); await loadMe(me); await loadDiscovery(me); }}>
+            Ripristina {confirm}
+          </button>{" "}
+          <button className="btn btn-navy" onClick={() => setConfirm(null)}>Annulla</button>
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        {(["discover", "edit", "prefs", "sub", "events"] as const).map((p) => (
+          <button key={p} className="tab" role="tab" aria-selected={panel === p} onClick={() => setPanel(p)}>
+            {{ discover: "Discovery", edit: "Profilo", prefs: "Preferenze", sub: "Abbonamento", events: "Eventi" }[p]}
+          </button>
+        ))}
+      </div>
+
+      <div className="live-grid">
+        <div>
+          {user && <ProfileCard person={user} compact />}
+          <p className="kicker">Tu, ora: identità demo</p>
+        </div>
+
+        <div>
+          {panel === "discover" && (
+            <div>
+              {card ? (
+                <>
+                  <ProfileCard person={card} />
+                  <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                    <button className="btn btn-ghost" disabled={busy} onClick={() => judge("pass")}>Pass</button>
+                    <button className="btn btn-primary" disabled={busy} onClick={() => judge("like")}>Like</button>
+                  </div>
+                  <p className="kicker">{idx + 1}/{cards.length} · filtri: distanza, età, genere, no self/hidden/paused/già giudicati</p>
+                </>
+              ) : (
+                <div className="empty" style={{ background: "white" }}>Nessuna carta. Allarga la distanza o resetta i like dello scenario.</div>
+              )}
+            </div>
+          )}
+          {panel === "edit" && user && (
+            <ProfileForm user={user} busy={busy} onSave={async (patch) => {
+              const json = await post({ action: "profile", profileId: me, patch });
+              setUser(json.user);
+              flash("Profilo salvato sul server");
+            }} />
+          )}
+          {panel === "prefs" && user?.settings && (
+            <PrefsForm settings={user.settings} busy={busy} onSave={async (patch) => {
+              const json = await post({ action: "settings", profileId: me, patch });
+              setUser(json.user);
+              flash("Preferenze salvate");
+              await loadDiscovery(me);
+            }} />
+          )}
+          {panel === "sub" && user?.subscription && (
+            <SubForm sub={user.subscription} busy={busy} onSave={async (patch) => {
+              const json = await post({ action: "subscription", profileId: me, patch });
+              setUser(json.user);
+              flash("Abbonamento demo salvato — nessun pagamento reale");
+            }} />
+          )}
+          {panel === "events" && (
+            <EventForm me={me} busy={busy} onCreate={async (payload) => {
+              await post({ action: "event", ...payload, organizerProfileId: me });
+              flash("Evento creato in bootcamp_events (referenziato)");
+              await loadMe(me);
+            }} />
+          )}
+        </div>
+
+        <div className="surface" style={{ padding: "0.9rem" }}>
+          <h3 style={{ marginTop: 0 }}>Match e messaggi</h3>
+          {matches.length === 0 && <div className="empty">Nessun match. Like reciproci Giulia ↔ Luca.</div>}
+          {matches.map((m) => (
+            <button key={m.matchId} className="btn btn-quiet" style={{ width: "100%", marginBottom: 6 }} onClick={() => openThread(m.matchId)}>
+              {m.other?.displayName ?? m.pairKey}
+            </button>
+          ))}
+          {matchId && (
+            <div>
+              <div style={{ maxHeight: 240, overflow: "auto", margin: "8px 0" }}>
+                {messages.map((m, i) => (
+                  <p key={i} style={{ textAlign: m.fromProfileId === me ? "right" : "left" }}>
+                    <span className="chip" style={{ background: m.fromProfileId === me ? "#00ED64" : "#E3FCF7", color: "#001E2B" }}>{m.body}</span>
+                  </p>
+                ))}
+              </div>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!msg.trim()) return;
+                await post({ action: "message", matchId, fromProfileId: me, body: msg });
+                setMsg("");
+                await openThread(matchId);
+                flash("Messaggio persistito");
+              }}>
+                <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Scrivi…" />
+                <button className="btn btn-primary" style={{ marginTop: 8 }} disabled={busy}>Invia</button>
+              </form>
+            </div>
+          )}
+          <button className="btn btn-navy" style={{ marginTop: 12 }} onClick={() => setInspectOpen(true)}>Dietro le quinte</button>
+          {behind ? (
+            <div style={{ marginTop: 12 }}>
+              <div className="kicker">Ultimo filtro discovery</div>
+              <JsonDoc value={behind} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+      <Inspector record={inspector} open={inspectOpen} onToggle={() => setInspectOpen((v) => !v)} />
+    </div>
+  );
+}
+
+function ProfileForm({ user, onSave, busy }: { user: CardPerson; onSave: (p: object) => Promise<void>; busy: boolean }) {
+  return (
+    <form className="surface" style={{ padding: "1rem", display: "grid", gap: 8 }} onSubmit={async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.currentTarget);
+      const hobbies = String(fd.get("hobbies") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+      const pronouns = String(fd.get("pronouns") ?? "").trim();
+      await onSave({
+        displayName: fd.get("displayName"),
+        bio: fd.get("bio"),
+        city: fd.get("city"),
+        profession: fd.get("profession") || null,
+        interests: String(fd.get("interests")).split(",").map((s) => s.trim()).filter(Boolean),
+        hobbies: hobbies.length ? hobbies : null,
+        pronouns: pronouns || null,
+      });
+    }}>
+      <h3 style={{ margin: 0 }}>Modifica profilo</h3>
+      <label>Nome <input name="displayName" defaultValue={user.displayName} required /></label>
+      <label>Città <input name="city" defaultValue={user.city} /></label>
+      <label>Professione <input name="profession" defaultValue={user.profession ?? ""} /></label>
+      <label>Bio <textarea name="bio" defaultValue={user.bio ?? ""} rows={3} /></label>
+      <label>Interessi (virgole) <input name="interests" defaultValue={user.interests.join(", ")} /></label>
+      <label>Hobby opzionali <input name="hobbies" defaultValue={(user.hobbies ?? []).join(", ")} /></label>
+      <label>Pronomi opzionali <input name="pronouns" defaultValue={user.pronouns ?? ""} /></label>
+      <button className="btn btn-primary" disabled={busy}>Salva (dopo conferma server)</button>
+    </form>
+  );
+}
+
+function PrefsForm({ settings, onSave, busy }: { settings: NonNullable<CardPerson["settings"]>; onSave: (p: object) => Promise<void>; busy: boolean }) {
+  return (
+    <form className="surface" style={{ padding: "1rem", display: "grid", gap: 8 }} onSubmit={async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.currentTarget);
+      await onSave({
+        discoveryDistanceKm: Number(fd.get("km")),
+        minDesiredAge: Number(fd.get("min")),
+        maxDesiredAge: Number(fd.get("max")),
+        notificationsEnabled: fd.get("n") === "on",
+        profileVisibility: fd.get("vis"),
+        pausedAccount: fd.get("p") === "on",
+        genderPreferences: fd.getAll("g"),
+      });
+    }}>
+      <h3 style={{ margin: 0 }}>Preferenze (influenzano la discovery)</h3>
+      <label>Distanza km <input name="km" type="number" defaultValue={settings.discoveryDistanceKm} /></label>
+      <label>Età min <input name="min" type="number" defaultValue={settings.minDesiredAge} /></label>
+      <label>Età max <input name="max" type="number" defaultValue={settings.maxDesiredAge} /></label>
+      <label><input name="n" type="checkbox" defaultChecked={settings.notificationsEnabled} /> Notifiche</label>
+      <label>Visibilità
+        <select name="vis" defaultValue={settings.profileVisibility}>
+          <option value="public">public</option>
+          <option value="hidden">hidden</option>
+        </select>
+      </label>
+      <label><input name="p" type="checkbox" defaultChecked={settings.pausedAccount} /> Pausa</label>
+      {["woman", "man", "nonbinary", "unspecified"].map((g) => (
+        <label key={g}><input name="g" type="checkbox" value={g} defaultChecked={settings.genderPreferences.includes(g)} /> {g}</label>
+      ))}
+      <button className="btn btn-primary" disabled={busy}>Salva preferenze</button>
+    </form>
+  );
+}
+
+function SubForm({ sub, onSave, busy }: { sub: NonNullable<CardPerson["subscription"]>; onSave: (p: object) => Promise<void>; busy: boolean }) {
+  return (
+    <form className="surface" style={{ padding: "1rem", display: "grid", gap: 8 }} onSubmit={async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.currentTarget);
+      await onSave({ plan: fd.get("plan"), paymentStatus: fd.get("st"), autoRenew: fd.get("ar") === "on" });
+    }}>
+      <h3 style={{ margin: 0 }}>Abbonamento demo</h3>
+      <label>Piano <select name="plan" defaultValue={sub.plan}><option>Free</option><option>Premium</option><option>Gold</option></select></label>
+      <label>Stato pagamento <select name="st" defaultValue={sub.paymentStatus}><option>Success</option><option>Failed</option><option>Pending</option></select></label>
+      <label><input name="ar" type="checkbox" defaultChecked={sub.autoRenew} /> Auto-renew</label>
+      <button className="btn btn-primary" disabled={busy}>Salva</button>
+    </form>
+  );
+}
+
+function EventForm({ me, onCreate, busy }: { me: string; onCreate: (p: object) => Promise<void>; busy: boolean }) {
+  return (
+    <form className="surface" style={{ padding: "1rem", display: "grid", gap: 8 }} onSubmit={async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.currentTarget);
+      await onCreate({
+        title: fd.get("title"),
+        city: fd.get("city"),
+        startsAt: fd.get("startsAt"),
+        description: fd.get("description"),
+      });
+    }}>
+      <h3 style={{ margin: 0 }}>Crea evento</h3>
+      <p>Collection <code className="code">bootcamp_events</code>, riferimento all’organizzatore {me}. Sul profilo solo un summary limitato (max 3).</p>
+      <label>Titolo <input name="title" required /></label>
+      <label>Città <input name="city" defaultValue="Milano" /></label>
+      <label>Inizio <input name="startsAt" type="datetime-local" required /></label>
+      <label>Descrizione <textarea name="description" rows={2} /></label>
+      <button className="btn btn-primary" disabled={busy}>Crea evento</button>
+    </form>
+  );
+}
