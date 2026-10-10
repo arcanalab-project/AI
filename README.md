@@ -64,3 +64,30 @@ GeoJSON: `coordinates: [longitude, latitude]`.
 ## URI safety
 
 `MONGODB_URI` lives only in `.env.local` / the server environment. It is not serialized in APIs, the inspector, or logs.
+
+## Public deploy (students)
+
+The **lesson** tab is a nine-table vs one-document walkthrough. It runs in the browser with no install (static host) and also via `/api/lesson` on a Node host.
+
+The **live** tab needs a Node host. Set **server-side** `MONGODB_URI` and `MONGODB_DB=TIN`. Never put the URI in `NEXT_PUBLIC_*`, the client bundle, logs, or the student URL. Without Atlas the lesson still works; the live tab is labeled offline.
+
+### GitHub Pages (lesson, durable HTTPS)
+
+After Actions can write Pages, the student URL is:
+
+https://arcanalab-project.github.io/AI/
+
+Repo **Settings → Pages → Source: GitHub Actions**. The workflow is `.github/workflows/pages.yml`.
+
+### Node host with optional Atlas (lesson + live)
+
+Connect this GitHub repo to one of:
+
+1. **Vercel** (preferred): [vercel.com/new](https://vercel.com/new) → import `arcanalab-project/AI` → env `MONGODB_URI` (secret) and `MONGODB_DB=TIN` → Deploy. Needs `VERCEL_TOKEN` or Mario logged into the Vercel CLI / dashboard.
+2. **Render**: this repo has `render.yaml`. Connect the repo, set `MONGODB_URI`.
+3. **Fly.io**: `fly launch` using `Dockerfile` + `fly.toml`. Needs `FLY_API_TOKEN`.
+4. **Railway**: Nixpacks/`Dockerfile`. Needs `RAILWAY_TOKEN`.
+
+```bash
+npx vercel --prod   # after `npx vercel login` or VERCEL_TOKEN
+```

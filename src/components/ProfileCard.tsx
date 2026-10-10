@@ -2,6 +2,7 @@
 
 import { CATEGORY_COLORS, FIELDS, fieldById } from "@/lib/fields";
 import { computeAge } from "@/lib/age";
+import { withBase } from "@/lib/paths";
 
 export type CardPerson = {
   displayName: string;
@@ -58,7 +59,7 @@ export function ProfileCard({
   compact?: boolean;
 }) {
   const age = person.age ?? computeAge(person.birthDate);
-  const photo = person.photos[0]?.url;
+  const photo = person.photos[0]?.url ? withBase(person.photos[0].url) : undefined;
   const click = (id: string) => () => onHighlight?.(id);
   const on = (id: string) => highlight === id;
   const show = (n: number) => reveal >= n;

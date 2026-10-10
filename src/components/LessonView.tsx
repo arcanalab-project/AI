@@ -6,6 +6,7 @@ import { ExpandableDocument } from "./JsonDoc";
 import { MappingStrip, ProfileCard } from "./ProfileCard";
 import { ContrastBanner, RelationalTables } from "./Tables";
 import { fieldById } from "@/lib/fields";
+import { lessonGet, lessonHostMode, lessonPost } from "@/lib/lessonClient";
 import { SCENES } from "@/lib/scenes";
 import type { InspectorRecord } from "@/lib/types";
 
@@ -30,16 +31,17 @@ export function LessonView({
   const [animStep, setAnimStep] = useState(0);
   const [quizOpen, setQuizOpen] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [engine, setEngine] = useState<"unknown" | "api" | "offline">("unknown");
   const meta = SCENES[scene - 1];
 
   async function load() {
-    const res = await fetch("/api/lesson", { cache: "no-store" });
-    const json = await res.json();
+    const json = await lessonGet();
+    setEngine(lessonHostMode());
     setState(json);
     setTables(json.tables ?? {});
     if (json.documentPreview) {
       setDocument((d: unknown) => d ?? json.documentPreview);
-      setDocSource((s: string) => s || "sqlite-assembled");
+      setDocSource((s: string) => s || (json.engine === "browser" ? "browser-lesson" : "sqlite-assembled"));
     }
   }
 
@@ -99,13 +101,7 @@ export function LessonView({
   }, [state, document]);
 
   async function post(action: string, extra: object = {}) {
-    const res = await fetch("/api/lesson", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, ...extra }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Error");
+    const json = await lessonPost(action, extra);
     if (json.tables) setTables(json.tables);
     if (json.inspector) setInspector(json.inspector);
     await load();
@@ -113,15 +109,13 @@ export function LessonView({
   }
 
   async function loadSql() {
-    const res = await fetch("/api/lesson?op=sql", { cache: "no-store" });
-    const json = await res.json();
+    const json = await lessonGet("sql");
     setSqlResult(json);
     setInspector(json.inspector);
   }
 
   async function loadDoc() {
-    const res = await fetch("/api/lesson?op=document", { cache: "no-store" });
-    const json = await res.json();
+    const json = await lessonGet("document");
     setDocument(json.document);
     setDocSource(json.source);
     setInspector(json.inspector);
@@ -161,12 +155,17 @@ export function LessonView({
       </div>
 
       {error && <div className="error-banner">{error}</div>}
+      {engine === "offline" && (
+        <div className="ok-banner" style={{ marginBottom: 12 }}>
+          Lesson running in the browser — no install. Nine tables vs one JSON document. Not Atlas.
+        </div>
+      )}
 
       <MappingStrip highlight={highlight} />
 
       {scene !== 8 && Object.keys(tables).length > 0 && (
         <div style={{ marginTop: 12 }}>
-          <ContrastBanner tables={tables} documentReady={Boolean(document)} />
+          <ContrastBanner tables={tables} documentReady={scene >= 2 && Boolean(document)} />
         </div>
       )}
 

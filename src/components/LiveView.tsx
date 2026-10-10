@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Inspector } from "./Inspector";
 import { JsonDoc } from "./JsonDoc";
 import { ProfileCard, type CardPerson } from "./ProfileCard";
+import { isLiveUnavailable, liveGet, livePost, STATIC_LIVE_CONNECTION } from "@/lib/liveClient";
 import type { ConnectionState, InspectorRecord } from "@/lib/types";
 
 type Identity = { profileId: string; displayName: string; city: string; age: number; gender: string };
@@ -35,18 +36,14 @@ export function LiveView() {
   };
 
   const loadMe = useCallback(async (id: string) => {
-    const res = await fetch(`/api/live?op=me&profileId=${id}`, { cache: "no-store" });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Profile not available");
+    const json = await liveGet(`/api/live?op=me&profileId=${id}`);
     setUser(json.user);
     setConnection(json.connection);
     setError(null);
   }, []);
 
   const loadDiscovery = useCallback(async (id: string) => {
-    const res = await fetch(`/api/live?op=discovery&profileId=${id}`, { cache: "no-store" });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Discovery not available");
+    const json = await liveGet(`/api/live?op=discovery&profileId=${id}`);
     setCards(json.cards ?? []);
     setIdx(0);
     if (json.inspector) setInspector(json.inspector);
@@ -54,41 +51,56 @@ export function LiveView() {
   }, []);
 
   const loadMatches = useCallback(async (id: string) => {
-    const res = await fetch(`/api/live?op=matches&profileId=${id}`, { cache: "no-store" });
-    const json = await res.json();
+    const json = await liveGet(`/api/live?op=matches&profileId=${id}`);
     setMatches(json.matches ?? []);
   }, []);
 
   useEffect(() => {
-    fetch("/api/status")
-      .then((r) => r.json())
+    liveGet("/api/status")
       .then((j) => setConnection(j.connection))
-      .catch(() => undefined);
-    fetch("/api/live?op=identities")
-      .then((r) => r.json())
+      .catch(() => setConnection(STATIC_LIVE_CONNECTION));
+    liveGet("/api/live?op=identities")
       .then((j) => setIdentities(j.identities ?? []))
-      .catch((e) => setError(String(e)));
+      .catch((e) => {
+        if (isLiveUnavailable(e)) {
+          setConnection(STATIC_LIVE_CONNECTION);
+          setIdentities([]);
+          setError(null);
+          return;
+        }
+        setError(String(e));
+      });
   }, []);
 
   useEffect(() => {
-    loadMe(me).then(() => loadDiscovery(me)).then(() => loadMatches(me)).catch((e) => setError(e.message));
+    loadMe(me)
+      .then(() => loadDiscovery(me))
+      .then(() => loadMatches(me))
+      .catch((e) => {
+        if (isLiveUnavailable(e)) {
+          setConnection(STATIC_LIVE_CONNECTION);
+          setError(null);
+          return;
+        }
+        setError(e.message);
+      });
   }, [me, loadMe, loadDiscovery, loadMatches]);
 
   async function post(body: object) {
     setBusy(true);
     try {
-      const res = await fetch("/api/live", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Error");
+      const json = await livePost(body);
       if (json.inspector) {
         setInspector(json.inspector);
         setInspectOpen(true);
       }
       return json;
+    } catch (e) {
+      if (isLiveUnavailable(e)) {
+        setConnection(STATIC_LIVE_CONNECTION);
+        throw new Error(STATIC_LIVE_CONNECTION.error);
+      }
+      throw e;
     } finally {
       setBusy(false);
     }
@@ -106,8 +118,7 @@ export function LiveView() {
 
   async function openThread(id: string) {
     setMatchId(id);
-    const res = await fetch(`/api/live?op=messages&matchId=${id}`, { cache: "no-store" });
-    const json = await res.json();
+    const json = await liveGet(`/api/live?op=messages&matchId=${id}`);
     setMessages(json.messages ?? []);
   }
 
