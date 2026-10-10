@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Ritratto di alessandro">
+  <rect width="400" height="520" fill="#001E2B"/>
+  <circle cx="204" cy="90" r="70" fill="#F9EBFF" opacity="0.35"/>
+  <rect x="70" y="300" width="260" height="220" rx="130" fill="#E9FF99"/>
+  <ellipse cx="192" cy="250" rx="92" ry="110" fill="#b97850"/>
+  <ellipse cx="192" cy="168" rx="78" ry="70" fill="#1a120c"/>
+  <rect x="114" y="168" width="156" height="46" fill="#1a120c"/>
+  <circle cx="162" cy="248" r="7" fill="#1a1a1a"/>
+  <circle cx="222" cy="248" r="7" fill="#1a1a1a"/>
+  <path d="M172 278 Q192 290 212 278" fill="none" stroke="#7a4b32" stroke-width="3" stroke-linecap="round"/>
+  <text x="200" y="490" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="700" fill="#FFFFFF">AC</text>
+</svg>

@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+.git
+.tin-api-parked
+*.md
+.env*
+!.env.example
