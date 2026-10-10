@@ -71,13 +71,13 @@ The **lesson** tab is a nine-table vs one-document walkthrough. It runs in the b
 
 The **live** tab needs a Node host. Set **server-side** `MONGODB_URI` and `MONGODB_DB=TIN`. Never put the URI in `NEXT_PUBLIC_*`, the client bundle, logs, or the student URL. Without Atlas the lesson still works; the live tab is labeled offline.
 
-### GitHub Pages (lesson, durable HTTPS)
+### Student URL (lesson, no install)
 
-After Actions can write Pages, the student URL is:
+**Open this:** https://raw.githack.com/arcanalab-project/AI/cursor/student-site-579d/
 
-https://arcanalab-project.github.io/AI/
+That URL is GitHub-backed static files (branch `cursor/student-site-579d`), not a Cloudflare quick tunnel and not this agent VM. Confirmed `GET /` **200**.
 
-Repo **Settings → Pages → Source: GitHub Actions**. The workflow is `.github/workflows/pages.yml`.
+GitHub Pages (`https://arcanalab-project.github.io/AI/`) is not enabled on the repo yet. Mario: **Settings → Pages → Source: GitHub Actions**. The workflow `.github/workflows/pages.yml` already builds the site; `configure-pages` enablement was denied (404). After that click, Pages becomes the canonical student URL.
 
 ### Node host with optional Atlas (lesson + live)
 
