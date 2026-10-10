@@ -73,11 +73,13 @@ The **live** tab needs a Node host. Set **server-side** `MONGODB_URI` and `MONGO
 
 ### Student URL (lesson, no install)
 
-**Open this:** https://raw.githack.com/arcanalab-project/AI/cursor/student-site-579d/
+**Open this:** https://tin-bootcamp.surge.sh/
 
-That URL is GitHub-backed static files (branch `cursor/student-site-579d`), not a Cloudflare quick tunnel and not this agent VM. Confirmed `GET /` **200**.
+Confirmed `GET /` **200** `text/html` from the public internet. HTTPS, no password, no Cloudflare/phishing interstitial. Not this agent VM and not trycloudflare.
 
-GitHub Pages (`https://arcanalab-project.github.io/AI/`) is not enabled on the repo yet. Mario: **Settings → Pages → Source: GitHub Actions**. The workflow `.github/workflows/pages.yml` already builds the site; `configure-pages` enablement was denied (404). After that click, Pages becomes the canonical student URL.
+Do **not** use `raw.githack.com` — in a real browser it shows a phishing-confirmation / challenge page (curl can still return 200). jsDelivr serves the HTML as `text/plain`, so the app does not run.
+
+GitHub Pages (`https://arcanalab-project.github.io/AI/`) is still off. Mario, with org admin: repo **Settings → Pages → Source: GitHub Actions**. This GitHub App token cannot enable it (`Resource not accessible by integration`). After that click, Pages can become the canonical URL. Until then, send the class the Surge link above.
 
 ### Node host with optional Atlas (lesson + live)
 
