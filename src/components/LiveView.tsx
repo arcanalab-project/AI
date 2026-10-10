@@ -37,7 +37,7 @@ export function LiveView() {
   const loadMe = useCallback(async (id: string) => {
     const res = await fetch(`/api/live?op=me&profileId=${id}`, { cache: "no-store" });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Profilo non disponibile");
+    if (!res.ok) throw new Error(json.error ?? "Profile not available");
     setUser(json.user);
     setConnection(json.connection);
     setError(null);
@@ -46,7 +46,7 @@ export function LiveView() {
   const loadDiscovery = useCallback(async (id: string) => {
     const res = await fetch(`/api/live?op=discovery&profileId=${id}`, { cache: "no-store" });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Discovery non disponibile");
+    if (!res.ok) throw new Error(json.error ?? "Discovery not available");
     setCards(json.cards ?? []);
     setIdx(0);
     if (json.inspector) setInspector(json.inspector);
@@ -83,7 +83,7 @@ export function LiveView() {
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Errore");
+      if (!res.ok) throw new Error(json.error ?? "Error");
       if (json.inspector) {
         setInspector(json.inspector);
         setInspectOpen(true);
@@ -99,7 +99,7 @@ export function LiveView() {
   async function judge(type: "like" | "pass") {
     if (!card) return;
     const json = await post({ action: "like", fromProfileId: me, toProfileId: card.profileId, type });
-    flash(json.matchCreated ? "È un match!" : type === "like" ? "Like salvato" : "Pass salvato");
+    flash(json.matchCreated ? "It's a match!" : type === "like" ? "Like saved" : "Pass saved");
     await loadDiscovery(me);
     await loadMatches(me);
   }
@@ -115,8 +115,8 @@ export function LiveView() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
         <label style={{ color: "white" }}>
-          <span className="kicker">Identità demo — non è una registrazione</span>
-          <select value={me} onChange={(e) => setMe(e.target.value)} aria-label="Identità demo">
+          <span className="kicker">Demo identity — this is not a sign-up</span>
+          <select value={me} onChange={(e) => setMe(e.target.value)} aria-label="Demo identity">
             {identities.map((i) => (
               <option key={i.profileId} value={i.profileId}>
                 {i.displayName} · {i.city} · {i.age}
@@ -125,19 +125,19 @@ export function LiveView() {
           </select>
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-primary" onClick={() => post({ action: "prepare" }).then(() => { flash("Scenario match pronto"); loadDiscovery(me); loadMatches(me); })}>
-            Prepara scenario Giulia ↔ Luca
+          <button className="btn btn-primary" onClick={() => post({ action: "prepare" }).then(() => { flash("Match scenario ready"); loadDiscovery(me); loadMatches(me); })}>
+            Prepare Giulia ↔ Luca scenario
           </button>
-          <button className="btn btn-ghost" onClick={() => setConfirm("mvp")}>Reset dataset MVP</button>
-          <button className="btn btn-ghost" onClick={() => setConfirm("lesson")}>Reset dataset lezione</button>
+          <button className="btn btn-ghost" onClick={() => setConfirm("mvp")}>Reset MVP dataset</button>
+          <button className="btn btn-ghost" onClick={() => setConfirm("lesson")}>Reset lesson dataset</button>
         </div>
       </div>
 
       {connection && (
         <div className={connection.mode === "offline" ? "error-banner" : "ok-banner"} style={{ marginBottom: 12 }}>
           {connection.mode === "atlas" && `Atlas live · DB ${connection.db} · ${connection.host}`}
-          {connection.mode === "embedded" && `Offline embedded MongoDB (NON Atlas) · ${connection.host}. Imposta MONGODB_URI per federazionecup.7qr2i.mongodb.net / TIN.`}
-          {connection.mode === "offline" && `Offline: ${connection.error ?? "MONGODB_URI assente. Nessuna persistenza Atlas."}`}
+          {connection.mode === "embedded" && `Offline embedded MongoDB (NOT Atlas) · ${connection.host}. Set MONGODB_URI for federazionecup.7qr2i.mongodb.net / TIN.`}
+          {connection.mode === "offline" && `Offline: ${connection.error ?? "MONGODB_URI missing. No Atlas persistence."}`}
         </div>
       )}
       {error && <div className="error-banner" style={{ marginBottom: 12 }}>{error}</div>}
@@ -145,22 +145,22 @@ export function LiveView() {
 
       {confirm && (
         <div className="surface" style={{ padding: "1rem", marginBottom: 12 }}>
-          <strong>Conferma reset</strong>
+          <strong>Confirm reset</strong>
           <p>
-            Verranno cancellati e riseeded solo i documenti <code className="code">bootcamp_*</code> con
-            <code className="code"> datasetId={confirm}</code>. Il database TIN non viene droppato. Collection non demo intatte.
+            Only <code className="code">bootcamp_*</code> documents with
+            <code className="code"> datasetId={confirm}</code> will be deleted and reseeded. The TIN database is not dropped. Non-demo collections stay intact.
           </p>
-          <button className="btn btn-primary" onClick={async () => { await post({ action: "reset", dataset: confirm }); setConfirm(null); flash(`Dataset ${confirm} ripristinato`); await loadMe(me); await loadDiscovery(me); }}>
-            Ripristina {confirm}
+          <button className="btn btn-primary" onClick={async () => { await post({ action: "reset", dataset: confirm }); setConfirm(null); flash(`Dataset ${confirm} restored`); await loadMe(me); await loadDiscovery(me); }}>
+            Restore {confirm}
           </button>{" "}
-          <button className="btn btn-navy" onClick={() => setConfirm(null)}>Annulla</button>
+          <button className="btn btn-navy" onClick={() => setConfirm(null)}>Cancel</button>
         </div>
       )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {(["discover", "edit", "prefs", "sub", "events"] as const).map((p) => (
           <button key={p} className="tab" role="tab" aria-selected={panel === p} onClick={() => setPanel(p)}>
-            {{ discover: "Discovery", edit: "Profilo", prefs: "Preferenze", sub: "Abbonamento", events: "Eventi" }[p]}
+            {{ discover: "Discovery", edit: "Profile", prefs: "Preferences", sub: "Subscription", events: "Events" }[p]}
           </button>
         ))}
       </div>
@@ -168,7 +168,7 @@ export function LiveView() {
       <div className="live-grid">
         <div>
           {user && <ProfileCard person={user} compact />}
-          <p className="kicker">Tu, ora: identità demo</p>
+          <p className="kicker">You, now: demo identity</p>
         </div>
 
         <div>
@@ -181,11 +181,11 @@ export function LiveView() {
                     <button className="btn btn-ghost" disabled={busy} onClick={() => judge("pass")}>Pass</button>
                     <button className="btn btn-primary" disabled={busy} onClick={() => judge("like")}>Like</button>
                   </div>
-                  <p className="kicker">{idx + 1}/{cards.length} · filtri: distanza, età, genere, no self/hidden/paused/già giudicati</p>
+                  <p className="kicker">{idx + 1}/{cards.length} · filters: distance, age, gender, no self/hidden/paused/already judged</p>
                 </>
               ) : (
                 <div className="empty" style={{ background: "white", minHeight: 220, display: "flex", alignItems: "center" }}>
-                  Nessuna carta in discovery. Allarga la distanza, cambia identità, oppure «Prepara scenario Giulia ↔ Luca».
+                  No cards in discovery. Widen the distance, switch identity, or “Prepare Giulia ↔ Luca scenario”.
                 </div>
               )}
             </div>
@@ -194,14 +194,14 @@ export function LiveView() {
             <ProfileForm user={user} busy={busy} onSave={async (patch) => {
               const json = await post({ action: "profile", profileId: me, patch });
               setUser(json.user);
-              flash("Profilo salvato sul server");
+              flash("Profile saved on the server");
             }} />
           )}
           {panel === "prefs" && user?.settings && (
             <PrefsForm settings={user.settings} busy={busy} onSave={async (patch) => {
               const json = await post({ action: "settings", profileId: me, patch });
               setUser(json.user);
-              flash("Preferenze salvate");
+              flash("Preferences saved");
               await loadDiscovery(me);
             }} />
           )}
@@ -209,21 +209,21 @@ export function LiveView() {
             <SubForm sub={user.subscription} busy={busy} onSave={async (patch) => {
               const json = await post({ action: "subscription", profileId: me, patch });
               setUser(json.user);
-              flash("Abbonamento demo salvato — nessun pagamento reale");
+              flash("Demo subscription saved — no real payment");
             }} />
           )}
           {panel === "events" && (
             <EventForm me={me} busy={busy} onCreate={async (payload) => {
               await post({ action: "event", ...payload, organizerProfileId: me });
-              flash("Evento creato in bootcamp_events (referenziato)");
+              flash("Event created in bootcamp_events (referenced)");
               await loadMe(me);
             }} />
           )}
         </div>
 
         <div className="surface" style={{ padding: "0.9rem" }}>
-          <h3 style={{ marginTop: 0 }}>Match e messaggi</h3>
-          {matches.length === 0 && <div className="empty">Nessun match. Like reciproci Giulia ↔ Luca.</div>}
+          <h3 style={{ marginTop: 0 }}>Matches and messages</h3>
+          {matches.length === 0 && <div className="empty">No matches. Reciprocal likes Giulia ↔ Luca.</div>}
           {matches.map((m) => (
             <button key={m.matchId} className="btn btn-quiet" style={{ width: "100%", marginBottom: 6 }} onClick={() => openThread(m.matchId)}>
               {m.other?.displayName ?? m.pairKey}
@@ -244,17 +244,17 @@ export function LiveView() {
                 await post({ action: "message", matchId, fromProfileId: me, body: msg });
                 setMsg("");
                 await openThread(matchId);
-                flash("Messaggio persistito");
+                flash("Message persisted");
               }}>
-                <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Scrivi…" />
-                <button className="btn btn-primary" style={{ marginTop: 8 }} disabled={busy}>Invia</button>
+                <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Write…" />
+                <button className="btn btn-primary" style={{ marginTop: 8 }} disabled={busy}>Send</button>
               </form>
             </div>
           )}
-          <button className="btn btn-navy" style={{ marginTop: 12 }} onClick={() => setInspectOpen(true)}>Dietro le quinte</button>
+          <button className="btn btn-navy" style={{ marginTop: 12 }} onClick={() => setInspectOpen(true)}>Behind the scenes</button>
           {behind ? (
             <div style={{ marginTop: 12 }}>
-              <div className="kicker">Ultimo filtro discovery</div>
+              <div className="kicker">Last discovery filter</div>
               <JsonDoc value={behind} />
             </div>
           ) : null}
@@ -282,15 +282,15 @@ function ProfileForm({ user, onSave, busy }: { user: CardPerson; onSave: (p: obj
         pronouns: pronouns || null,
       });
     }}>
-      <h3 style={{ margin: 0 }}>Modifica profilo</h3>
-      <label>Nome <input name="displayName" defaultValue={user.displayName} required /></label>
-      <label>Città <input name="city" defaultValue={user.city} /></label>
-      <label>Professione <input name="profession" defaultValue={user.profession ?? ""} /></label>
+      <h3 style={{ margin: 0 }}>Edit profile</h3>
+      <label>Name <input name="displayName" defaultValue={user.displayName} required /></label>
+      <label>City <input name="city" defaultValue={user.city} /></label>
+      <label>Profession <input name="profession" defaultValue={user.profession ?? ""} /></label>
       <label>Bio <textarea name="bio" defaultValue={user.bio ?? ""} rows={3} /></label>
-      <label>Interessi (virgole) <input name="interests" defaultValue={user.interests.join(", ")} /></label>
-      <label>Hobby opzionali <input name="hobbies" defaultValue={(user.hobbies ?? []).join(", ")} /></label>
-      <label>Pronomi opzionali <input name="pronouns" defaultValue={user.pronouns ?? ""} /></label>
-      <button className="btn btn-primary" disabled={busy}>Salva (dopo conferma server)</button>
+      <label>Interests (comma-separated) <input name="interests" defaultValue={user.interests.join(", ")} /></label>
+      <label>Optional hobbies <input name="hobbies" defaultValue={(user.hobbies ?? []).join(", ")} /></label>
+      <label>Optional pronouns <input name="pronouns" defaultValue={user.pronouns ?? ""} /></label>
+      <button className="btn btn-primary" disabled={busy}>Save (after server confirm)</button>
     </form>
   );
 }
@@ -310,22 +310,22 @@ function PrefsForm({ settings, onSave, busy }: { settings: NonNullable<CardPerso
         genderPreferences: fd.getAll("g"),
       });
     }}>
-      <h3 style={{ margin: 0 }}>Preferenze (influenzano la discovery)</h3>
-      <label>Distanza km <input name="km" type="number" defaultValue={settings.discoveryDistanceKm} /></label>
-      <label>Età min <input name="min" type="number" defaultValue={settings.minDesiredAge} /></label>
-      <label>Età max <input name="max" type="number" defaultValue={settings.maxDesiredAge} /></label>
-      <label><input name="n" type="checkbox" defaultChecked={settings.notificationsEnabled} /> Notifiche</label>
-      <label>Visibilità
+      <h3 style={{ margin: 0 }}>Preferences (they affect discovery)</h3>
+      <label>Distance km <input name="km" type="number" defaultValue={settings.discoveryDistanceKm} /></label>
+      <label>Min age <input name="min" type="number" defaultValue={settings.minDesiredAge} /></label>
+      <label>Max age <input name="max" type="number" defaultValue={settings.maxDesiredAge} /></label>
+      <label><input name="n" type="checkbox" defaultChecked={settings.notificationsEnabled} /> Notifications</label>
+      <label>Visibility
         <select name="vis" defaultValue={settings.profileVisibility}>
           <option value="public">public</option>
           <option value="hidden">hidden</option>
         </select>
       </label>
-      <label><input name="p" type="checkbox" defaultChecked={settings.pausedAccount} /> Pausa</label>
+      <label><input name="p" type="checkbox" defaultChecked={settings.pausedAccount} /> Pause</label>
       {["woman", "man", "nonbinary", "unspecified"].map((g) => (
         <label key={g}><input name="g" type="checkbox" value={g} defaultChecked={settings.genderPreferences.includes(g)} /> {g}</label>
       ))}
-      <button className="btn btn-primary" disabled={busy}>Salva preferenze</button>
+      <button className="btn btn-primary" disabled={busy}>Save preferences</button>
     </form>
   );
 }
@@ -337,11 +337,11 @@ function SubForm({ sub, onSave, busy }: { sub: NonNullable<CardPerson["subscript
       const fd = new FormData(e.currentTarget);
       await onSave({ plan: fd.get("plan"), paymentStatus: fd.get("st"), autoRenew: fd.get("ar") === "on" });
     }}>
-      <h3 style={{ margin: 0 }}>Abbonamento demo</h3>
-      <label>Piano <select name="plan" defaultValue={sub.plan}><option>Free</option><option>Premium</option><option>Gold</option></select></label>
-      <label>Stato pagamento <select name="st" defaultValue={sub.paymentStatus}><option>Success</option><option>Failed</option><option>Pending</option></select></label>
+      <h3 style={{ margin: 0 }}>Demo subscription</h3>
+      <label>Plan <select name="plan" defaultValue={sub.plan}><option>Free</option><option>Premium</option><option>Gold</option></select></label>
+      <label>Payment status <select name="st" defaultValue={sub.paymentStatus}><option>Success</option><option>Failed</option><option>Pending</option></select></label>
       <label><input name="ar" type="checkbox" defaultChecked={sub.autoRenew} /> Auto-renew</label>
-      <button className="btn btn-primary" disabled={busy}>Salva</button>
+      <button className="btn btn-primary" disabled={busy}>Save</button>
     </form>
   );
 }
@@ -358,13 +358,13 @@ function EventForm({ me, onCreate, busy }: { me: string; onCreate: (p: object) =
         description: fd.get("description"),
       });
     }}>
-      <h3 style={{ margin: 0 }}>Crea evento</h3>
-      <p>Collection <code className="code">bootcamp_events</code>, riferimento all’organizzatore {me}. Sul profilo solo un summary limitato (max 3).</p>
-      <label>Titolo <input name="title" required /></label>
-      <label>Città <input name="city" defaultValue="Milano" /></label>
-      <label>Inizio <input name="startsAt" type="datetime-local" required /></label>
-      <label>Descrizione <textarea name="description" rows={2} /></label>
-      <button className="btn btn-primary" disabled={busy}>Crea evento</button>
+      <h3 style={{ margin: 0 }}>Create event</h3>
+      <p>Collection <code className="code">bootcamp_events</code>, reference to organizer {me}. On the profile, only a bounded summary (max 3).</p>
+      <label>Title <input name="title" required /></label>
+      <label>City <input name="city" defaultValue="Milano" /></label>
+      <label>Start <input name="startsAt" type="datetime-local" required /></label>
+      <label>Description <textarea name="description" rows={2} /></label>
+      <button className="btn btn-primary" disabled={busy}>Create event</button>
     </form>
   );
 }

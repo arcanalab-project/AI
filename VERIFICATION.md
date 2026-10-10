@@ -1,34 +1,34 @@
 # Verification
 
-Eseguito su questa VM (2026-10-09). Materiali Mac assenti; palette MongoDB 2026 e sequenza del brief.
+Run on this VM (2026-10-09). Mac materials missing; MongoDB 2026 palette and brief sequence.
 
 ## Automated
 
-- `npm test` — fixture adulti, GeoJSON lng/lat, uguaglianza SQL↔canonical (foto/interessi/settings/sub), no cartesiano, like idempotenti, like reciproci → un match, filtri discovery (self/hidden/paused/giudicato/età/genere/distanza).
+- `npm test` — adult fixtures, GeoJSON lng/lat, SQL↔canonical equality (photos/interests/settings/sub), no cartesian, idempotent likes, reciprocal likes → one match, discovery filters (self/hidden/paused/judged/age/gender/distance).
 - `npm run typecheck`
-- `npm run lint` (se fallisce su warning non bloccanti, annotato sotto)
+- `npm run lint` (if it fails on non-blocking warnings, annotated below)
 - `npm run build`
 
 ## Flows (app)
 
-Eseguiti via API su `http://localhost:3000` e via browser (computer-use):
+Run via API on `http://localhost:3000` and via browser (computer-use):
 
-- Home 200. `/api/status`: mode `embedded` (MongoMemoryServer, etichettato non-Atlas), seed ok, collection `bootcamp_*`.
-- SQL: 1 riga, 3 foto, 3 interessi, cartesiano ingenuo 9, nome Giulia Conti.
-- Documento: `source=embedded`, GeoJSON `[9.19, 45.4642]`.
-- Discovery Giulia: `luca`, `samuele`; esclusi self, Marco (distanza), Elena (hidden), Davide (paused).
-- Like Giulia→Luca created; repeat idempotent; Luca→Giulia `matchCreated` su `giulia|luca`.
-- Messaggio persistito; GET thread = 1.
-- PATCH bio confermato dal GET successivo.
+- Home 200. `/api/status`: mode `embedded` (MongoMemoryServer, labeled not-Atlas), seed ok, collections `bootcamp_*`.
+- SQL: 1 row, 3 photos, 3 interests, naive cartesian 9, name Giulia Conti.
+- Document: `source=embedded`, GeoJSON `[9.19, 45.4642]`.
+- Discovery Giulia: `luca`, `samuele`; excluded self, Marco (distance), Elena (hidden), Davide (paused).
+- Like Giulia→Luca created; repeat idempotent; Luca→Giulia `matchCreated` on `giulia|luca`.
+- Message persisted; GET thread = 1.
+- PATCH bio confirmed by the following GET.
 - Evolve hobbies flag true.
-- Browser: tab lezione scene 1–5, click mapping, SQL button; tab live identity switcher, like, match Luca, inspector filtro 2dsphere.
+- Browser: lesson tab scenes 1–5, mapping click, SQL button; live tab identity switcher, like, match Luca, inspector 2dsphere filter.
 
 ## Projection
 
-Layout pensato per 1440×900 e 1920×1080 (lezione). Live usabile su viewport stretta (stack). Contrasto navy/green, focus visibile, frecce scena non rubano gli input.
+Layout designed for 1440×900 and 1920×1080 (lesson). Live usable on a narrow viewport (stack). Navy/green contrast, visible focus, scene arrows do not steal inputs.
 
-## Blocchi noti
+## Known blockers
 
-- `MONGODB_URI` non era nel repo/env di questa VM. Senza URI: lezione SQL ok; live usa MongoMemoryServer (etichettato **non Atlas**) oppure errore offline concreto.
-- Font Special Gothic del path Mac assente; usati pacchetti Fontsource Special Gothic + Source Code Pro.
-- PDF e PPTX assenti: sequenza e palette dal brief, non dal file originale.
+- `MONGODB_URI` was not in this VM’s repo/env. Without URI: SQL lesson ok; live uses MongoMemoryServer (labeled **not Atlas**) or a concrete offline error.
+- Special Gothic font from the Mac path missing; Fontsource Special Gothic + Source Code Pro packages used.
+- PDF and PPTX missing: sequence and palette from the brief, not from the original file.

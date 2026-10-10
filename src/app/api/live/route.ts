@@ -41,10 +41,10 @@ export async function GET(req: Request) {
     }
     if (op === "discovery") {
       const { value, inspector } = await timed(
-        `Discovery per ${profileId}`,
+        `Discovery for ${profileId}`,
         "MongoDB",
         "bootcamp_users",
-        { find: "geo + filtri" },
+        { find: "geo + filters" },
         () => discover(profileId),
       );
       inspector.operation = value.filter;
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
     }
     if (op === "messages") {
       const matchId = searchParams.get("matchId");
-      if (!matchId) return NextResponse.json({ error: "matchId richiesto" }, { status: 400 });
+      if (!matchId) return NextResponse.json({ error: "matchId required" }, { status: 400 });
       const messages = await listMessages(matchId);
       return NextResponse.json({ messages });
     }
@@ -73,7 +73,7 @@ export async function GET(req: Request) {
     if (op === "inspector") {
       return NextResponse.json({ inspector: getLastInspector() });
     }
-    return NextResponse.json({ error: "op sconosciuta" }, { status: 400 });
+    return NextResponse.json({ error: "unknown op" }, { status: 400 });
   } catch (err) {
     return NextResponse.json(
       { error: sanitizeError(err), connection: await getConnectionState() },
@@ -90,14 +90,14 @@ export async function POST(req: Request) {
       const dataset = body.dataset === "lesson" ? "lesson" : "mvp";
       const result = await seedDataset(dataset);
       const inspector = setLastInspector({
-        description: `Seed idempotente dataset ${dataset}`,
+        description: `Idempotent seed of dataset ${dataset}`,
         engine: "MongoDB",
         target: "bootcamp_*",
-        operation: { replaceOne: "upsert per profileId" },
+        operation: { replaceOne: "upsert by profileId" },
         outcome: "ok",
         result,
         measured: false,
-        note: "Non tocca collection fuori da bootcamp_*.",
+        note: "Does not touch collections outside bootcamp_*.",
       });
       return NextResponse.json({ result, inspector });
     }
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
         outcome: "ok",
         result: { deleted, seeded },
         measured: false,
-        note: `Ripristinato esattamente il dataset «${dataset}». Il database TIN non è stato droppato.`,
+        note: `Restored exactly dataset “${dataset}”. The TIN database was not dropped.`,
       });
       return NextResponse.json({ deleted, seeded, inspector });
     }
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         result,
         inspector: setLastInspector({
-          description: "Prepara scenario match Giulia ↔ Luca",
+          description: "Prepare Giulia ↔ Luca match scenario",
           engine: "MongoDB",
           target: "bootcamp_users / interactions / matches / messages",
           operation: { restore: ["giulia", "luca"], deletePair: "giulia|luca" },
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
       const profileId = String(body.profileId);
       const patch = profilePatchSchema.parse(body.patch);
       const { value, inspector } = await timed(
-        `Salvo il profilo ${profileId}`,
+        `Save profile ${profileId}`,
         "MongoDB",
         "bootcamp_users",
         { updateOne: { datasetId: "mvp", profileId }, $set: patch },
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
       const profileId = String(body.profileId);
       const patch = settingsPatchSchema.parse(body.patch);
       const { value, inspector } = await timed(
-        `Salvo le preferenze di ${profileId}`,
+        `Save preferences for ${profileId}`,
         "MongoDB",
         "bootcamp_users.settings",
         { updateOne: { "settings.*": patch } },
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
       const profileId = String(body.profileId);
       const patch = subscriptionPatchSchema.parse(body.patch);
       const { value, inspector } = await timed(
-        `Salvo l'abbonamento demo di ${profileId}`,
+        `Save demo subscription for ${profileId}`,
         "MongoDB",
         "bootcamp_users.subscription",
         { updateOne: { "subscription.*": patch } },
@@ -174,8 +174,8 @@ export async function POST(req: Request) {
       const inspector = setLastInspector({
         description:
           parsed.type === "like"
-            ? `${parsed.fromProfileId} mette like a ${parsed.toProfileId}`
-            : `${parsed.fromProfileId} passa ${parsed.toProfileId}`,
+            ? `${parsed.fromProfileId} likes ${parsed.toProfileId}`
+            : `${parsed.fromProfileId} passes ${parsed.toProfileId}`,
         engine: "MongoDB",
         target: "bootcamp_interactions (+ bootcamp_matches se reciproco)",
         operation: {
@@ -187,7 +187,7 @@ export async function POST(req: Request) {
             },
             upsert: true,
             unique: "datasetId+from+to",
-            then: "se like reciproco, upsert match con pairKey ordinato",
+            then: "if reciprocal like, upsert match with sorted pairKey",
           },
         },
         outcome: result.created ? "created" : "idempotent-hit",
@@ -198,7 +198,7 @@ export async function POST(req: Request) {
         },
         elapsedMs: result.elapsedMs,
         measured: true,
-        note: "Unicità + upsert: i like concorrenti non perdono il match e non duplicano.",
+        note: "Uniqueness + upsert: concurrent likes neither lose the match nor duplicate it.",
       });
       return NextResponse.json({ ...result, inspector });
     }
@@ -206,7 +206,7 @@ export async function POST(req: Request) {
       const parsed = messageSchema.parse(body);
       const result = await sendMessage(parsed.matchId, parsed.fromProfileId, parsed.body);
       const inspector = setLastInspector({
-        description: `Messaggio in match ${parsed.matchId}`,
+        description: `Message in match ${parsed.matchId}`,
         engine: "MongoDB",
         target: "bootcamp_messages",
         operation: { insertOne: { matchId: parsed.matchId, fromProfileId: parsed.fromProfileId } },
@@ -220,7 +220,7 @@ export async function POST(req: Request) {
     if (action === "event") {
       const parsed = eventSchema.parse(body);
       const { value, inspector } = await timed(
-        "Creo un evento (referenziato, non unbounded nell'user)",
+        "Create an event (referenced, not unbounded on the user)",
         "MongoDB",
         "bootcamp_events",
         { insertOne: parsed, user: "$push eventSummary $slice 3" },
@@ -228,7 +228,7 @@ export async function POST(req: Request) {
       );
       return NextResponse.json({ event: value, inspector });
     }
-    return NextResponse.json({ error: "Azione sconosciuta" }, { status: 400 });
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (err) {
     return NextResponse.json({ error: sanitizeError(err) }, { status: 400 });
   }

@@ -1,14 +1,14 @@
-export const NAIVE_JOIN_SQL = `-- SPIEGAZIONE — NON eseguita dal motore della lezione.
--- Un JOIN su due relazioni 1:N produce un prodotto cartesiano:
--- 3 foto × 3 interessi = 9 righe per la stessa persona.
+export const NAIVE_JOIN_SQL = `-- EXPLANATION — NOT executed by the lesson engine.
+-- A JOIN on two 1:N relations produces a cartesian product:
+-- 3 photos × 3 interests = 9 rows for the same person.
 SELECT u.display_name, p.url, i.interest
 FROM users u
 JOIN user_photos p ON p.user_id = u.id
 JOIN user_interests i ON i.user_id = u.id
 WHERE u.id = ?;`;
 
-export const RETRIEVE_PERSON_SQL = `-- SQLite (lezione). Equivalente PostgreSQL: json_agg / json_build_object.
--- Foto e interessi arrivano da subquery aggregate: una riga, nessun cartesiano.
+export const RETRIEVE_PERSON_SQL = `-- SQLite (lesson). PostgreSQL equivalent: json_agg / json_build_object.
+-- Photos and interests come from aggregate subqueries: one row, no cartesian.
 SELECT
   u.id,
   u.display_name,

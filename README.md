@@ -1,39 +1,39 @@
 # TIN — Finding Love in Data
 
-Demo interattiva per il bootcamp **Match your data**: due tab, **La lezione** (SQL → documento MongoDB) e **L’app live** (MVP persistito su MongoDB, database `TIN`).
+Interactive demo for the **Match your data** bootcamp: two tabs, **The lesson** (SQL → MongoDB document) and **The live app** (MVP persisted on MongoDB, database `TIN`).
 
-UI in italiano. Nomi di modello in inglese. Titoli corso in inglese dove servono alla continuità.
+UI in English. Model names in English. Course titles in English.
 
 ## Stack
 
-Next.js 15 + TypeScript + Tailwind · driver ufficiale MongoDB · SQLite in-process (`node:sqlite`) **solo per la lezione SQL**. Non è un secondo database di prodotto e non è un benchmark vs Atlas.
+Next.js 15 + TypeScript + Tailwind · official MongoDB driver · in-process SQLite (`node:sqlite`) **only for the SQL lesson**. It is not a second product database and not a benchmark vs Atlas.
 
-## Avvio
+## Start
 
 ```bash
 npm install
 cp .env.example .env.local
-# inserisci MONGODB_URI (server-side). Non metterla nel frontend.
+# put MONGODB_URI (server-side). Do not put it in the frontend.
 npm run dev
 ```
 
-Apri [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000).
 
-Senza `MONGODB_URI` la lezione SQL funziona comunque. L’app live prova un MongoDB embedded di sviluppo e mostra chiaramente **offline / embedded / Atlas live**.
+Without `MONGODB_URI` the SQL lesson still works. The live app tries an embedded development MongoDB and clearly shows **offline / embedded / Atlas live**.
 
-### Seed e reset
+### Seed and reset
 
-- Seed idempotente all’avvio: collection `bootcamp_*` nel DB `TIN`.
-- In UI: **Prepara scenario Giulia ↔ Luca**, **Reset dataset MVP**, **Reset dataset lezione** (con conferma). Il reset cancella solo `datasetId` scelto in `bootcamp_*`. **Non droppa il database.**
+- Idempotent seed on start: `bootcamp_*` collections in DB `TIN`.
+- In the UI: **Prepare Giulia ↔ Luca scenario**, **Reset MVP dataset**, **Reset lesson dataset** (with confirmation). Reset deletes only the chosen `datasetId` in `bootcamp_*`. **It does not drop the database.**
 
-Oppure:
+Or:
 
 ```bash
 curl -X POST http://localhost:3000/api/live -H 'content-type: application/json' -d '{"action":"seed","dataset":"mvp"}'
 curl -X POST http://localhost:3000/api/live -H 'content-type: application/json' -d '{"action":"reset","dataset":"mvp"}'
 ```
 
-### Test e build
+### Test and build
 
 ```bash
 npm test
@@ -41,24 +41,24 @@ npm run typecheck
 npm run build
 ```
 
-## Dati
+## Data
 
-14 profili adulti sintetici, foto locali in `public/avatars/`. Fixture unica: `src/lib/canonical.ts` → tabelle SQL e documenti MongoDB con gli stessi id e valori.
+14 synthetic adult profiles, local photos in `public/avatars/`. Single fixture: `src/lib/canonical.ts` → SQL tables and MongoDB documents with the same ids and values.
 
-Collection: `bootcamp_users`, `bootcamp_interactions`, `bootcamp_matches`, `bootcamp_messages`, `bootcamp_events`. Dataset `lesson` e `mvp` separati.
+Collections: `bootcamp_users`, `bootcamp_interactions`, `bootcamp_matches`, `bootcamp_messages`, `bootcamp_events`. Separate `lesson` and `mvp` datasets.
 
-## Mapping nomi
+## Name mapping
 
-SQL `snake_case`, documenti `camelCase`. Tabella esplicita in `src/lib/naming.ts` (es. `user_settings.discovery_distance_km` → `settings.discoveryDistanceKm`).
+SQL `snake_case`, documents `camelCase`. Explicit table in `src/lib/naming.ts` (e.g. `user_settings.discovery_distance_km` → `settings.discoveryDistanceKm`).
 
 GeoJSON: `coordinates: [longitude, latitude]`.
 
-## Documentazione demo
+## Demo documentation
 
-- [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) — 15–20 minuti
-- [`SCENE_PDF_MAP.md`](SCENE_PDF_MAP.md) — scene ↔ pagine PDF
-- [`VERIFICATION.md`](VERIFICATION.md) — check eseguiti
+- [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) — 15–20 minutes
+- [`SCENE_PDF_MAP.md`](SCENE_PDF_MAP.md) — scenes ↔ PDF pages
+- [`VERIFICATION.md`](VERIFICATION.md) — checks run
 
-## Sicurezza URI
+## URI safety
 
-`MONGODB_URI` vive solo in `.env.local` / ambiente server. Non viene serializzata nelle API, nell’inspector, né nei log.
+`MONGODB_URI` lives only in `.env.local` / the server environment. It is not serialized in APIs, the inspector, or logs.

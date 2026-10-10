@@ -80,7 +80,7 @@ export async function getClient(): Promise<MongoClient> {
 
   if (process.env.TIN_ALLOW_EMBEDDED_MONGO === "0") {
     throw new Error(
-      "MONGODB_URI assente. Impostala in .env.local (server-side) verso Atlas federazionecup.7qr2i.mongodb.net, database TIN.",
+      "MONGODB_URI missing. Set it in .env.local (server-side) to Atlas federazionecup.7qr2i.mongodb.net, database TIN.",
     );
   }
 
@@ -97,12 +97,12 @@ export async function getClient(): Promise<MongoClient> {
     g.tinState = {
       mode: "embedded",
       db: DB_NAME,
-      host: "localhost (MongoMemoryServer — NON è Atlas)",
+      host: "localhost (MongoMemoryServer — NOT Atlas)",
     };
     return client;
   } catch (err) {
     throw new Error(
-      `Atlas non connesso: MONGODB_URI mancante. Fallback embedded fallito: ${sanitizeError(err)}`,
+      `Atlas not connected: MONGODB_URI missing. Embedded fallback failed: ${sanitizeError(err)}`,
     );
   }
 }

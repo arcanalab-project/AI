@@ -101,7 +101,7 @@ export function LessonView({
       body: JSON.stringify({ action, ...extra }),
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Errore");
+    if (!res.ok) throw new Error(json.error ?? "Error");
     if (json.tables) setTables(json.tables);
     if (json.inspector) setInspector(json.inspector);
     await load();
@@ -133,21 +133,21 @@ export function LessonView({
   return (
     <div>
       <div className="surface-deep" style={{ padding: "1rem 1.1rem", borderRadius: 16, marginBottom: 12 }}>
-        <div className="kicker">{meta.pdfPages} · scena {scene}/8</div>
+        <div className="kicker">{meta.pdfPages} · scene {scene}/8</div>
         <h2 style={{ margin: "0.2rem 0", fontSize: "1.85rem", fontWeight: 500 }}>{meta.title}</h2>
         <p style={{ margin: "0.2rem 0 0.6rem", fontSize: "1.15rem" }}>{meta.question}</p>
         <p style={{ margin: 0, opacity: 0.85 }}>{meta.action}</p>
         <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
           <button className="btn btn-ghost" onClick={() => setShowSolution((s) => !s)}>
-            {showSolution ? "Nascondi soluzione" : "Rivela soluzione (tutor)"}
+            {showSolution ? "Hide solution" : "Reveal solution (tutor)"}
           </button>
           {scene === 5 && (
-            <button className="btn btn-primary" onClick={() => loadSql()}>Esegui SQL reale</button>
+            <button className="btn btn-primary" onClick={() => loadSql()}>Run real SQL</button>
           )}
           {scene === 6 && (
             <>
-              <button className="btn btn-primary" onClick={() => setAnimStep((s) => (s + 1) % 4)}>Anima righe → documento</button>
-              <button className="btn btn-ghost" onClick={() => loadDoc()}>Lettura MongoDB</button>
+              <button className="btn btn-primary" onClick={() => setAnimStep((s) => (s + 1) % 4)}>Animate rows → document</button>
+              <button className="btn btn-ghost" onClick={() => loadDoc()}>MongoDB read</button>
             </>
           )}
         </div>
@@ -165,14 +165,14 @@ export function LessonView({
           {person && (
             <ProfileCard person={person} highlight={highlight} onHighlight={setHighlight} reveal={scene === 1 ? reveal : 99} />
           )}
-          <p className="kicker" style={{ marginTop: 8 }}>Stessa persona al centro: Giulia Conti</p>
+          <p className="kicker" style={{ marginTop: 8 }}>Same person in the center: Giulia Conti</p>
         </div>
 
         <div>
           {scene === 1 && (
             <div className="surface" style={{ padding: "1rem" }}>
-              <h3 style={{ marginTop: 0 }}>I campi emergono</h3>
-              <p>Una card credibile nasconde già molte entità. L’esercizio si concentra su utente, preferenze, abbonamento — non su swipe e messaggi.</p>
+              <h3 style={{ marginTop: 0 }}>The fields emerge</h3>
+              <p>A credible card already hides many entities. The exercise focuses on user, preferences, subscription — not on swipes and messages.</p>
             </div>
           )}
           {scene >= 2 && scene !== 8 && (
@@ -180,7 +180,7 @@ export function LessonView({
           )}
           {scene === 2 && (
             <p style={{ color: "#E3FCF7" }}>
-              user_gender_preferences esiste perché un utente può cercare più generi: 1:N normalizzato, non un CSV. Non è l’unico schema relazionale possibile.
+              user_gender_preferences exists because a user can look for more than one gender: normalized 1:N, not a CSV. It is not the only possible relational schema.
             </p>
           )}
           {scene === 3 && settings && (
@@ -203,18 +203,18 @@ export function LessonView({
                 });
               }}
             >
-              <h3 style={{ margin: 0 }}>Modifica preferenze (lezione)</h3>
-              <label>Distanza km <input name="km" type="number" defaultValue={settings.discoveryDistanceKm} /></label>
-              <label>Età min <input name="min" type="number" defaultValue={settings.minDesiredAge} /></label>
-              <label>Età max <input name="max" type="number" defaultValue={settings.maxDesiredAge} /></label>
-              <label><input name="n" type="checkbox" defaultChecked={settings.notificationsEnabled} /> Notifiche</label>
-              <label>Visibilità
+              <h3 style={{ margin: 0 }}>Edit preferences (lesson)</h3>
+              <label>Distance km <input name="km" type="number" defaultValue={settings.discoveryDistanceKm} /></label>
+              <label>Min age <input name="min" type="number" defaultValue={settings.minDesiredAge} /></label>
+              <label>Max age <input name="max" type="number" defaultValue={settings.maxDesiredAge} /></label>
+              <label><input name="n" type="checkbox" defaultChecked={settings.notificationsEnabled} /> Notifications</label>
+              <label>Visibility
                 <select name="vis" defaultValue={settings.profileVisibility}>
                   <option value="public">public</option>
                   <option value="hidden">hidden</option>
                 </select>
               </label>
-              <label><input name="p" type="checkbox" defaultChecked={settings.pausedAccount} /> Account in pausa</label>
+              <label><input name="p" type="checkbox" defaultChecked={settings.pausedAccount} /> Paused account</label>
               <div>
                 {GENDERS.map((g) => (
                   <label key={g} style={{ marginRight: 8 }}>
@@ -222,7 +222,7 @@ export function LessonView({
                   </label>
                 ))}
               </div>
-              <button className="btn btn-primary" type="submit">Salva preferenze</button>
+              <button className="btn btn-primary" type="submit">Save preferences</button>
             </form>
           )}
           {scene === 4 && person?.subscription && (
@@ -243,38 +243,38 @@ export function LessonView({
                 });
               }}
             >
-              <h3 style={{ margin: 0 }}>Abbonamento corrente</h3>
-              <p>Lo storico Free di Giulia resta in un’altra riga (`is_current=0`). Bisogni diversi: storico vs corrente.</p>
-              <label>Piano
+              <h3 style={{ margin: 0 }}>Current subscription</h3>
+              <p>Giulia’s Free history stays on another row (`is_current=0`). Different needs: history vs current.</p>
+              <label>Plan
                 <select name="plan" defaultValue={person.subscription.plan}>
                   <option>Free</option><option>Premium</option><option>Gold</option>
                 </select>
               </label>
-              <label>Pagamento (demo)
+              <label>Payment (demo)
                 <select name="st" defaultValue={person.subscription.paymentStatus}>
                   <option>Success</option><option>Failed</option><option>Pending</option>
                 </select>
               </label>
-              <label>Inizio <input name="sd" defaultValue={person.subscription.startDate} /></label>
-              <label>Fine <input name="ed" defaultValue={person.subscription.endDate} /></label>
+              <label>Start <input name="sd" defaultValue={person.subscription.startDate} /></label>
+              <label>End <input name="ed" defaultValue={person.subscription.endDate} /></label>
               <label><input name="ar" type="checkbox" defaultChecked={person.subscription.autoRenew} /> Auto-renew</label>
-              <button className="btn btn-primary" type="submit">Salva abbonamento</button>
+              <button className="btn btn-primary" type="submit">Save subscription</button>
             </form>
           )}
           {scene === 5 && sqlResult && (
             <div className="surface" style={{ padding: "1rem", marginTop: 10 }}>
-              <div className="kicker">Risultato SQL · {String(sqlResult.photoCount)} foto · {String(sqlResult.interestCount)} interessi · cartesiano ingenuo = {String(sqlResult.cartesianIfNaive)} righe</div>
+              <div className="kicker">SQL result · {String(sqlResult.photoCount)} photos · {String(sqlResult.interestCount)} interests · naive cartesian = {String(sqlResult.cartesianIfNaive)} rows</div>
               <pre className="inspect-pre">{JSON.stringify(sqlResult.row, null, 2)}</pre>
-              <p>Una riga → oggetto UI. Il conteggio ingenuo mostra il prodotto cartesiano che abbiamo evitato. SQLite è il motore della lezione, non un confronto di performance con Atlas.</p>
+              <p>One row → UI object. The naive count shows the cartesian product we avoided. SQLite is the lesson engine, not a performance comparison with Atlas.</p>
             </div>
           )}
           {scene === 7 && (
             <div className="surface" style={{ padding: "1rem", display: "grid", gap: 8 }}>
-              <p>Tre cambi prodotto. Francesca e altri documenti restano senza i nuovi campi.</p>
-              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "hobbies" }).then(loadDoc)}>Aggiungi hobby</button>
-              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "pronouns" }).then(loadDoc)}>Pronomi opzionali</button>
-              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "organizer" }).then(loadDoc)}>Profilo organizzatore</button>
-              <p className="kicker">SQL: CREATE/ALTER. MongoDB: campi opzionali. UI: assenza gestita. Feature = frontend + backend in entrambi i mondi. ALTER non significa downtime.</p>
+              <p>Three product changes. Francesca and other documents stay without the new fields.</p>
+              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "hobbies" }).then(loadDoc)}>Add hobbies</button>
+              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "pronouns" }).then(loadDoc)}>Optional pronouns</button>
+              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "organizer" }).then(loadDoc)}>Organizer profile</button>
+              <p className="kicker">SQL: CREATE/ALTER. MongoDB: optional fields. UI: missing fields handled. A feature is frontend + backend in both worlds. ALTER does not mean downtime.</p>
             </div>
           )}
           {scene === 8 && (
@@ -284,15 +284,15 @@ export function LessonView({
 
         {scene >= 6 && (
           <div className="surface" style={{ padding: "0.9rem" }}>
-            <div className="kicker">Documento MongoDB {docSource && `· ${docSource}`}</div>
+            <div className="kicker">MongoDB document {docSource && `· ${docSource}`}</div>
             {animStep > 0 && (
-              <p className="kicker">Passo animazione {animStep}/3: {["", "righe", "gruppi nidificati", "documento"][animStep]}</p>
+              <p className="kicker">Animation step {animStep}/3: {["", "rows", "nested groups", "document"][animStep]}</p>
             )}
             <div style={{ maxHeight: 520, overflow: "auto" }}>
               {document ? (
                 <JsonDoc value={stripMongo(document)} highlight={mongoPath} />
               ) : (
-                <p>Premi «Lettura MongoDB» per il findOne reale.</p>
+                <p>Press “MongoDB read” for the real findOne.</p>
               )}
             </div>
           </div>
@@ -321,26 +321,26 @@ function Quiz({
 }) {
   const items = [
     {
-      q: "Perché settings e l’abbonamento corrente stanno nel documento user, mentre i messaggi no?",
-      a: "Si incorporano dati limitati e letti insieme alla card (1:1 / 1:corrente). I messaggi crescono senza bound: collection referenziata. Vedi unbounded arrays.",
+      q: "Why do settings and the current subscription live in the user document, while messages do not?",
+      a: "Embed data that is bounded and read with the card (1:1 / 1:current). Messages grow without bound: referenced collection. See unbounded arrays.",
     },
     {
-      q: "Se metto 10.000 like dentro il documento user, quale anti-pattern tocco?",
-      a: "Array non limitato. Peggiora documento, indici e scritture. Like e pass stanno in bootcamp_interactions.",
+      q: "If I put 10,000 likes inside the user document, which anti-pattern am I hitting?",
+      a: "Unbounded array. It inflates the document, indexes, and writes. Likes and passes live in bootcamp_interactions.",
     },
     {
-      q: "Like reciproci creano un match in un’altra collection. L’atomicità del singolo documento copre anche questa operazione?",
-      a: "No. Atomicità del documento ≠ transazione multi-documento automatica. Servono unicità sul pairKey e upsert idempotenti, altrimenti due like simultanei possono perdere o duplicare il match. Evitare JOIN su questo aggregato non significa che MongoDB non sappia fare $lookup.",
+      q: "Reciprocal likes create a match in another collection. Does single-document atomicity cover that operation too?",
+      a: "No. Document atomicity ≠ automatic multi-document transaction. You need uniqueness on pairKey and idempotent upserts, otherwise two simultaneous likes can lose or duplicate the match. Avoiding JOIN on this aggregate does not mean MongoDB cannot do $lookup.",
     },
   ];
   return (
     <div className="surface" style={{ padding: "1rem" }}>
-      <h3 style={{ marginTop: 0 }}>Quiz lampo</h3>
+      <h3 style={{ marginTop: 0 }}>Lightning quiz</h3>
       {items.map((item, i) => (
         <div key={i} style={{ marginBottom: 12 }}>
           <p><strong>{i + 1}. {item.q}</strong></p>
           <button className="btn btn-quiet" onClick={() => setQuizOpen(quizOpen === i ? null : i)}>
-            {quizOpen === i ? "Nascondi" : "Rivela"}
+            {quizOpen === i ? "Hide" : "Reveal"}
           </button>
           {quizOpen === i && <p className="rise">{item.a}</p>}
         </div>

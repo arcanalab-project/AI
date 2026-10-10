@@ -84,7 +84,7 @@ export async function recordInteraction(
       matchCreated: false,
       note: created
         ? undefined
-        : "Interazione già presente: operazione idempotente, nessun duplicato.",
+        : "Interaction already present: idempotent operation, no duplicate.",
     };
   }
 
@@ -102,7 +102,7 @@ export async function recordInteraction(
       matchCreated: false,
       note: created
         ? undefined
-        : "Interazione già presente: operazione idempotente, nessun duplicato.",
+        : "Interaction already present: idempotent operation, no duplicate.",
     };
   }
 
@@ -129,6 +129,6 @@ export async function recordInteraction(
     matchCreated: (matchWrite.upsertedCount ?? 0) > 0,
     note: created
       ? undefined
-      : "Interazione già presente: operazione idempotente, nessun duplicato.",
+      : "Interaction already present: idempotent operation, no duplicate.",
   };
 }

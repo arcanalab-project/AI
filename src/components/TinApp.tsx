@@ -36,8 +36,8 @@ export function TinApp() {
           <div style={{ fontSize: "2rem", fontWeight: 500, lineHeight: 1.1 }}>TIN — Match your data</div>
         </div>
         <div style={{ display: "flex", gap: 8, background: "rgba(255,255,255,0.06)", padding: 4, borderRadius: 999 }}>
-          <button className="tab" role="tab" aria-selected={tab === "lesson"} onClick={() => setTab("lesson")}>La lezione</button>
-          <button className="tab" role="tab" aria-selected={tab === "live"} onClick={() => setTab("live")}>L&apos;app live</button>
+          <button className="tab" role="tab" aria-selected={tab === "lesson"} onClick={() => setTab("lesson")}>The lesson</button>
+          <button className="tab" role="tab" aria-selected={tab === "live"} onClick={() => setTab("live")}>The live app</button>
         </div>
         <button
           className="btn btn-ghost"
@@ -48,21 +48,21 @@ export function TinApp() {
             else el.requestFullscreen();
           }}
         >
-          Schermo intero
+          Fullscreen
         </button>
       </header>
 
       {tab === "lesson" && (
         <div style={{ padding: "0.4rem 1.4rem 0" }}>
-          <div className="progress" aria-label="Progresso scene" style={{ marginBottom: 12 }}>
+          <div className="progress" aria-label="Scene progress" style={{ marginBottom: 12 }}>
             {SCENES.map((s) => (
               <span key={s.id} className={s.id <= scene ? "on" : undefined} />
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <button className="btn btn-ghost" onClick={() => go(scene - 1)} disabled={scene === 1}>Indietro</button>
+            <button className="btn btn-ghost" onClick={() => go(scene - 1)} disabled={scene === 1}>Back</button>
             <div className="kicker" style={{ textAlign: "center" }}>{scene}/8 · {SCENES[scene - 1].title}</div>
-            <button className="btn btn-primary" onClick={() => go(scene + 1)} disabled={scene === 8}>Avanti</button>
+            <button className="btn btn-primary" onClick={() => go(scene + 1)} disabled={scene === 8}>Next</button>
           </div>
         </div>
       )}

@@ -54,13 +54,13 @@ export async function GET(req: Request) {
     }
     if (op === "sql") {
       const { value, inspector } = await timed(
-        "Recupero la persona completa da SQLite con subquery aggregate",
+        "Retrieve the full person from SQLite with aggregate subqueries",
         "SQLite",
         "users + user_photos + user_interests + user_settings + subscriptions",
         { sql: RETRIEVE_PERSON_SQL, params: [1] },
         () => retrievePerson(1),
         {
-          note: "Motore reale: node:sqlite. Non è un benchmark vs Atlas. La query ingenua JOIN non viene eseguita come risultato della lezione.",
+          note: "Real engine: node:sqlite. This is not a benchmark vs Atlas. The naive JOIN query is not executed as the lesson result.",
         },
       );
       return NextResponse.json({
@@ -79,7 +79,7 @@ export async function GET(req: Request) {
         try {
           const users = await coll(COLLECTIONS.users);
           const run = await timed(
-            "Lettura reale del documento Giulia da bootcamp_users",
+            "Real read of Giulia’s document from bootcamp_users",
             "MongoDB",
             "bootcamp_users",
             MONGO_FIND_ONE,
@@ -89,7 +89,7 @@ export async function GET(req: Request) {
           inspector = run.inspector;
         } catch (err) {
           inspector = setLastInspector({
-            description: "Lettura MongoDB non disponibile",
+            description: "MongoDB read not available",
             engine: "MongoDB",
             target: "bootcamp_users",
             operation: MONGO_FIND_ONE,
@@ -106,13 +106,13 @@ export async function GET(req: Request) {
         source: real ? connection.mode : "sqlite-synthesized",
         synthesized,
         inspector: inspector ?? {
-          description: "Documento sintetizzato da SQLite (Atlas non connesso)",
+          description: "Document synthesized from SQLite (Atlas not connected)",
           engine: "SQLite",
           target: "users…",
           operation: { transform: "sqlPersonDocument" },
           outcome: "offline-fallback",
           measured: false,
-          note: "Non è una lettura Atlas. Distinguere animazione/fixture da esecuzione reale.",
+          note: "This is not an Atlas read. Distinguish animation/fixture from a real execution.",
         },
       });
     }
@@ -154,14 +154,14 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ok: true,
         dataset: "lesson",
-        note: "Ripristinato solo il dataset lesson (SQLite lezione + bootcamp_* lesson). Il dataset mvp e le altre collection non demo restano intatti.",
+        note: "Restored only the lesson dataset (lesson SQLite + bootcamp_* lesson). The mvp dataset and non-demo collections stay intact.",
         tables: listTables(1),
       });
     }
     if (action === "settings") {
       const patch = settingsPatchSchema.parse(body.patch);
       const { value, inspector } = await timed(
-        "Aggiorno le preferenze di Giulia (dataset lesson)",
+        "Update Giulia’s preferences (lesson dataset)",
         "SQLite",
         "user_settings / user_gender_preferences",
         { update: patch },
@@ -173,7 +173,7 @@ export async function POST(req: Request) {
     if (action === "subscription") {
       const patch = subscriptionPatchSchema.parse(body.patch);
       const { value, inspector } = await timed(
-        "Aggiorno l'abbonamento corrente di Giulia",
+        "Update Giulia’s current subscription",
         "SQLite",
         "subscriptions",
         { update: patch, predicate: "is_current = 1" },
@@ -189,7 +189,7 @@ export async function POST(req: Request) {
       await syncLessonMongo();
       const after = sqlPersonDocument(1);
       const inspector = setLastInspector({
-        description: `Evoluzione prodotto: ${feature}`,
+        description: `Product evolution: ${feature}`,
         engine: "SQLite",
         target: feature === "hobbies" ? "user_hobbies" : "users",
         operation:
@@ -202,11 +202,11 @@ export async function POST(req: Request) {
         before,
         after,
         measured: false,
-        note: "Una ALTER TABLE non implica downtime (in PostgreSQL ADD COLUMN nullable è spesso un catalog change). MongoDB accetta documenti senza il nuovo campo; la UI deve gestirli. Francesca resta senza hobby/pronomi.",
+        note: "ALTER TABLE does not imply downtime (in PostgreSQL a nullable ADD COLUMN is often a catalog change). MongoDB accepts documents without the new field; the UI must handle them. Francesca stays without hobbies/pronouns.",
       });
       return NextResponse.json({ ...result, before, after, inspector });
     }
-    return NextResponse.json({ error: "Azione sconosciuta" }, { status: 400 });
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (err) {
     return NextResponse.json({ error: sanitizeError(err) }, { status: 400 });
   }

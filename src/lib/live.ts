@@ -12,7 +12,7 @@ const DATASET = "mvp" as const;
 export async function getUser(profileId: string) {
   const users = await coll(COLLECTIONS.users);
   const doc = await users.findOne({ datasetId: DATASET, profileId });
-  if (!doc) throw new Error(`Profilo ${profileId} non trovato nel dataset mvp`);
+  if (!doc) throw new Error(`Profile ${profileId} not found in mvp dataset`);
   return publicUser(doc as unknown as Record<string, unknown>);
 }
 
@@ -37,7 +37,7 @@ export async function patchUser(
 ) {
   const users = await coll(COLLECTIONS.users);
   const current = await users.findOne({ datasetId: DATASET, profileId });
-  if (!current) throw new Error("Profilo non trovato");
+  if (!current) throw new Error("Profile not found");
   const $set: Record<string, unknown> = { updatedAt: new Date().toISOString() };
   const $unset: Record<string, string> = {};
   const assign = [
@@ -79,7 +79,7 @@ export async function patchUser(
 export async function discover(profileId: string) {
   const me = (await coll(COLLECTIONS.users)).findOne({ datasetId: DATASET, profileId });
   const viewerDoc = await me;
-  if (!viewerDoc) throw new Error("Identità demo non trovata");
+  if (!viewerDoc) throw new Error("Demo identity not found");
   const settings = viewerDoc.settings as PersonFixture["settings"];
   const location = viewerDoc.location as { coordinates: [number, number] };
   const interactions = await coll(COLLECTIONS.interactions);
@@ -110,7 +110,7 @@ export async function discover(profileId: string) {
     measured: true,
     semantics: {
       distance: `<= ${settings.discoveryDistanceKm} km via 2dsphere $geoWithin $centerSphere`,
-      age: `${minAge}–${maxAge} (calcolata da birthDate, applicata dopo la query geo)`,
+      age: `${minAge}–${maxAge} (computed from birthDate, applied after the geo query)`,
       gender: settings.genderPreferences,
       exclude: ["self", "hidden", "paused", "already_judged"],
     },
@@ -165,9 +165,9 @@ export async function sendMessage(matchId: string, fromProfileId: string, body: 
   const match = ObjectId.isValid(matchId)
     ? await matches.findOne({ _id: new ObjectId(matchId), datasetId: DATASET })
     : await matches.findOne({ pairKey: matchId, datasetId: DATASET });
-  if (!match) throw new Error("Match non trovato");
+  if (!match) throw new Error("Match not found");
   const userIds = match.userIds as string[];
-  if (!userIds.includes(fromProfileId)) throw new Error("Non sei parte di questo match");
+  if (!userIds.includes(fromProfileId)) throw new Error("You are not part of this match");
   const messages = await coll(COLLECTIONS.messages);
   const doc = {
     datasetId: DATASET,
@@ -197,7 +197,7 @@ export async function createEvent(input: {
 }) {
   const users = await coll(COLLECTIONS.users);
   const organizer = await users.findOne({ datasetId: DATASET, profileId: input.organizerProfileId });
-  if (!organizer) throw new Error("Organizzatore non trovato");
+  if (!organizer) throw new Error("Organizer not found");
   const events = await coll(COLLECTIONS.events);
   const id = `evt-${Date.now()}`;
   const doc = { datasetId: DATASET, id, ...input };
@@ -247,7 +247,7 @@ export async function prepareMatchScenario() {
   }
   await matches.deleteMany({ datasetId: DATASET, pairKey: "giulia|luca" });
   return {
-    note: "Ripristinati Giulia e Luca nel dataset mvp, cancellati like/match/messaggi tra loro. Altri profili intatti.",
+    note: "Restored Giulia and Luca in the mvp dataset; deleted likes/matches/messages between them. Other profiles intact.",
     identities: ["giulia", "luca"],
   };
 }

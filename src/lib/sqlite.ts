@@ -230,7 +230,7 @@ export function retrievePerson(userId = 1) {
   const started = Date.now();
   const row = db.prepare(RETRIEVE_PERSON_SQL).get(userId) as Record<string, unknown> | undefined;
   const elapsedMs = Date.now() - started;
-  if (!row) throw new Error("Persona non trovata");
+  if (!row) throw new Error("Person not found");
   const photos = JSON.parse(String(row.photos ?? "[]")) as unknown[];
   const interests = JSON.parse(String(row.interests ?? "[]")) as unknown[];
   const genderPreferences = JSON.parse(String(row.gender_preferences ?? "[]")) as unknown[];
@@ -345,7 +345,7 @@ export function evolveLesson(feature: "hobbies" | "pronouns" | "organizer") {
     if (!cols.some((c) => c.name === "pronouns")) {
       db.exec(`ALTER TABLE users ADD COLUMN pronouns TEXT`);
     }
-    db.prepare(`UPDATE users SET pronouns = ? WHERE id = 1`).run(giulia.pronouns ?? "lei");
+    db.prepare(`UPDATE users SET pronouns = ? WHERE id = 1`).run(giulia.pronouns ?? "she/her");
     flags.pronouns = true;
   }
   if (feature === "organizer") {
@@ -373,7 +373,7 @@ export function evolveLesson(feature: "hobbies" | "pronouns" | "organizer") {
       "Speed data: aperitivo in Brera",
       "Milano",
       "2026-10-24T19:00:00+02:00",
-      "Sei tavoli, sei storie, un documento MongoDB.",
+      "Six tables, six stories, one MongoDB document.",
     );
     flags.organizer = true;
   }

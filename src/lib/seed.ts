@@ -121,7 +121,7 @@ export async function resetDataset(datasetId: DatasetId) {
     counts[name] = res.deletedCount;
   }
   if (datasetId === "lesson") resetLessonSql();
-  return { datasetId, deleted: counts, note: "Solo documenti bootcamp_* con questo datasetId. Database TIN non droppato." };
+  return { datasetId, deleted: counts, note: "Only bootcamp_* documents with this datasetId. TIN database not dropped." };
 }
 
 export async function ensureSeeded() {

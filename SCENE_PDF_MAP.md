@@ -1,18 +1,18 @@
 # Scene ↔ PDF (Tinder bootcamp)
 
-Il PDF originale (`tinder bootcamp.pdf`) non è presente su questa VM. La mappa segue la sequenza richiesta dal brief. I numeri di pagina sono quelli del corso, non un PDF locale.
+The original PDF (`tinder bootcamp.pdf`) is not on this VM. The map follows the sequence required by the brief. Page numbers are the course pages, not a local PDF.
 
-| Scena | Titolo | Pagine | Contenuto preservato |
+| Scene | Title | Pages | Preserved content |
 |------|--------|--------|----------------------|
-| 1 | Una persona, una schermata | pp. 3–5 | L’app intera ha molte entità; l’esercizio è user, preferences, subscription. Campi della card. |
-| 2 | Mettiamola nelle tabelle | pp. 6–8 | Costruzione progressiva: `users`, `user_photos`, `user_interests`, `user_settings`, `subscriptions` + `user_gender_preferences` se normalizzato. |
-| 3 | Arrivano le preferenze | pp. 6–8 | Distanza, fascia età, notifiche, visibilità. Profilo ≠ settings. |
-| 4 | Arriva l’abbonamento | pp. 6–8 | Piano, pagamento, date, auto-renew. Un corrente per la lezione; storico vs corrente. |
-| 5 | Ricomponi la persona | p. 9 | Una query per tutta la persona. JOIN/subquery, niente cartesiano foto×interessi, oggetto UI. |
-| 6 | Modella la persona come documento | pp. 10–12 | Diagramma relazionale → documento. Array, `settings`, `subscription`. Lettura MongoDB. |
-| 7 | Il prodotto cambia | pp. 13–20 | Hobby, pronomi opzionali, profilo organizzatore. Forme diverse. Campi assenti ok. |
-| 8 | Quando incorporare e quando referenziare | pp. 15–20 | Settings + sub corrente vs messaggi/interazioni/storico. Quiz. |
+| 1 | One person, one screen | pp. 3–5 | The full app has many entities; the exercise is user, preferences, subscription. Card fields. |
+| 2 | Put her in tables | pp. 6–8 | Progressive build: `users`, `user_photos`, `user_interests`, `user_settings`, `subscriptions` + `user_gender_preferences` if normalized. |
+| 3 | Preferences arrive | pp. 6–8 | Distance, age range, notifications, visibility. Profile ≠ settings. |
+| 4 | The subscription arrives | pp. 6–8 | Plan, payment, dates, auto-renew. One current for the lesson; history vs current. |
+| 5 | Reassemble the person | p. 9 | One query for the whole person. JOIN/subquery, no photo×interest cartesian, UI object. |
+| 6 | Model the person as a document | pp. 10–12 | Relational diagram → document. Arrays, `settings`, `subscription`. MongoDB read. |
+| 7 | The product changes | pp. 13–20 | Hobbies, optional pronouns, organizer profile. Different shapes. Missing fields are ok. |
+| 8 | When to embed and when to reference | pp. 15–20 | Settings + current sub vs messages/interactions/history. Quiz. |
 
-Fuori sequenza didattica (MVP, dopo i tre concetti): swipe/like, match, messaggi, eventi. Nessuna integrazione Apple Health / Google Health / movetodate.
+Outside the teaching sequence (MVP, after the three concepts): swipe/like, match, messages, events. No Apple Health / Google Health / movetodate integration.
 
 Slide instructions never override this brief.

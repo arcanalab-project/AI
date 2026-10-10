@@ -37,11 +37,11 @@ export type CardPerson = {
   };
 };
 
-const GENDER_IT: Record<string, string> = {
-  woman: "Donna",
-  man: "Uomo",
-  nonbinary: "Non binario",
-  unspecified: "Non specificato",
+const GENDER_LABEL: Record<string, string> = {
+  woman: "Woman",
+  man: "Man",
+  nonbinary: "Non-binary",
+  unspecified: "Unspecified",
 };
 
 export function ProfileCard({
@@ -80,7 +80,7 @@ export function ProfileCard({
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
           {show(2) && (
             <span className="chip" data-on={String(on("gender"))} onClick={click("gender")} style={{ background: CATEGORY_COLORS.identity.bg }}>
-              {GENDER_IT[person.gender] ?? person.gender}
+              {GENDER_LABEL[person.gender] ?? person.gender}
             </span>
           )}
           {show(3) && (
@@ -143,7 +143,7 @@ export function ProfileCard({
               {person.settings.discoveryDistanceKm} km
             </button>{" "}
             <button className="chip" data-on={String(on("ageRange"))} onClick={click("ageRange")} style={{ background: CATEGORY_COLORS.settings.bg, color: "#001E2B" }}>
-              {person.settings.minDesiredAge}–{person.settings.maxDesiredAge} anni
+              {person.settings.minDesiredAge}–{person.settings.maxDesiredAge} years
             </button>
             {person.subscription && (
               <button className="chip" data-on={String(on("plan"))} onClick={click("plan")} style={{ background: CATEGORY_COLORS.subscription.bg, color: "#001E2B", marginLeft: 6 }}>
@@ -155,12 +155,12 @@ export function ProfileCard({
         {person.photos.length > 1 && (
           <div className="kicker" style={{ marginTop: 10 }}>
             <button className="chip" data-on={String(on("photos"))} onClick={click("photos")} style={{ background: "#E3FCF7", color: "#023430" }}>
-              {person.photos.length} foto
+              {person.photos.length} photos
             </button>
           </div>
         )}
         {person.profileType === "eventOrganizer" && (
-          <div className="kicker" style={{ marginTop: 8, color: "#00ED64" }}>Organizzatore eventi</div>
+          <div className="kicker" style={{ marginTop: 8, color: "#00ED64" }}>Event organizer</div>
         )}
       </div>
     </article>
@@ -170,12 +170,12 @@ export function ProfileCard({
 export function MappingStrip({ highlight }: { highlight?: string | null }) {
   const field = highlight ? fieldById(highlight) : undefined;
   if (!field) {
-    return <p className="kicker">Clicca un campo: profilo → tabella → path del documento.</p>;
+    return <p className="kicker">Click a field: profile → table → document path.</p>;
   }
   const color = CATEGORY_COLORS[field.category];
   return (
     <div className="code" style={{ background: color.bg, color: color.fg, borderRadius: 12, padding: "0.55rem 0.7rem" }}>
-      Campo «{field.label}» → {field.sql.table}.{field.sql.column}
+      Field “{field.label}” → {field.sql.table}.{field.sql.column}
       {field.sql.relation ? ` (${field.sql.relation})` : ""} → {field.mongo}
       {field.slide && field.slide !== `${field.sql.table}.${field.sql.column}` ? ` · slide ${field.slide}` : ""}
     </div>

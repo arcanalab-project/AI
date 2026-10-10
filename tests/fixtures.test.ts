@@ -69,6 +69,6 @@ describe("canonical fixture", () => {
   it("comparable core is stable", () => {
     const a = personByProfileId("giulia");
     expect(personContentEqual(a, a)).toBe(true);
-    expect(comparableCore(a).interests).toEqual(["cucina", "fotografia", "viaggi"]);
+    expect(comparableCore(a).interests).toEqual(["cooking", "photography", "travel"]);
   });
 });

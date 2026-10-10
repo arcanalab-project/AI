@@ -1,52 +1,52 @@
 # Demo script (15–20 min)
 
-Proiezione 1440×900 o 1920×1080. Tab **La lezione**, poi **L’app live**.
+Project at 1440×900 or 1920×1080. Tab **The lesson**, then **The live app**.
 
-Identità compatibili per il match: **Giulia Conti** (Milano) ↔ **Luca Bianchi** (Milano). Non è casuale.
+Compatible identities for the match: **Giulia Conti** (Milano) ↔ **Luca Bianchi** (Milano). That is not random.
 
 ## 0. Reset (1 min)
 
-1. Apri l’app.
-2. Tab **L’app live** → **Prepara scenario Giulia ↔ Luca**.
-3. Se serve un ambiente pulito: **Reset dataset lezione** e/o **Reset dataset MVP** (conferma: indica esattamente quale `datasetId` viene riseeded).
+1. Open the app.
+2. Tab **The live app** → **Prepare Giulia ↔ Luca scenario**.
+3. If you need a clean environment: **Reset lesson dataset** and/or **Reset MVP dataset** (confirmation: it states exactly which `datasetId` is reseeded).
 
-## 1. Profilo (scene 1–2, ~3 min)
+## 1. Profile (scenes 1–2, ~3 min)
 
-1. Tab **La lezione**. Giulia è al centro.
-2. Scena 1: «Quali dati servono per costruire questa schermata?» I campi emergono. Clicca nome, città, foto, interessi: strip di mapping UI → tabella → path documento.
-3. Avanti. Scena 2: tabelle `users`, `user_photos`, `user_interests`, `user_settings`, `user_gender_preferences`, `subscriptions`. PK/FK, 1:1 vs 1:N. La tabella extra dei generi non è un CSV.
+1. Tab **The lesson**. Giulia is in the center.
+2. Scene 1: “What data do we need to build this screen?” The fields emerge. Click name, city, photos, interests: mapping strip UI → table → document path.
+3. Next. Scene 2: tables `users`, `user_photos`, `user_interests`, `user_settings`, `user_gender_preferences`, `subscriptions`. PK/FK, 1:1 vs 1:N. The extra gender table is not a CSV.
 
-## 2. Preferenze e abbonamento (scene 3–4, ~3 min)
+## 2. Preferences and subscription (scenes 3–4, ~3 min)
 
-1. Scena 3: modifica distanza, fascia età, notifiche, visibilità. Salva. Il profilo resta Giulia; cambiano le settings.
-2. Apri **Dietro le quinte**: SQL reale su `user_settings`.
-3. Scena 4: piano Premium/Gold/Free, stato pagamento demo, date, auto-renew. Una riga corrente; lo storico Free resta `is_current=0`.
+1. Scene 3: edit distance, age range, notifications, visibility. Save. The profile stays Giulia; the settings change.
+2. Open **Behind the scenes**: real SQL on `user_settings`.
+3. Scene 4: Premium/Gold/Free plan, demo payment status, dates, auto-renew. One current row; the Free history stays `is_current=0`.
 
-## 3. SQL retrieve (scena 5, ~2 min)
+## 3. SQL retrieve (scene 5, ~2 min)
 
-1. **Esegui SQL reale**.
-2. Una riga, foto e interessi in JSON. Il conteggio «cartesiano ingenuo» è spiegato, non è il risultato usato dalla UI.
-3. Mostra che SQLite è il motore della lezione, non un test di velocità contro Atlas.
+1. **Run real SQL**.
+2. One row, photos and interests in JSON. The “naive cartesian” count is explained; it is not the result used by the UI.
+3. Show that SQLite is the lesson engine, not a speed test against Atlas.
 
-## 4. Documento (scene 6–7, ~4 min)
+## 4. Document (scenes 6–7, ~4 min)
 
-1. Scena 6: **Anima righe → documento**, poi **Lettura MongoDB**.
-2. Stesso contenuto: `photos[]`, `interests[]`, `settings`, `subscription`. GeoJSON `[lng, lat]`.
-3. Scena 7: tre pulsanti — hobby, pronomi, organizzatore. Before/after. Francesca (e altri) restano senza i nuovi campi. La UI non si rompe.
+1. Scene 6: **Animate rows → document**, then **MongoDB read**.
+2. Same content: `photos[]`, `interests[]`, `settings`, `subscription`. GeoJSON `[lng, lat]`.
+3. Scene 7: three buttons — hobbies, pronouns, organizer. Before/after. Francesca (and others) stay without the new fields. The UI does not break.
 
-## 5. Quiz (scena 8, ~2 min)
+## 5. Quiz (scene 8, ~2 min)
 
-Tre domande: embed vs reference, unbounded arrays, atomicità multi-documento. Rivela dopo la discussione.
+Three questions: embed vs reference, unbounded arrays, multi-document atomicity. Reveal after the classroom discussion.
 
-## 6. App live (restante tempo)
+## 6. Live app (remaining time)
 
-1. Tab **L’app live**. Badge: Atlas live / embedded / offline.
-2. Identità demo **Giulia**. **Profilo**: modifica bio o hobby → Salva. **Refresh** (F5): i dati ci sono ancora.
-3. **Preferenze**: stringi la distanza e verifica che Roma (Marco) sparisca; Milano/Monza restano.
-4. **Discovery**: Pass/Like. Like ripetuto: niente duplicati (inspector: idempotent-hit).
-5. Switch identità → **Luca** → Like a Giulia. Switch → **Giulia** → Like a Luca. Un solo match.
-6. Apri il match, invia un messaggio. Switch di nuovo: l’altro lato vede il thread. Ordine persistito.
-7. **Dietro le quinte** sull’ultima azione reale (like/match/update), stessa struttura della lezione.
-8. Opzionale: **Eventi** — crea un evento; summary limitato sul profilo, documenti in `bootcamp_events`.
+1. Tab **The live app**. Badge: Atlas live / embedded / offline.
+2. Demo identity **Giulia**. **Profile**: edit bio or hobbies → Save. **Refresh** (F5): the data is still there.
+3. **Preferences**: tighten the distance and check that Rome (Marco) disappears; Milano/Monza remain.
+4. **Discovery**: Pass/Like. Repeated like: no duplicates (inspector: idempotent-hit).
+5. Switch identity → **Luca** → Like Giulia. Switch → **Giulia** → Like Luca. One match.
+6. Open the match, send a message. Switch again: the other side sees the thread. Order persisted.
+7. **Behind the scenes** on the last real action (like/match/update), same structure as the lesson.
+8. Optional: **Events** — create an event; bounded summary on the profile, documents in `bootcamp_events`.
 
-Fine: una persona, due modelli, un’app che persiste.
+Close: one person, two models, an app that persists.
