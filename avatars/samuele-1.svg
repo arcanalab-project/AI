@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Ritratto di samuele">
+  <rect width="400" height="520" fill="#023430"/>
+  <circle cx="220" cy="90" r="70" fill="#E3FCF7" opacity="0.35"/>
+  <rect x="70" y="300" width="260" height="220" rx="130" fill="#E9FF99"/>
+  <ellipse cx="200" cy="250" rx="92" ry="110" fill="#e0b38c"/>
+  <ellipse cx="200" cy="168" rx="78" ry="70" fill="#3b2a1c"/>
+  <rect x="122" y="168" width="156" height="46" fill="#3b2a1c"/>
+  <circle cx="170" cy="248" r="7" fill="#1a1a1a"/>
+  <circle cx="230" cy="248" r="7" fill="#1a1a1a"/>
+  <path d="M180 278 Q200 290 220 278" fill="none" stroke="#7a4b32" stroke-width="3" stroke-linecap="round"/>
+  <text x="200" y="490" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="700" fill="#FFFFFF">SV</text>
+</svg>
