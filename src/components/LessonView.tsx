@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Inspector } from "./Inspector";
-import { JsonDoc } from "./JsonDoc";
+import { ExpandableDocument } from "./JsonDoc";
 import { MappingStrip, ProfileCard } from "./ProfileCard";
-import { RelationalTables } from "./Tables";
+import { ContrastBanner, RelationalTables } from "./Tables";
 import { fieldById } from "@/lib/fields";
 import { SCENES } from "@/lib/scenes";
 import type { InspectorRecord } from "@/lib/types";
@@ -37,6 +37,10 @@ export function LessonView({
     const json = await res.json();
     setState(json);
     setTables(json.tables ?? {});
+    if (json.documentPreview) {
+      setDocument((d: unknown) => d ?? json.documentPreview);
+      setDocSource((s: string) => s || "sqlite-assembled");
+    }
   }
 
   useEffect(() => {
@@ -160,7 +164,13 @@ export function LessonView({
 
       <MappingStrip highlight={highlight} />
 
-      <div className="lesson-grid" style={{ marginTop: 12, gridTemplateColumns: scene >= 6 ? undefined : "280px minmax(0, 1fr)" }}>
+      {scene >= 2 && scene !== 8 && (
+        <div style={{ marginTop: 12 }}>
+          <ContrastBanner tables={tables} documentReady={Boolean(document)} />
+        </div>
+      )}
+
+      <div className="lesson-grid" style={{ marginTop: 12, gridTemplateColumns: scene >= 2 && scene !== 8 ? undefined : "280px minmax(0, 1fr)" }}>
         <div>
           {person && (
             <ProfileCard person={person} highlight={highlight} onHighlight={setHighlight} reveal={scene === 1 ? reveal : 99} />
@@ -172,7 +182,7 @@ export function LessonView({
           {scene === 1 && (
             <div className="surface" style={{ padding: "1rem" }}>
               <h3 style={{ marginTop: 0 }}>The fields emerge</h3>
-              <p>A credible card already hides many entities. The exercise focuses on user, preferences, subscription — not on swipes and messages.</p>
+              <p>A credible card already hides many sections. This exercise is the person: profile, photos, interests, preferences, subscription — not swipes, matches, or messages.</p>
             </div>
           )}
           {scene >= 2 && scene !== 8 && (
@@ -244,7 +254,7 @@ export function LessonView({
               }}
             >
               <h3 style={{ margin: 0 }}>Current subscription</h3>
-              <p>Giulia’s Free history stays on another row (`is_current=0`). Different needs: history vs current.</p>
+              <p>Current plan is `subscriptions` (1:1). Giulia’s Free past is `subscription_history` (1:N). Different tables, different needs.</p>
               <label>Plan
                 <select name="plan" defaultValue={person.subscription.plan}>
                   <option>Free</option><option>Premium</option><option>Gold</option>
@@ -282,19 +292,12 @@ export function LessonView({
           )}
         </div>
 
-        {scene >= 6 && (
-          <div className="surface" style={{ padding: "0.9rem" }}>
-            <div className="kicker">MongoDB document {docSource && `· ${docSource}`}</div>
+        {scene >= 2 && scene !== 8 && (
+          <div>
             {animStep > 0 && (
               <p className="kicker">Animation step {animStep}/3: {["", "rows", "nested groups", "document"][animStep]}</p>
             )}
-            <div style={{ maxHeight: 520, overflow: "auto" }}>
-              {document ? (
-                <JsonDoc value={stripMongo(document)} highlight={mongoPath} />
-              ) : (
-                <p>Press “MongoDB read” for the real findOne.</p>
-              )}
-            </div>
+            <ExpandableDocument value={stripMongo(document)} highlight={mongoPath} source={docSource} />
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeAll } from "vitest";
-import { getLessonDb, naiveJoinCount, resetLessonSql, retrievePerson } from "@/lib/sqlite";
+import { getLessonDb, listTables, naiveJoinCount, resetLessonSql, retrievePerson } from "@/lib/sqlite";
+import { CORE_LESSON_TABLES } from "@/lib/lessonTables";
 import { personByProfileId, toMongoUser } from "@/lib/canonical";
 import { mongoDocToComparable, sqlRowToComparable } from "@/lib/compare";
 
@@ -34,6 +35,18 @@ describe("lesson SQL", () => {
     expect(comparable.settings.discoveryDistanceKm).toBe(giulia.settings.discoveryDistanceKm);
     expect(comparable.subscription.plan).toBe(giulia.subscription.plan);
     expect(comparable.subscription.id).toBe(giulia.subscription.id);
+  });
+
+  it("spreads Giulia across nine core tables with PK/FK rows", () => {
+    const tables = listTables(1) as Record<string, unknown>;
+    for (const spec of CORE_LESSON_TABLES) {
+      expect(Array.isArray(tables[spec.name])).toBe(true);
+      expect((tables[spec.name] as unknown[]).length).toBeGreaterThan(0);
+    }
+    expect((tables.user_photos as unknown[]).length).toBeGreaterThan(1);
+    expect((tables.user_interests as unknown[]).length).toBeGreaterThan(1);
+    expect((tables.subscription_history as unknown[]).length).toBeGreaterThan(0);
+    expect((tables.cities as { name: string }[])[0].name).toBe("Milano");
   });
 
   it("SQL retrieve matches Mongo document builder on equal content", () => {

@@ -45,6 +45,8 @@ npm run build
 
 14 synthetic adult profiles, local photos in `public/avatars/`. Single fixture: `src/lib/canonical.ts` → SQL tables and MongoDB documents with the same ids and values.
 
+The lesson shows **one person (Giulia) as nine relational tables** (`users`, `cities`, `user_education`, `user_photos`, `user_interests`, `user_settings`, `user_gender_preferences`, `subscriptions`, `subscription_history`) **versus one nested MongoDB document**. That is one specific normalized model, not a speed claim.
+
 Collections: `bootcamp_users`, `bootcamp_interactions`, `bootcamp_matches`, `bootcamp_messages`, `bootcamp_events`. Separate `lesson` and `mvp` datasets.
 
 ## Name mapping

@@ -32,13 +32,22 @@ export function resetLessonSql() {
     DROP TABLE IF EXISTS user_hobbies;
     DROP TABLE IF EXISTS events;
     DROP TABLE IF EXISTS user_gender_preferences;
+    DROP TABLE IF EXISTS subscription_history;
     DROP TABLE IF EXISTS subscriptions;
     DROP TABLE IF EXISTS user_settings;
+    DROP TABLE IF EXISTS user_education;
     DROP TABLE IF EXISTS user_interests;
     DROP TABLE IF EXISTS user_photos;
     DROP TABLE IF EXISTS users;
+    DROP TABLE IF EXISTS cities;
   `);
   db.exec(`
+    CREATE TABLE cities (
+      id INTEGER PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      lng REAL NOT NULL,
+      lat REAL NOT NULL
+    );
     CREATE TABLE users (
       id INTEGER PRIMARY KEY,
       display_name TEXT NOT NULL,
@@ -47,11 +56,12 @@ export function resetLessonSql() {
       height_cm INTEGER NOT NULL,
       body_type TEXT,
       profession TEXT,
-      education TEXT,
-      city TEXT NOT NULL,
-      city_lng REAL NOT NULL,
-      city_lat REAL NOT NULL,
+      city_id INTEGER NOT NULL REFERENCES cities(id),
       bio TEXT NOT NULL
+    );
+    CREATE TABLE user_education (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id),
+      school TEXT NOT NULL
     );
     CREATE TABLE user_photos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,21 +91,41 @@ export function resetLessonSql() {
     );
     CREATE TABLE subscriptions (
       id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
+      plan TEXT NOT NULL,
+      payment_method TEXT NOT NULL,
+      payment_status TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      auto_renew INTEGER NOT NULL
+    );
+    CREATE TABLE subscription_history (
+      id TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id),
       plan TEXT NOT NULL,
       payment_method TEXT NOT NULL,
       payment_status TEXT NOT NULL,
       start_date TEXT NOT NULL,
       end_date TEXT NOT NULL,
-      auto_renew INTEGER NOT NULL,
-      is_current INTEGER NOT NULL
+      auto_renew INTEGER NOT NULL
     );
   `);
 
+  const cityIds = new Map<string, number>();
+  const insertCity = db.prepare(`INSERT INTO cities (id, name, lng, lat) VALUES (?, ?, ?, ?)`);
+  let citySeq = 1;
+  for (const p of PEOPLE) {
+    if (cityIds.has(p.city)) continue;
+    insertCity.run(citySeq, p.city, p.location.coordinates[0], p.location.coordinates[1]);
+    cityIds.set(p.city, citySeq);
+    citySeq += 1;
+  }
+
   const insertUser = db.prepare(`
-    INSERT INTO users (id, display_name, gender, birth_date, height_cm, body_type, profession, education, city, city_lng, city_lat, bio)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (id, display_name, gender, birth_date, height_cm, body_type, profession, city_id, bio)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
+  const insertEducation = db.prepare(`INSERT INTO user_education (user_id, school) VALUES (?, ?)`);
   const insertPhoto = db.prepare(
     `INSERT INTO user_photos (user_id, url, sort_order, caption) VALUES (?, ?, ?, ?)`,
   );
@@ -108,8 +138,12 @@ export function resetLessonSql() {
     `INSERT INTO user_gender_preferences (user_id, gender) VALUES (?, ?)`,
   );
   const insertSub = db.prepare(`
-    INSERT INTO subscriptions (id, user_id, plan, payment_method, payment_status, start_date, end_date, auto_renew, is_current)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO subscriptions (id, user_id, plan, payment_method, payment_status, start_date, end_date, auto_renew)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertHist = db.prepare(`
+    INSERT INTO subscription_history (id, user_id, plan, payment_method, payment_status, start_date, end_date, auto_renew)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   for (const raw of PEOPLE) {
@@ -122,12 +156,10 @@ export function resetLessonSql() {
       p.heightCm,
       p.bodyType ?? null,
       p.profession ?? null,
-      p.education ?? null,
-      p.city,
-      p.location.coordinates[0],
-      p.location.coordinates[1],
+      cityIds.get(p.city) as number,
       p.bio,
     );
+    if (p.education) insertEducation.run(p.id, p.education);
     for (const photo of p.photos) {
       insertPhoto.run(p.id, photo.url, photo.sortOrder, photo.caption ?? null);
     }
@@ -145,7 +177,7 @@ export function resetLessonSql() {
     for (const g of s.genderPreferences) insertGender.run(p.id, g);
     if (p.subscriptionHistory) {
       for (const h of p.subscriptionHistory) {
-        insertSub.run(
+        insertHist.run(
           h.id,
           p.id,
           h.plan,
@@ -154,7 +186,6 @@ export function resetLessonSql() {
           h.startDate,
           h.endDate,
           h.autoRenew ? 1 : 0,
-          0,
         );
       }
     }
@@ -167,7 +198,6 @@ export function resetLessonSql() {
       p.subscription.startDate,
       p.subscription.endDate,
       p.subscription.autoRenew ? 1 : 0,
-      1,
     );
   }
 }
@@ -183,14 +213,20 @@ function stripLessonExtras(p: PersonFixture): PersonFixture {
 
 export function listTables(userId = 1) {
   const db = getLessonDb();
-  const users = db.prepare(`SELECT * FROM users WHERE id = ?`).all(userId);
+  const users = db.prepare(`SELECT * FROM users WHERE id = ?`).all(userId) as { city_id?: number }[];
+  const cityId = users[0]?.city_id;
+  const cities = cityId
+    ? db.prepare(`SELECT * FROM cities WHERE id = ?`).all(cityId)
+    : [];
+  const education = db.prepare(`SELECT * FROM user_education WHERE user_id = ?`).all(userId);
   const photos = db.prepare(`SELECT * FROM user_photos WHERE user_id = ? ORDER BY sort_order`).all(userId);
   const interests = db.prepare(`SELECT * FROM user_interests WHERE user_id = ?`).all(userId);
   const settings = db.prepare(`SELECT * FROM user_settings WHERE user_id = ?`).all(userId);
   const genders = db.prepare(`SELECT * FROM user_gender_preferences WHERE user_id = ?`).all(userId);
-  const subscriptions = db.prepare(`SELECT * FROM subscriptions WHERE user_id = ? ORDER BY start_date`).all(
-    userId,
-  );
+  const subscriptions = db.prepare(`SELECT * FROM subscriptions WHERE user_id = ?`).all(userId);
+  const subscription_history = db
+    .prepare(`SELECT * FROM subscription_history WHERE user_id = ? ORDER BY start_date`)
+    .all(userId);
   let hobbies: Record<string, unknown>[] = [];
   let events: Record<string, unknown>[] = [];
   const flags = lessonFlags();
@@ -211,11 +247,14 @@ export function listTables(userId = 1) {
   const user = users[0] ?? {};
   return {
     users,
+    cities,
+    user_education: education,
     user_photos: photos,
     user_interests: interests,
     user_settings: settings,
     user_gender_preferences: genders,
     subscriptions,
+    subscription_history,
     user_hobbies: hobbies,
     events,
     columns: {
@@ -305,9 +344,7 @@ export function updateLessonSettings(userId: number, patch: Partial<Settings>) {
 
 export function updateLessonSubscription(userId: number, patch: Partial<Subscription>) {
   const db = getLessonDb();
-  const current = db.prepare(`SELECT * FROM subscriptions WHERE user_id = ? AND is_current = 1`).get(
-    userId,
-  );
+  const current = db.prepare(`SELECT * FROM subscriptions WHERE user_id = ?`).get(userId);
   if (!current) throw new Error("current subscription missing");
   db.prepare(
     `UPDATE subscriptions SET plan=?, payment_method=?, payment_status=?, start_date=?, end_date=?, auto_renew=? WHERE id=?`,
@@ -373,7 +410,7 @@ export function evolveLesson(feature: "hobbies" | "pronouns" | "organizer") {
       "Speed data: aperitivo in Brera",
       "Milano",
       "2026-10-24T19:00:00+02:00",
-      "Six tables, six stories, one MongoDB document.",
+      "Nine tables, nine stories, one MongoDB document.",
     );
     flags.organizer = true;
   }

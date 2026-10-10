@@ -56,6 +56,27 @@ export const FIELD_NAME_MAP = [
     app: "settings.genderPreferences",
   },
   {
+    concept: "City",
+    slideSql: "cities.name",
+    sql: "cities.name",
+    mongo: "city",
+    app: "city",
+  },
+  {
+    concept: "Location (GeoJSON)",
+    slideSql: "cities.lng / cities.lat",
+    sql: "cities.lng, cities.lat",
+    mongo: "location.coordinates [lng, lat]",
+    app: "location",
+  },
+  {
+    concept: "Education",
+    slideSql: "user_education.school",
+    sql: "user_education.school",
+    mongo: "education",
+    app: "education",
+  },
+  {
     concept: "Display name",
     slideSql: "users.display_name",
     sql: "users.display_name",

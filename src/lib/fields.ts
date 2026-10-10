@@ -60,7 +60,7 @@ export const FIELDS: FieldDef[] = [
     id: "education",
     label: "Education",
     category: "identity",
-    sql: { table: "users", column: "education" },
+    sql: { table: "user_education", column: "school", relation: "users 1:1 user_education" },
     mongo: "education",
     optional: true,
   },
@@ -68,7 +68,7 @@ export const FIELDS: FieldDef[] = [
     id: "city",
     label: "City",
     category: "identity",
-    sql: { table: "users", column: "city" },
+    sql: { table: "cities", column: "name", relation: "users N:1 cities" },
     mongo: "city",
   },
   {
@@ -143,7 +143,7 @@ export const FIELDS: FieldDef[] = [
     id: "plan",
     label: "Plan",
     category: "subscription",
-    sql: { table: "subscriptions", column: "plan", relation: "users 1:N subscriptions (current: is_current=1)" },
+    sql: { table: "subscriptions", column: "plan", relation: "users 1:1 subscriptions (current)" },
     mongo: "subscription.plan",
   },
   {

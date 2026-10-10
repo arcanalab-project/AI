@@ -8,7 +8,7 @@ JOIN user_interests i ON i.user_id = u.id
 WHERE u.id = ?;`;
 
 export const RETRIEVE_PERSON_SQL = `-- SQLite (lesson). PostgreSQL equivalent: json_agg / json_build_object.
--- Photos and interests come from aggregate subqueries: one row, no cartesian.
+-- Nine tables for one person. Subqueries keep photos × interests from exploding.
 SELECT
   u.id,
   u.display_name,
@@ -18,10 +18,10 @@ SELECT
   u.height_cm,
   u.body_type,
   u.profession,
-  u.education,
-  u.city,
-  u.city_lng,
-  u.city_lat,
+  e.school AS education,
+  c.name AS city,
+  c.lng AS city_lng,
+  c.lat AS city_lat,
   u.bio,
   s.notifications_enabled,
   s.discovery_distance_km,
@@ -53,8 +53,10 @@ SELECT
    FROM user_gender_preferences g
    WHERE g.user_id = u.id) AS gender_preferences
 FROM users u
+JOIN cities c ON c.id = u.city_id
+LEFT JOIN user_education e ON e.user_id = u.id
 LEFT JOIN user_settings s ON s.user_id = u.id
-LEFT JOIN subscriptions sub ON sub.user_id = u.id AND sub.is_current = 1
+LEFT JOIN subscriptions sub ON sub.user_id = u.id
 WHERE u.id = ?;`;
 
 export const MONGO_FIND_ONE = {

@@ -247,3 +247,40 @@ input, select, textarea {
 @media (max-width: 1200px) {
   .lesson-grid { grid-template-columns: 1fr; }
 }
+
+.contrast-banner {
+  background: #023430;
+  color: #fff;
+  border-radius: 16px;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid rgba(0, 237, 100, 0.35);
+}
+
+.schema-connectors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.schema-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 10px;
+  padding: 0.35rem 0.5rem;
+  max-width: 100%;
+}
+.schema-chip[data-on="true"] {
+  box-shadow: 0 0 0 2px #00ed64;
+}
+
+.json-toggle {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.8;
+}

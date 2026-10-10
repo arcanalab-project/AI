@@ -123,6 +123,7 @@ export async function GET(req: Request) {
       core: lessonCorePerson(),
       tables,
       retrieved: retrieved.row,
+      documentPreview: sqlPersonDocument(1),
       flags: lessonFlags(),
       fields: FIELDS,
       scenes: SCENES,

@@ -14,13 +14,13 @@ Compatible identities for the match: **Giulia Conti** (Milano) ↔ **Luca Bianch
 
 1. Tab **The lesson**. Giulia is in the center.
 2. Scene 1: “What data do we need to build this screen?” The fields emerge. Click name, city, photos, interests: mapping strip UI → table → document path.
-3. Next. Scene 2: tables `users`, `user_photos`, `user_interests`, `user_settings`, `user_gender_preferences`, `subscriptions`. PK/FK, 1:1 vs 1:N. The extra gender table is not a CSV.
+3. Next. Scene 2: **9 tables vs 1 document** for the same Giulia. `users`, `cities`, `user_education`, `user_photos`, `user_interests`, `user_settings`, `user_gender_preferences`, `subscriptions`, `subscription_history`. PK/FK on every table. Click a field: table + document path light up. Not a 3-table toy. Swipes are not the lesson.
 
 ## 2. Preferences and subscription (scenes 3–4, ~3 min)
 
 1. Scene 3: edit distance, age range, notifications, visibility. Save. The profile stays Giulia; the settings change.
 2. Open **Behind the scenes**: real SQL on `user_settings`.
-3. Scene 4: Premium/Gold/Free plan, demo payment status, dates, auto-renew. One current row; the Free history stays `is_current=0`.
+3. Scene 4: Premium/Gold/Free plan, demo payment status, dates, auto-renew. Current plan is `subscriptions` (1:1). Free history is `subscription_history`.
 
 ## 3. SQL retrieve (scene 5, ~2 min)
 
@@ -30,8 +30,8 @@ Compatible identities for the match: **Giulia Conti** (Milano) ↔ **Luca Bianch
 
 ## 4. Document (scenes 6–7, ~4 min)
 
-1. Scene 6: **Animate rows → document**, then **MongoDB read**.
-2. Same content: `photos[]`, `interests[]`, `settings`, `subscription`. GeoJSON `[lng, lat]`.
+1. Scene 6: tables still visible. **Animate rows → document**, then **MongoDB read**. One expandable JSON document — not nine collections.
+2. Same content: `photos[]`, `interests[]`, `settings`, `subscription`, `location` GeoJSON `[lng, lat]`. History is not in the user document.
 3. Scene 7: three buttons — hobbies, pronouns, organizer. Before/after. Francesca (and others) stay without the new fields. The UI does not break.
 
 ## 5. Quiz (scene 8, ~2 min)
