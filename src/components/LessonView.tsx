@@ -164,7 +164,7 @@ export function LessonView({
 
       <MappingStrip highlight={highlight} />
 
-      {scene >= 2 && scene !== 8 && (
+      {scene !== 8 && Object.keys(tables).length > 0 && (
         <div style={{ marginTop: 12 }}>
           <ContrastBanner tables={tables} documentReady={Boolean(document)} />
         </div>
