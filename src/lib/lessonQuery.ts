@@ -8,7 +8,8 @@ JOIN user_interests i ON i.user_id = u.id
 WHERE u.id = ?;`;
 
 export const RETRIEVE_PERSON_SQL = `-- SQLite (lesson). PostgreSQL equivalent: json_agg / json_build_object.
--- Nine tables for one person. Subqueries keep photos × interests from exploding.
+-- One SELECT assembles the person. Subqueries keep photos × interests from exploding.
+-- Table count is not query count. This is not a performance comparison.
 SELECT
   u.id,
   u.display_name,

@@ -1,52 +1,31 @@
-# Demo script (15–20 min)
+# Demo script (10 minutes)
 
-Project at 1440×900 or 1920×1080. Tab **The lesson**, then **The live app**.
+Project the lesson at 1366×768 or 1920×1080. Stay on **The lesson** until the last minute. Back, Next, and Reset scene stay on screen. Teacher notes and technical details stay closed unless you open them.
 
-Compatible identities for the match: **Giulia Conti** (Milano) ↔ **Luca Bianchi** (Milano). That is not random.
+## 1. One profile (scene 1, ~1 min)
 
-## 0. Reset (1 min)
+Giulia is the compact card. Age is labeled derived. One table, `users`, and one JSON document: name, gender, birth date, city, bio. Click **Name**. The card chip, the `display_name` cell, and `"displayName"` in the JSON light up together.
 
-1. Open the app.
-2. Tab **The live app** → **Prepare Giulia ↔ Luca scenario**.
-3. If you need a clean environment: **Reset lesson dataset** and/or **Reset MVP dataset** (confirmation: it states exactly which `datasetId` is reseeded).
+## 2. Many rows, one array (scene 2, ~2 min)
 
-## 1. Profile (scenes 1–2, ~3 min)
+Next. Photos and interests appear. Click **Photos**. Say: `id` is the row identifier; `user_photos.user_id` is a reference to `users.id`. The document holds `photos[]`. Interests work the same way. Preferences and the plan are not on screen yet.
 
-1. Tab **The lesson**. Giulia is in the center.
-2. Scene 1: “What data do we need to build this screen?” The fields emerge. Click name, city, photos, interests: mapping strip UI → table → document path.
-3. Next. Scene 2: **9 tables vs 1 document** for the same Giulia. `users`, `cities`, `user_education`, `user_photos`, `user_interests`, `user_settings`, `user_gender_preferences`, `subscriptions`, `subscription_history`. PK/FK on every table. Click a field: table + document path light up. Not a 3-table toy. Swipes are not the lesson.
+## 3. Preferences, then the plan (scenes 3–4, ~2 min)
 
-## 2. Preferences and subscription (scenes 3–4, ~3 min)
+Scene 3 adds settings only now. Scene 4 adds the current plan only. The count line is calculated from the tables you see. Plan history is not in either panel.
 
-1. Scene 3: edit distance, age range, notifications, visibility. Save. The profile stays Giulia; the settings change.
-2. Open **Behind the scenes**: real SQL on `user_settings`.
-3. Scene 4: Premium/Gold/Free plan, demo payment status, dates, auto-renew. Current plan is `subscriptions` (1:1). Free history is `subscription_history`.
+## 4. The same read (scene 5, ~1 min)
 
-## 3. SQL retrieve (scene 5, ~2 min)
+Both panels are the profile so far. One sentence: each model can hand the app the same business fields. Open **Technical details** only if someone asks. It says this is not one query per table, and not a speed test.
 
-1. **Run real SQL**.
-2. One row, photos and interests in JSON. The “naive cartesian” count is explained; it is not the result used by the UI.
-3. Show that SQLite is the lesson engine, not a speed test against Atlas.
+## 5. Pronouns, then hobbies (scenes 6–7, ~3 min)
 
-## 4. Document (scenes 6–7, ~4 min)
+Scene 6: **New request → Before → Apply change → After**. After: Giulia has `she/her`. Francesca’s document omits pronouns; her table cell is NULL. Reset scene and apply again: still one value, not a duplicate.
 
-1. Scene 6: tables still visible. **Animate rows → document**, then **MongoDB read**. One expandable JSON document — not nine collections.
-2. Same content: `photos[]`, `interests[]`, `settings`, `subscription`, `location` GeoJSON `[lng, lat]`. History is not in the user document.
-3. Scene 7: three buttons — hobbies, pronouns, organizer. Before/after. Francesca (and others) stay without the new fields. The UI does not break.
+Scene 7: hobbies are a new list, not more interests. Apply. Giulia gains `hobbies[]` and `user_hobbies`. Francesca keeps interests and has no hobbies. Optional organizer note stays closed unless you have time.
 
-## 5. Quiz (scene 8, ~2 min)
+## 6. What not to embed (scene 8, ~1 min)
 
-Three questions: embed vs reference, unbounded arrays, multi-document atomicity. Reveal after the classroom discussion.
+The current plan stays in the profile. Plan history is under the tables, outside the count. The event summary is not the event: city and description stay on the event document. If you applied hobbies, they stay on the profile. Reset scene 7 before this slide if you want the count without that new table.
 
-## 6. Live app (remaining time)
-
-1. Tab **The live app**. Badge: Atlas live / embedded / offline.
-2. Demo identity **Giulia**. **Profile**: edit bio or hobbies → Save. **Refresh** (F5): the data is still there.
-3. **Preferences**: tighten the distance and check that Rome (Marco) disappears; Milano/Monza remain.
-4. **Discovery**: Pass/Like. Repeated like: no duplicates (inspector: idempotent-hit).
-5. Switch identity → **Luca** → Like Giulia. Switch → **Giulia** → Like Luca. One match.
-6. Open the match, send a message. Switch again: the other side sees the thread. Order persisted.
-7. **Behind the scenes** on the last real action (like/match/update), same structure as the lesson.
-8. Optional: **Events** — create an event; bounded summary on the profile, documents in `bootcamp_events`.
-
-Close: one person, two models, an app that persists.
+If the class is on the static host, **The live app** says live commands are off. Do not demo likes there. On a Node host with a database, the live tab is a separate product demo.

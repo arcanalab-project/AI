@@ -45,7 +45,7 @@ npm run build
 
 14 synthetic adult profiles, local photos in `public/avatars/`. Single fixture: `src/lib/canonical.ts` → SQL tables and MongoDB documents with the same ids and values.
 
-The lesson shows **one person (Giulia) as nine relational tables** (`users`, `cities`, `user_education`, `user_photos`, `user_interests`, `user_settings`, `user_gender_preferences`, `subscriptions`, `subscription_history`) **versus one nested MongoDB document**. That is one specific normalized model, not a speed claim.
+The lesson introduces Giulia’s data scene by scene: one profile table, then photos and interests, then preferences, then the current plan. Counts follow whatever is on screen. Plan history stays out of the profile document until the last scene. This is one model, not a speed claim.
 
 Collections: `bootcamp_users`, `bootcamp_interactions`, `bootcamp_matches`, `bootcamp_messages`, `bootcamp_events`. Separate `lesson` and `mvp` datasets.
 
@@ -57,7 +57,7 @@ GeoJSON: `coordinates: [longitude, latitude]`.
 
 ## Demo documentation
 
-- [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) — 15–20 minutes
+- [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) — 10 minutes
 - [`SCENE_PDF_MAP.md`](SCENE_PDF_MAP.md) — scenes ↔ PDF pages
 - [`VERIFICATION.md`](VERIFICATION.md) — checks run
 
@@ -67,15 +67,15 @@ GeoJSON: `coordinates: [longitude, latitude]`.
 
 ## Public deploy (students)
 
-The **lesson** tab is a nine-table vs one-document walkthrough. It runs in the browser with no install (static host) and also via `/api/lesson` on a Node host.
+The **lesson** tab runs in the browser with no install. On a static host the live tab disables its commands and says the database API is absent.
 
-The **live** tab needs a Node host. Set **server-side** `MONGODB_URI` and `MONGODB_DB=TIN`. Never put the URI in `NEXT_PUBLIC_*`, the client bundle, logs, or the student URL. Without Atlas the lesson still works; the live tab is labeled offline.
+The **live** tab needs a Node host. Set **server-side** `MONGODB_URI` and `MONGODB_DB=TIN`. Never put the URI in `NEXT_PUBLIC_*`, the client bundle, logs, or the student URL.
 
 ### Student URL (lesson, no install)
 
 **Open this:** https://tin-bootcamp.surge.sh/
 
-Confirmed `GET /` **200** `text/html` from the public internet. HTTPS, no password, no Cloudflare/phishing interstitial. Not this agent VM and not trycloudflare.
+That URL is HTTPS and needs no install. It still serves the previous static build: this environment has no Surge login, so the progressive lesson was not republished. Republish the `out/` folder from `npm run build:static` to `tin-bootcamp.surge.sh` before class. On that host the live tab stays off until a Node server is connected.
 
 Do **not** use `raw.githack.com` — in a real browser it shows a phishing-confirmation / challenge page (curl can still return 200). jsDelivr serves the HTML as `text/plain`, so the app does not run.
 

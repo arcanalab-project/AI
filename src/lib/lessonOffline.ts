@@ -28,7 +28,7 @@ type Store = {
 };
 
 const BROWSER_NOTE =
-  "Browser lesson engine: the same nine-table model as the SQLite lesson, running in memory. Not node:sqlite and not Atlas. Table count is not query count.";
+  "Browser lesson engine: simulated rows in memory, derived from the canonical profiles. Not node:sqlite and not Atlas. Table count is not query count.";
 
 let store: Store | null = null;
 
@@ -382,9 +382,29 @@ export function evolveOfflineLesson(feature: "hobbies" | "pronouns" | "organizer
       title: "Speed data: aperitivo in Brera",
       city: "Milano",
       starts_at: "2026-10-24T19:00:00+02:00",
-      description: "Nine tables, nine stories, one MongoDB document.",
+      description: "Speed data: one person, two models, one aperitivo.",
     });
     f.organizer = true;
+  }
+  return { flags: { ...f }, tables: listOfflineTables(1) };
+}
+
+export function revertOfflineLesson(feature: "hobbies" | "pronouns" | "organizer") {
+  ensure();
+  const f = flags();
+  const user = store!.users.find((u) => u.id === 1);
+  if (feature === "hobbies") {
+    store!.user_hobbies = store!.user_hobbies.filter((h) => h.user_id !== 1);
+    f.hobbies = false;
+  }
+  if (feature === "pronouns" && user) {
+    delete user.pronouns;
+    f.pronouns = false;
+  }
+  if (feature === "organizer" && user) {
+    user.profile_type = "standard";
+    store!.events = store!.events.filter((e) => e.id !== "evt-lesson-giulia");
+    f.organizer = false;
   }
   return { flags: { ...f }, tables: listOfflineTables(1) };
 }
@@ -402,7 +422,7 @@ export function offlineLessonGet(op = "state") {
       naiveRowCount: naiveOfflineJoinCount(1).length,
       ...value,
       inspector: {
-        description: "Retrieve the full person from the nine-table lesson model",
+        description: "Retrieve Giulia's current profile from the lesson tables",
         engine: "SQLite" as const,
         target: "users + user_photos + user_interests + user_settings + subscriptions",
         operation: { sql: RETRIEVE_PERSON_SQL, params: [1] },
@@ -420,7 +440,7 @@ export function offlineLessonGet(op = "state") {
       connection: {
         mode: "offline" as const,
         db: "TIN",
-        error: "No MongoDB on this static host. Document assembled from the nine-table lesson model.",
+        error: "No MongoDB on this static host. The document is assembled from the lesson tables.",
       },
       document: synthesized,
       source: "browser-synthesized",
@@ -432,7 +452,7 @@ export function offlineLessonGet(op = "state") {
         operation: MONGO_FIND_ONE,
         outcome: "offline-fallback",
         measured: false,
-        note: "This is not an Atlas read. Same Giulia, one JSON document vs nine tables.",
+        note: "This is not an Atlas read. JSON shown here is the document shape for the current lesson perimeter.",
       },
     };
   }

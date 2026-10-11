@@ -1,352 +1,385 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Inspector } from "./Inspector";
-import { ExpandableDocument } from "./JsonDoc";
-import { MappingStrip, ProfileCard } from "./ProfileCard";
-import { ContrastBanner, RelationalTables } from "./Tables";
-import { fieldById } from "@/lib/fields";
-import { lessonGet, lessonHostMode, lessonPost } from "@/lib/lessonClient";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FormattedJson } from "./FormattedJson";
+import { computeAge } from "@/lib/age";
+import { evolveOfflineLesson, listOfflineTables, revertOfflineLesson } from "@/lib/lessonOffline";
+import { projectLesson, type HighlightSpec, type StageTable } from "@/lib/lessonStage";
 import { SCENES } from "@/lib/scenes";
-import type { InspectorRecord } from "@/lib/types";
+import { withBase } from "@/lib/paths";
 
-const GENDERS = ["woman", "man", "nonbinary", "unspecified"] as const;
+type Phase = "request" | "before" | "apply" | "after";
 
-export function LessonView({
-  scene,
-}: {
-  scene: number;
-  setScene: (n: number) => void;
-}) {
-  const [state, setState] = useState<Record<string, unknown> | null>(null);
-  const [tables, setTables] = useState<Record<string, unknown>>({});
+const PHASES: Phase[] = ["request", "before", "apply", "after"];
+const PHASE_LABEL: Record<Phase, string> = {
+  request: "New request",
+  before: "Before",
+  apply: "Apply change",
+  after: "After",
+};
+
+export function LessonView({ scene, resetToken }: { scene: number; setScene?: (n: number) => void; resetToken: number }) {
+  const [tick, setTick] = useState(0);
   const [highlight, setHighlight] = useState<string | null>(null);
-  const [inspector, setInspector] = useState<InspectorRecord | null>(null);
-  const [inspectOpen, setInspectOpen] = useState(true);
-  const [showSolution, setShowSolution] = useState(false);
-  const [document, setDocument] = useState<unknown>(null);
-  const [docSource, setDocSource] = useState<string>("");
-  const [sqlResult, setSqlResult] = useState<Record<string, unknown> | null>(null);
-  const [reveal, setReveal] = useState(1);
-  const [animStep, setAnimStep] = useState(0);
-  const [quizOpen, setQuizOpen] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [engine, setEngine] = useState<"unknown" | "api" | "offline">("unknown");
-  const meta = SCENES[scene - 1];
+  const [showAll, setShowAll] = useState(false);
+  const [phaseByScene, setPhaseByScene] = useState<Record<number, Phase>>({});
+  const [showOrganizer, setShowOrganizer] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [techOpen, setTechOpen] = useState(false);
 
-  async function load() {
-    const json = await lessonGet();
-    setEngine(lessonHostMode());
-    setState(json);
-    setTables(json.tables ?? {});
-    if (json.documentPreview) {
-      setDocument((d: unknown) => d ?? json.documentPreview);
-      setDocSource((s: string) => s || (json.engine === "browser" ? "browser-lesson" : "sqlite-assembled"));
+  const phase: Phase = scene === 6 || scene === 7 ? (phaseByScene[scene] ?? "request") : "after";
+  const revealExtension = phase === "after";
+  const sceneRef = useRef(scene);
+  sceneRef.current = scene;
+
+  useEffect(() => {
+    setHighlight(null);
+    setNotesOpen(false);
+    setTechOpen(false);
+  }, [scene]);
+
+  useEffect(() => {
+    if (resetToken === 0) return;
+    const current = sceneRef.current;
+    if (current === 6) revertOfflineLesson("pronouns");
+    if (current === 7) {
+      revertOfflineLesson("hobbies");
+      revertOfflineLesson("organizer");
+      setShowOrganizer(false);
     }
-  }
+    setPhaseByScene((prev) => ({ ...prev, [current]: "request" }));
+    setHighlight(null);
+    setTick((n) => n + 1);
+  }, [resetToken]);
+
+  const stage = useMemo(
+    () => projectLesson(scene, { revealExtension, showOrganizer: scene === 7 && showOrganizer, revision: tick }),
+    [scene, revealExtension, showOrganizer, tick],
+  );
+
+  const spec = stage.highlights.find((h) => h.id === highlight) ?? null;
+  const giulia = listOfflineTables(1);
+  const user = giulia.users[0];
+  const age = user ? computeAge(String(user.birth_date)) : null;
+  const meta = SCENES[scene - 1];
+  const dim = revealExtension && stage.changedPaths.length > 0;
 
   useEffect(() => {
-    load().catch((e) => setError(String(e)));
-  }, []);
+    if (!highlight) return;
+    const nodes = document.querySelectorAll('[data-hot="true"]');
+    nodes.forEach((node) => node.scrollIntoView({ block: "nearest", inline: "nearest" }));
+  }, [highlight, stage, showAll]);
 
   useEffect(() => {
-    setShowSolution(false);
-    if (scene === 1) setReveal(1);
-    else setReveal(99);
-  }, [scene]);
+    if (highlight) return;
+    const panels = document.querySelectorAll(".lesson-panel");
+    const pinBottom = scene === 3 || scene === 4 || scene === 5 || scene === 8 || (scene === 7 && revealExtension);
+    panels.forEach((panel) => {
+      panel.scrollTop = pinBottom ? panel.scrollHeight : 0;
+    });
+  }, [scene, revealExtension, tick, highlight]);
 
-  useEffect(() => {
-    if (scene !== 1) return;
-    const t = setInterval(() => setReveal((r) => Math.min(12, r + 1)), 900);
-    return () => clearInterval(t);
-  }, [scene]);
-
-  const person = useMemo(() => {
-    const retrieved = state?.retrieved as Record<string, unknown> | undefined;
-    const base = (state?.person ?? state?.core) as Record<string, unknown> | undefined;
-    if (!retrieved && !base) return null;
-    const photos = (retrieved?.photos as { url: string }[]) ?? (base?.photos as { url: string }[]);
-    return {
-      displayName: String(retrieved?.display_name ?? base?.displayName ?? "Giulia Conti"),
-      gender: String(retrieved?.gender ?? base?.gender ?? "woman"),
-      birthDate: String(retrieved?.birth_date ?? base?.birthDate ?? "1997-03-14"),
-      heightCm: Number(retrieved?.height_cm ?? base?.heightCm ?? 168),
-      bodyType: (retrieved?.body_type ?? base?.bodyType) as string | undefined,
-      profession: (retrieved?.profession ?? base?.profession) as string | undefined,
-      education: (retrieved?.education ?? base?.education) as string | undefined,
-      city: String(retrieved?.city ?? base?.city ?? "Milano"),
-      bio: (retrieved?.bio ?? base?.bio) as string | undefined,
-      photos: photos ?? [{ url: "/avatars/giulia-1.svg" }],
-      interests: (retrieved?.interests as string[]) ?? (base?.interests as string[]) ?? [],
-      hobbies: (document as { hobbies?: string[] } | null)?.hobbies,
-      pronouns: (document as { pronouns?: string } | null)?.pronouns,
-      profileType: (document as { profileType?: string } | null)?.profileType,
-      settings: {
-        notificationsEnabled: Boolean(retrieved?.notifications_enabled),
-        discoveryDistanceKm: Number(retrieved?.discovery_distance_km ?? 40),
-        minDesiredAge: Number(retrieved?.min_desired_age ?? 26),
-        maxDesiredAge: Number(retrieved?.max_desired_age ?? 38),
-        profileVisibility: String(retrieved?.profile_visibility ?? "public"),
-        pausedAccount: Boolean(retrieved?.paused_account),
-        genderPreferences: (retrieved?.gender_preferences as string[]) ?? ["man"],
-      },
-      subscription: {
-        plan: String(retrieved?.plan ?? "Premium"),
-        paymentStatus: String(retrieved?.payment_status ?? "Success"),
-        autoRenew: Boolean(retrieved?.auto_renew),
-        startDate: String(retrieved?.start_date ?? ""),
-        endDate: String(retrieved?.end_date ?? ""),
-      },
-    };
-  }, [state, document]);
-
-  async function post(action: string, extra: object = {}) {
-    const json = await lessonPost(action, extra);
-    if (json.tables) setTables(json.tables);
-    if (json.inspector) setInspector(json.inspector);
-    await load();
-    return json;
+  function setPhase(next: Phase) {
+    setPhaseByScene((prev) => ({ ...prev, [scene]: next }));
   }
 
-  async function loadSql() {
-    const json = await lessonGet("sql");
-    setSqlResult(json);
-    setInspector(json.inspector);
+  function apply() {
+    if (scene === 6) evolveOfflineLesson("pronouns");
+    if (scene === 7) evolveOfflineLesson("hobbies");
+    setTick((n) => n + 1);
+    setPhase("after");
+    setHighlight(scene === 6 ? "pronouns" : "hobbies");
   }
-
-  async function loadDoc() {
-    const json = await lessonGet("document");
-    setDocument(json.document);
-    setDocSource(json.source);
-    setInspector(json.inspector);
-  }
-
-  useEffect(() => {
-    if (scene >= 6) loadDoc().catch(() => undefined);
-  }, [scene, tables]);
-
-  const mongoPath = highlight ? fieldById(highlight)?.mongo : undefined;
-  const settings = person?.settings;
 
   return (
-    <div>
-      <div className="surface-deep" style={{ padding: "1rem 1.1rem", borderRadius: 16, marginBottom: 12 }}>
-        <div className="kicker">{meta.pdfPages} · scene {scene}/8</div>
-        <h2 style={{ margin: "0.2rem 0", fontSize: "1.85rem", fontWeight: 500 }}>{meta.title}</h2>
-        <p style={{ margin: "0.2rem 0 0.6rem", fontSize: "1.15rem" }}>{meta.question}</p>
-        <p style={{ margin: 0, opacity: 0.85 }}>{meta.action}</p>
-        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-          <button className="btn btn-ghost" onClick={() => setShowSolution((s) => !s)}>
-            {showSolution ? "Hide solution" : "Reveal solution (tutor)"}
-          </button>
-          {scene === 5 && (
-            <button className="btn btn-primary" onClick={() => loadSql()}>Run real SQL</button>
-          )}
-          {scene === 6 && (
-            <>
-              <button className="btn btn-primary" onClick={() => setAnimStep((s) => (s + 1) % 4)}>Animate rows → document</button>
-              <button className="btn btn-ghost" onClick={() => loadDoc()}>MongoDB read</button>
-            </>
-          )}
-        </div>
-        {showSolution && (
-          <p className="rise" style={{ margin: "0.8rem 0 0", color: "#E9FF99" }}>{meta.solution}</p>
-        )}
-      </div>
-
-      {error && <div className="error-banner">{error}</div>}
-      {engine === "offline" && (
-        <div className="ok-banner" style={{ marginBottom: 12 }}>
-          Lesson running in the browser — no install. Nine tables vs one JSON document. Not Atlas.
-        </div>
-      )}
-
-      <MappingStrip highlight={highlight} />
-
-      {scene !== 8 && Object.keys(tables).length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <ContrastBanner tables={tables} documentReady={scene >= 2 && Boolean(document)} />
-        </div>
-      )}
-
-      <div className="lesson-grid" style={{ marginTop: 12, gridTemplateColumns: scene >= 2 && scene !== 8 ? undefined : "280px minmax(0, 1fr)" }}>
+    <div className="lesson-stage">
+      <div className="lesson-top">
         <div>
-          {person && (
-            <ProfileCard person={person} highlight={highlight} onHighlight={setHighlight} reveal={scene === 1 ? reveal : 99} />
-          )}
-          <p className="kicker" style={{ marginTop: 8 }}>Same person in the center: Giulia Conti</p>
-        </div>
-
-        <div>
-          {scene === 1 && (
-            <div className="surface" style={{ padding: "1rem" }}>
-              <h3 style={{ marginTop: 0 }}>The fields emerge</h3>
-              <p>A credible card already hides many sections. This exercise is the person: profile, photos, interests, preferences, subscription — not swipes, matches, or messages.</p>
-            </div>
-          )}
-          {scene >= 2 && scene !== 8 && (
-            <RelationalTables tables={tables} highlight={highlight} />
-          )}
-          {scene === 2 && (
-            <p style={{ color: "#E3FCF7" }}>
-              user_gender_preferences exists because a user can look for more than one gender: normalized 1:N, not a CSV. It is not the only possible relational schema.
-            </p>
-          )}
-          {scene === 3 && settings && (
-            <form
-              className="surface"
-              style={{ padding: "1rem", marginTop: 10, display: "grid", gap: 8 }}
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.currentTarget);
-                await post("settings", {
-                  patch: {
-                    discoveryDistanceKm: Number(fd.get("km")),
-                    minDesiredAge: Number(fd.get("min")),
-                    maxDesiredAge: Number(fd.get("max")),
-                    notificationsEnabled: fd.get("n") === "on",
-                    profileVisibility: fd.get("vis"),
-                    pausedAccount: fd.get("p") === "on",
-                    genderPreferences: fd.getAll("g"),
-                  },
-                });
-              }}
-            >
-              <h3 style={{ margin: 0 }}>Edit preferences (lesson)</h3>
-              <label>Distance km <input name="km" type="number" defaultValue={settings.discoveryDistanceKm} /></label>
-              <label>Min age <input name="min" type="number" defaultValue={settings.minDesiredAge} /></label>
-              <label>Max age <input name="max" type="number" defaultValue={settings.maxDesiredAge} /></label>
-              <label><input name="n" type="checkbox" defaultChecked={settings.notificationsEnabled} /> Notifications</label>
-              <label>Visibility
-                <select name="vis" defaultValue={settings.profileVisibility}>
-                  <option value="public">public</option>
-                  <option value="hidden">hidden</option>
-                </select>
-              </label>
-              <label><input name="p" type="checkbox" defaultChecked={settings.pausedAccount} /> Paused account</label>
-              <div>
-                {GENDERS.map((g) => (
-                  <label key={g} style={{ marginRight: 8 }}>
-                    <input name="g" type="checkbox" value={g} defaultChecked={settings.genderPreferences.includes(g)} /> {g}
-                  </label>
-                ))}
-              </div>
-              <button className="btn btn-primary" type="submit">Save preferences</button>
-            </form>
-          )}
-          {scene === 4 && person?.subscription && (
-            <form
-              className="surface"
-              style={{ padding: "1rem", marginTop: 10, display: "grid", gap: 8 }}
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.currentTarget);
-                await post("subscription", {
-                  patch: {
-                    plan: fd.get("plan"),
-                    paymentStatus: fd.get("st"),
-                    autoRenew: fd.get("ar") === "on",
-                    startDate: fd.get("sd"),
-                    endDate: fd.get("ed"),
-                  },
-                });
-              }}
-            >
-              <h3 style={{ margin: 0 }}>Current subscription</h3>
-              <p>Current plan is `subscriptions` (1:1). Giulia’s Free past is `subscription_history` (1:N). Different tables, different needs.</p>
-              <label>Plan
-                <select name="plan" defaultValue={person.subscription.plan}>
-                  <option>Free</option><option>Premium</option><option>Gold</option>
-                </select>
-              </label>
-              <label>Payment (demo)
-                <select name="st" defaultValue={person.subscription.paymentStatus}>
-                  <option>Success</option><option>Failed</option><option>Pending</option>
-                </select>
-              </label>
-              <label>Start <input name="sd" defaultValue={person.subscription.startDate} /></label>
-              <label>End <input name="ed" defaultValue={person.subscription.endDate} /></label>
-              <label><input name="ar" type="checkbox" defaultChecked={person.subscription.autoRenew} /> Auto-renew</label>
-              <button className="btn btn-primary" type="submit">Save subscription</button>
-            </form>
-          )}
-          {scene === 5 && sqlResult && (
-            <div className="surface" style={{ padding: "1rem", marginTop: 10 }}>
-              <div className="kicker">SQL result · {String(sqlResult.photoCount)} photos · {String(sqlResult.interestCount)} interests · naive cartesian = {String(sqlResult.cartesianIfNaive)} rows</div>
-              <pre className="inspect-pre">{JSON.stringify(sqlResult.row, null, 2)}</pre>
-              <p>One row → UI object. The naive count shows the cartesian product we avoided. SQLite is the lesson engine, not a performance comparison with Atlas.</p>
-            </div>
-          )}
-          {scene === 7 && (
-            <div className="surface" style={{ padding: "1rem", display: "grid", gap: 8 }}>
-              <p>Three product changes. Francesca and other documents stay without the new fields.</p>
-              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "hobbies" }).then(loadDoc)}>Add hobbies</button>
-              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "pronouns" }).then(loadDoc)}>Optional pronouns</button>
-              <button className="btn btn-primary" onClick={() => post("evolve", { feature: "organizer" }).then(loadDoc)}>Organizer profile</button>
-              <p className="kicker">SQL: CREATE/ALTER. MongoDB: optional fields. UI: missing fields handled. A feature is frontend + backend in both worlds. ALTER does not mean downtime.</p>
-            </div>
-          )}
-          {scene === 8 && (
-            <Quiz quizOpen={quizOpen} setQuizOpen={setQuizOpen} />
-          )}
-        </div>
-
-        {scene >= 2 && scene !== 8 && (
-          <div>
-            {animStep > 0 && (
-              <p className="kicker">Animation step {animStep}/3: {["", "rows", "nested groups", "document"][animStep]}</p>
-            )}
-            <ExpandableDocument value={stripMongo(document)} highlight={mongoPath} source={docSource} />
+          <h2 className="lesson-title">{meta.title}</h2>
+          <p className="lesson-question">{meta.question}</p>
+          {spec && <p className="lesson-label">{spec.label}</p>}
+          <div className="fact-row">
+            {stage.highlights.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="fact"
+                data-on={String(highlight === item.id)}
+                onClick={() => setHighlight(item.id)}
+              >
+                {item.label.split(" · ")[0]}
+              </button>
+            ))}
           </div>
-        )}
+          {(scene === 6 || scene === 7) && (
+            <div className="phase-row" role="tablist" aria-label="Experiment steps">
+              {PHASES.map((p) => (
+                <button key={p} type="button" role="tab" className="phase" aria-selected={phase === p} onClick={() => setPhase(p)}>
+                  {PHASE_LABEL[p]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button type="button" className="giulia-chip" onClick={() => setHighlight("displayName")}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={withBase("/avatars/giulia-1.svg")} alt="" />
+          <span>
+            <strong className={highlight === "displayName" ? "card-hot" : undefined} data-hot={highlight === "displayName" ? "true" : undefined}>
+              Giulia Conti
+            </strong>
+            <span className={highlight === "birthDate" ? "card-hot" : "kicker"} style={{ display: "block", color: highlight === "birthDate" ? "#001E2B" : "#E3FCF7" }} data-hot={highlight === "birthDate" ? "true" : undefined}>
+              Age {age} · derived from birth date
+            </span>
+            {spec && highlight !== "displayName" && highlight !== "birthDate" && (
+              <span className="card-hot" data-hot="true">{cardFact(spec.id, stage.documents[0]?.value)}</span>
+            )}
+          </span>
+        </button>
       </div>
 
-      <p style={{ margin: "0.8rem 0 0", opacity: 0.85 }}>{meta.conclusion}</p>
-      <Inspector record={inspector} open={inspectOpen} onToggle={() => setInspectOpen((v) => !v)} />
-    </div>
-  );
-}
-
-function stripMongo(doc: unknown) {
-  if (!doc || typeof doc !== "object") return doc;
-  const copy = { ...(doc as Record<string, unknown>) };
-  delete copy._id;
-  return copy;
-}
-
-function Quiz({
-  quizOpen,
-  setQuizOpen,
-}: {
-  quizOpen: number | null;
-  setQuizOpen: (n: number | null) => void;
-}) {
-  const items = [
-    {
-      q: "Why do settings and the current subscription live in the user document, while messages do not?",
-      a: "Embed data that is bounded and read with the card (1:1 / 1:current). Messages grow without bound: referenced collection. See unbounded arrays.",
-    },
-    {
-      q: "If I put 10,000 likes inside the user document, which anti-pattern am I hitting?",
-      a: "Unbounded array. It inflates the document, indexes, and writes. Likes and passes live in bootcamp_interactions.",
-    },
-    {
-      q: "Reciprocal likes create a match in another collection. Does single-document atomicity cover that operation too?",
-      a: "No. Document atomicity ≠ automatic multi-document transaction. You need uniqueness on pairKey and idempotent upserts, otherwise two simultaneous likes can lose or duplicate the match. Avoiding JOIN on this aggregate does not mean MongoDB cannot do $lookup.",
-    },
-  ];
-  return (
-    <div className="surface" style={{ padding: "1rem" }}>
-      <h3 style={{ marginTop: 0 }}>Lightning quiz</h3>
-      {items.map((item, i) => (
-        <div key={i} style={{ marginBottom: 12 }}>
-          <p><strong>{i + 1}. {item.q}</strong></p>
-          <button className="btn btn-quiet" onClick={() => setQuizOpen(quizOpen === i ? null : i)}>
-            {quizOpen === i ? "Hide" : "Reveal"}
-          </button>
-          {quizOpen === i && <p className="rise">{item.a}</p>}
+      {stage.operations && phase === "apply" && (
+        <div className="op-row">
+          <p><strong>Relational. </strong>{stage.operations.relational}</p>
+          <p><strong>Document. </strong>{stage.operations.document}</p>
+          <p><strong>Application. </strong>{stage.operations.application}</p>
         </div>
-      ))}
+      )}
+
+      {phase === "apply" && (
+        <div className="apply-row">
+          <button type="button" className="btn btn-primary" onClick={apply}>
+            Apply change
+          </button>
+          <span className="kicker" style={{ color: "#E3FCF7" }}>Repeatable. Applying again replaces the same rows.</span>
+        </div>
+      )}
+
+      <div className="lesson-panels">
+        <section className="lesson-panel" aria-label="Relational — tables">
+          <div className="panel-sticky">
+            <header className="panel-head">
+              <strong>Relational — tables</strong>
+              <button type="button" className="text-btn" onClick={() => setShowAll((v) => !v)}>
+                {showAll ? "Hide extra fields" : "Show all fields"}
+              </button>
+            </header>
+            <p className="panel-count">{stage.countsLabel}</p>
+            {spec?.link && <p className="fk-callout">{spec.link}</p>}
+          </div>
+          {stage.tables.map((table) => (
+            <TableBlock
+              key={table.name}
+              table={table}
+              showAll={showAll}
+              spec={spec}
+              changed={dim ? stage.changedColumns : []}
+              dim={dim}
+              onPick={(column) => {
+                const hit = stage.highlights.find((h) =>
+                  h.tables.some((t) => t.name === table.name && t.columns.includes(column)),
+                );
+                if (hit) setHighlight(hit.id);
+              }}
+            />
+          ))}
+          {stage.history && (
+            <div className="aside-block">
+              <strong>Plan history — outside this profile</strong>
+              <p>{stage.history.note}</p>
+              <table className="data">
+                <thead>
+                  <tr>
+                    {stage.history.rows[0] ? Object.keys(stage.history.rows[0]).map((c) => <th key={c}>{c}</th>) : null}
+                  </tr>
+                </thead>
+                <tbody>
+                  {stage.history.rows.map((row, i) => (
+                    <tr key={i}>
+                      {Object.keys(row).map((c) => (
+                        <td key={c}>{formatCell(row[c])}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="lesson-panel" aria-label="MongoDB — document">
+          <div className="panel-sticky">
+            <header className="panel-head">
+              <strong>MongoDB — document</strong>
+            </header>
+            <p className="panel-note">JSON representation of the MongoDB document. Braces are objects. Brackets are arrays.</p>
+            {scene === 6 && revealExtension && (
+              <p className="fk-callout">Giulia stores pronouns (she/her). Francesca omits the field. Her table cell is NULL. The application treats both as no pronouns.</p>
+            )}
+            {scene === 7 && revealExtension && (
+              <p className="fk-callout">Interests are match tags and already exist. Hobbies are a separate list. Giulia has them. Francesca has interests and no hobbies array.</p>
+            )}
+          </div>
+          {stage.documents.map((doc) => (
+            <div key={doc.who} className="doc-block">
+              <div className="kicker" style={{ color: "#00684A" }}>{doc.who}</div>
+              <FormattedJson
+                value={doc.value}
+                highlight={spec?.paths ?? null}
+                changedPaths={dim && doc.who.startsWith("Giulia") ? stage.changedPaths : []}
+                dimUnchanged={dim}
+              />
+            </div>
+          ))}
+          {stage.eventCompare && (
+            <div className="aside-block">
+              <strong>Event summary is not the event</strong>
+              <p>The profile would keep only the summary. These fields stay on the event: {stage.eventCompare.onlyOnEvent.join(", ")}.</p>
+              <div className="doc-pair">
+                <div>
+                  <div className="kicker" style={{ color: "#00684A" }}>Summary on the profile</div>
+                  <FormattedJson value={stage.eventCompare.summary} />
+                </div>
+                <div>
+                  <div className="kicker" style={{ color: "#00684A" }}>Event document</div>
+                  <FormattedJson value={stage.eventCompare.full} />
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <div className="lesson-foot">
+        <p className="takeaway">{stage.takeaway}</p>
+        <div className="foot-actions">
+          {scene === 7 && (
+            <button type="button" className="text-btn" onClick={() => setShowOrganizer((v) => !v)}>
+              {showOrganizer ? "Hide organizer note" : "Optional: organizer profile"}
+            </button>
+          )}
+          <button type="button" className="text-btn" aria-expanded={notesOpen} onClick={() => setNotesOpen((v) => !v)}>
+            Teacher notes
+          </button>
+          <button type="button" className="text-btn" aria-expanded={techOpen} onClick={() => setTechOpen((v) => !v)}>
+            Technical details
+          </button>
+        </div>
+      </div>
+      {showOrganizer && scene === 7 && (
+        <p className="fold-note">
+          An organizer profile points at events. A short summary on the person (title, start) is not the event. City and description stay on the event document. Scene 8 shows that split.
+        </p>
+      )}
+      {notesOpen && <p className="fold-note">{stage.teacherNote}</p>}
+      {techOpen && (
+        <div className="fold-note">
+          <p>{stage.technicalNote}</p>
+          <pre className="inspect-pre">{stage.simulatedSql}</pre>
+          <pre className="inspect-pre">{stage.simulatedFind}</pre>
+        </div>
+      )}
     </div>
   );
+}
+
+function TableBlock({
+  table,
+  showAll,
+  spec,
+  changed,
+  dim,
+  onPick,
+}: {
+  table: StageTable;
+  showAll: boolean;
+  spec: HighlightSpec | null;
+  changed: { table: string; column: string }[];
+  dim: boolean;
+  onPick?: (column: string) => void;
+}) {
+  const hotCols = new Set(spec?.tables.find((t) => t.name === table.name)?.columns ?? []);
+  const columns = table.columns.filter((c) => showAll || c.focus || hotCols.has(c.key));
+  const tableHot = hotCols.size > 0;
+  return (
+    <div className="table-block" data-hot={tableHot ? "true" : undefined}>
+      <div className="table-title">
+        <span className="code">{table.name}</span>
+        <span>Row identifier: {table.pk}{table.fk ? ` · ${table.fk} (reference to another row)` : ""}</span>
+      </div>
+      <table className="data">
+        <thead>
+          <tr>
+            {columns.map((c) => (
+              <th key={c.key} className={hotCols.has(c.key) ? "hl" : undefined}>
+                {c.key}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row, i) => (
+            <tr key={i}>
+              {columns.map((c) => {
+                const isChanged = changed.some((ch) => ch.table === table.name && ch.column === c.key);
+                const isHot = hotCols.has(c.key);
+                const faded = dim && changed.length > 0 && !isChanged && !isHot;
+                return (
+                  <td
+                    key={c.key}
+                    className={isHot || isChanged ? "hl" : undefined}
+                    style={faded ? { opacity: 0.4 } : undefined}
+                    data-hot={isHot ? "true" : undefined}
+                    onClick={() => onPick?.(c.key)}
+                  >
+                    {formatCell(row[c.key])}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function formatCell(v: unknown) {
+  if (v === null || v === undefined) return "NULL";
+  if (typeof v === "boolean") return v ? "true" : "false";
+  return String(v);
+}
+
+function cardFact(id: string, doc: Record<string, unknown> | undefined): string {
+  if (!doc) return "";
+  const settings = (doc.settings ?? {}) as Record<string, unknown>;
+  const sub = (doc.subscription ?? {}) as Record<string, unknown>;
+  switch (id) {
+    case "gender":
+      return String(doc.gender ?? "");
+    case "city":
+      return String(doc.city ?? "");
+    case "bio":
+      return String(doc.bio ?? "");
+    case "photos":
+      return `${Array.isArray(doc.photos) ? doc.photos.length : 0} photos`;
+    case "interests":
+      return Array.isArray(doc.interests) ? doc.interests.join(", ") : "";
+    case "notifications":
+      return settings.notificationsEnabled ? "notifications on" : "notifications off";
+    case "distance":
+      return `${settings.discoveryDistanceKm ?? ""} km`;
+    case "ageRange":
+      return `${settings.minDesiredAge ?? ""}–${settings.maxDesiredAge ?? ""}`;
+    case "genders":
+      return Array.isArray(settings.genderPreferences) ? settings.genderPreferences.join(", ") : "";
+    case "plan":
+      return String(sub.plan ?? "");
+    case "pronouns":
+      return doc.pronouns ? String(doc.pronouns) : "not set";
+    case "hobbies":
+      return Array.isArray(doc.hobbies) ? doc.hobbies.join(", ") : "none";
+    default:
+      return "";
+  }
 }

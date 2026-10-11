@@ -1,18 +1,16 @@
-# Scene ↔ PDF (Tinder bootcamp)
+# Scene map
 
-The original PDF (`tinder bootcamp.pdf`) is not on this VM. The map follows the sequence required by the brief. Page numbers are the course pages, not a local PDF.
+The course PDF is not in this repo. The eight scenes follow the bootcamp sequence: same data, two models, then a product change.
 
-| Scene | Title | Pages | Preserved content |
-|------|--------|--------|----------------------|
-| 1 | One person, one screen | pp. 3–5 | The full app has many entities; the exercise is user, preferences, subscription. Card fields. |
-| 2 | Put her in tables | pp. 6–8 | Nine tables for one person: `users`, `cities`, `user_education`, `user_photos`, `user_interests`, `user_settings`, `user_gender_preferences`, `subscriptions`, `subscription_history`. Contrast vs 1 document. |
-| 3 | Preferences arrive | pp. 6–8 | Distance, age range, notifications, visibility. Profile ≠ settings. |
-| 4 | The subscription arrives | pp. 6–8 | Plan, payment, dates, auto-renew. Current `subscriptions` vs `subscription_history`. |
-| 5 | Reassemble the person | p. 9 | One query for the whole person. JOIN/subquery, no photo×interest cartesian, UI object. |
-| 6 | Model the person as a document | pp. 10–12 | Relational diagram → document. Arrays, `settings`, `subscription`. MongoDB read. |
-| 7 | The product changes | pp. 13–20 | Hobbies, optional pronouns, organizer profile. Different shapes. Missing fields are ok. |
-| 8 | When to embed and when to reference | pp. 15–20 | Settings + current sub vs messages/interactions/history. Quiz. |
+| Scene | Title | What is on screen |
+|------|--------|-------------------|
+| 1 | The profile | `users` and one document: name, gender, birth date, city, bio. Age is derived. |
+| 2 | Photos and interests | `user_photos`, `user_interests`, and arrays. PK / FK called out. |
+| 3 | Preferences | `user_settings` and `user_gender_preferences`. |
+| 4 | The current plan | `subscriptions` for the plan she has now. History is hidden. |
+| 5 | Retrieve the profile | Same perimeter. One read on each side. |
+| 6 | An optional field | Pronouns. Giulia has them. Francesca does not. |
+| 7 | A new structure | Hobbies, separate from interests. Organizer is optional. |
+| 8 | Embed or reference | History and the event summary sit outside the profile document. |
 
-Outside the teaching sequence (MVP, after the three concepts): swipe/like, match, messages, events. No Apple Health / Google Health / movetodate integration.
-
-Slide instructions never override this brief.
+Counts come from the tables and documents actually shown. They are not a fixed “nine tables”.

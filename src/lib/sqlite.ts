@@ -410,7 +410,7 @@ export function evolveLesson(feature: "hobbies" | "pronouns" | "organizer") {
       "Speed data: aperitivo in Brera",
       "Milano",
       "2026-10-24T19:00:00+02:00",
-      "Nine tables, nine stories, one MongoDB document.",
+      "Speed data: one person, two models, one aperitivo.",
     );
     flags.organizer = true;
   }

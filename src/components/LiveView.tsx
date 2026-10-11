@@ -107,6 +107,7 @@ export function LiveView() {
   }
 
   const card = cards[idx];
+  const liveOff = connection?.mode === "offline";
 
   async function judge(type: "like" | "pass") {
     if (!card) return;
@@ -127,7 +128,7 @@ export function LiveView() {
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
         <label style={{ color: "white" }}>
           <span className="kicker">Demo identity — this is not a sign-up</span>
-          <select value={me} onChange={(e) => setMe(e.target.value)} aria-label="Demo identity">
+          <select value={me} onChange={(e) => setMe(e.target.value)} aria-label="Demo identity" disabled={liveOff}>
             {identities.map((i) => (
               <option key={i.profileId} value={i.profileId}>
                 {i.displayName} · {i.city} · {i.age}
@@ -136,11 +137,11 @@ export function LiveView() {
           </select>
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-primary" onClick={() => post({ action: "prepare" }).then(() => { flash("Match scenario ready"); loadDiscovery(me); loadMatches(me); })}>
+          <button className="btn btn-primary" disabled={liveOff || busy} onClick={() => post({ action: "prepare" }).then(() => { flash("Match scenario ready"); loadDiscovery(me); loadMatches(me); })}>
             Prepare Giulia ↔ Luca scenario
           </button>
-          <button className="btn btn-ghost" onClick={() => setConfirm("mvp")}>Reset MVP dataset</button>
-          <button className="btn btn-ghost" onClick={() => setConfirm("lesson")}>Reset lesson dataset</button>
+          <button className="btn btn-ghost" disabled={liveOff} onClick={() => setConfirm("mvp")}>Reset MVP dataset</button>
+          <button className="btn btn-ghost" disabled={liveOff} onClick={() => setConfirm("lesson")}>Reset lesson dataset</button>
         </div>
       </div>
 
@@ -151,7 +152,7 @@ export function LiveView() {
             `Atlas cluster federazionecup.7qr2i.mongodb.net is online, but this server has no database user. Live data stays on embedded MongoDB, not in Atlas. Set server-side MONGODB_URI for database TIN.`}
           {connection.mode === "embedded" && connection.atlas !== "online-auth-required" &&
             `Offline embedded MongoDB (NOT Atlas) · ${connection.host}. Set MONGODB_URI for federazionecup.7qr2i.mongodb.net / TIN.`}
-          {connection.mode === "offline" && `Offline: ${connection.error ?? "MONGODB_URI missing. No Atlas persistence."}`}
+          {connection.mode === "offline" && "Live commands are off. This host has no database API."}
         </div>
       )}
       {error && <div className="error-banner" style={{ marginBottom: 12 }}>{error}</div>}
@@ -173,7 +174,7 @@ export function LiveView() {
 
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {(["discover", "edit", "prefs", "sub", "events"] as const).map((p) => (
-          <button key={p} className="tab" role="tab" aria-selected={panel === p} onClick={() => setPanel(p)}>
+          <button key={p} className="tab" role="tab" aria-selected={panel === p} disabled={liveOff} onClick={() => setPanel(p)}>
             {{ discover: "Discovery", edit: "Profile", prefs: "Preferences", sub: "Subscription", events: "Events" }[p]}
           </button>
         ))}
@@ -192,14 +193,14 @@ export function LiveView() {
                 <>
                   <ProfileCard person={card} />
                   <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-                    <button className="btn btn-ghost" disabled={busy} onClick={() => judge("pass")}>Pass</button>
-                    <button className="btn btn-primary" disabled={busy} onClick={() => judge("like")}>Like</button>
+                    <button className="btn btn-ghost" disabled={liveOff || busy} onClick={() => judge("pass")}>Pass</button>
+                    <button className="btn btn-primary" disabled={liveOff || busy} onClick={() => judge("like")}>Like</button>
                   </div>
                   <p className="kicker">{idx + 1}/{cards.length} · filters: distance, age, gender, no self/hidden/paused/already judged</p>
                 </>
               ) : (
                 <div className="empty" style={{ background: "white", minHeight: 220, display: "flex", alignItems: "center" }}>
-                  No cards in discovery. Widen the distance, switch identity, or “Prepare Giulia ↔ Luca scenario”.
+                  {liveOff ? "Live data is unavailable on this host." : "No cards in discovery. Widen the distance, switch identity, or prepare the Giulia and Luca scenario."}
                 </div>
               )}
             </div>
@@ -239,7 +240,7 @@ export function LiveView() {
           <h3 style={{ marginTop: 0 }}>Matches and messages</h3>
           {matches.length === 0 && <div className="empty">No matches. Reciprocal likes Giulia ↔ Luca.</div>}
           {matches.map((m) => (
-            <button key={m.matchId} className="btn btn-quiet" style={{ width: "100%", marginBottom: 6 }} onClick={() => openThread(m.matchId)}>
+            <button key={m.matchId} className="btn btn-quiet" style={{ width: "100%", marginBottom: 6 }} disabled={liveOff} onClick={() => openThread(m.matchId)}>
               {m.other?.displayName ?? m.pairKey}
             </button>
           ))}
@@ -261,7 +262,7 @@ export function LiveView() {
                 flash("Message persisted");
               }}>
                 <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Write…" />
-                <button className="btn btn-primary" style={{ marginTop: 8 }} disabled={busy}>Send</button>
+                <button className="btn btn-primary" style={{ marginTop: 8 }} disabled={liveOff || busy}>Send</button>
               </form>
             </div>
           )}
@@ -304,7 +305,7 @@ function ProfileForm({ user, onSave, busy }: { user: CardPerson; onSave: (p: obj
       <label>Interests (comma-separated) <input name="interests" defaultValue={user.interests.join(", ")} /></label>
       <label>Optional hobbies <input name="hobbies" defaultValue={(user.hobbies ?? []).join(", ")} /></label>
       <label>Optional pronouns <input name="pronouns" defaultValue={user.pronouns ?? ""} /></label>
-      <button className="btn btn-primary" disabled={busy}>Save (after server confirm)</button>
+      <button className="btn btn-primary" disabled={busy}>Save</button>
     </form>
   );
 }

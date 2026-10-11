@@ -4,8 +4,7 @@ import type { ConnectionState } from "./types";
 export const STATIC_LIVE_CONNECTION: ConnectionState = {
   mode: "offline",
   db: "TIN",
-  error:
-    "This host has no live API. The lesson tab works in the browser with no install. Live MVP needs a Node host (Vercel, Fly.io, or Render) with MONGODB_URI and MONGODB_DB=TIN.",
+  error: "Live commands are off. This host has no database API.",
 };
 
 export async function liveGet(path: string) {

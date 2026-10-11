@@ -8,6 +8,7 @@ import { SCENES } from "@/lib/scenes";
 export function TinApp() {
   const [tab, setTab] = useState<"lesson" | "live">("lesson");
   const [scene, setScene] = useState(1);
+  const [resetToken, setResetToken] = useState(0);
   const root = useRef<HTMLDivElement>(null);
 
   const go = useCallback((n: number) => {
@@ -29,11 +30,11 @@ export function TinApp() {
   }, [scene, tab, go]);
 
   return (
-    <div className="tin-shell" ref={root}>
-      <header style={{ padding: "1rem 1.4rem 0.4rem", display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+    <div className={tab === "lesson" ? "tin-shell lesson-fit" : "tin-shell"} ref={root}>
+      <header className="app-head">
         <div>
           <div className="kicker">MongoDB · Finding Love in Data</div>
-          <div style={{ fontSize: "2rem", fontWeight: 500, lineHeight: 1.1 }}>TIN — Match your data</div>
+          <div className="app-title">TIN — Match your data</div>
         </div>
         <div style={{ display: "flex", gap: 8, background: "rgba(255,255,255,0.06)", padding: 4, borderRadius: 999 }}>
           <button className="tab" role="tab" aria-selected={tab === "lesson"} onClick={() => setTab("lesson")}>The lesson</button>
@@ -53,22 +54,21 @@ export function TinApp() {
       </header>
 
       {tab === "lesson" && (
-        <div style={{ padding: "0.4rem 1.4rem 0" }}>
-          <div className="progress" aria-label="Scene progress" style={{ marginBottom: 12 }}>
+        <div className="lesson-nav">
+          <button className="btn btn-ghost" type="button" onClick={() => go(scene - 1)} disabled={scene === 1}>Back</button>
+          <div className="progress" aria-label="Scene progress">
             {SCENES.map((s) => (
               <span key={s.id} className={s.id <= scene ? "on" : undefined} />
             ))}
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <button className="btn btn-ghost" onClick={() => go(scene - 1)} disabled={scene === 1}>Back</button>
-            <div className="kicker" style={{ textAlign: "center" }}>{scene}/8 · {SCENES[scene - 1].title}</div>
-            <button className="btn btn-primary" onClick={() => go(scene + 1)} disabled={scene === 8}>Next</button>
-          </div>
+          <div className="kicker nav-label">{scene}/8 · {SCENES[scene - 1].title}</div>
+          <button className="btn btn-ghost" type="button" onClick={() => setResetToken((n) => n + 1)}>Reset scene</button>
+          <button className="btn btn-primary" type="button" onClick={() => go(scene + 1)} disabled={scene === 8}>Next</button>
         </div>
       )}
 
-      <main style={{ padding: "1rem 1.4rem 2rem" }}>
-        {tab === "lesson" ? <LessonView scene={scene} setScene={setScene} /> : <LiveView />}
+      <main className={tab === "lesson" ? "lesson-main" : "live-main"}>
+        {tab === "lesson" ? <LessonView scene={scene} resetToken={resetToken} /> : <LiveView />}
       </main>
     </div>
   );
