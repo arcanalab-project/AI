@@ -31,6 +31,6 @@ The six supplied photos are the first picture for Giulia, Francesca, Sofia, Luca
 
 ## Not checked
 
-- Republication of https://tin-bootcamp.surge.sh/. `GET /` is still 200, and the published JavaScript still contains “nine tables” and does not contain the scene title “The profile”. This VM has no Surge session.
+- https://tin-bootcamp.surge.sh/ could not be overwritten. Surge refused the publish: that domain belongs to another account. This revision is on https://tin-bootcamp-lesson.surge.sh/ (`GET /` 200, bundle contains “The profile” and `giulia-1.jpg`, and does not contain “nine tables”). Portrait JPEGs return 200. The live-off sentence is in the bundle.
 - A live Atlas write. No `MONGODB_URI` is configured here.
 - No timing comparison between the local lesson store and Atlas.

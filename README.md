@@ -73,9 +73,11 @@ The **live** tab needs a Node host. Set **server-side** `MONGODB_URI` and `MONGO
 
 ### Student URL (lesson, no install)
 
-**Open this:** https://tin-bootcamp.surge.sh/
+**Open this:** https://tin-bootcamp-lesson.surge.sh/
 
-That URL is HTTPS and needs no install. It still serves the previous static build: this environment has no Surge login, so the progressive lesson was not republished. Republish the `out/` folder from `npm run build:static` to `tin-bootcamp.surge.sh` before class. On that host the live tab stays off until a Node server is connected.
+That URL is HTTPS and needs no install. It serves this revision: the progressive lesson and the six portraits. The live tab stays off there, because a static host has no database API.
+
+https://tin-bootcamp.surge.sh/ is an older publish. This environment cannot update it: Surge says the domain belongs to another account.
 
 Do **not** use `raw.githack.com` — in a real browser it shows a phishing-confirmation / challenge page (curl can still return 200). jsDelivr serves the HTML as `text/plain`, so the app does not run.
 
