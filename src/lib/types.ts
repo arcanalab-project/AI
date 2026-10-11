@@ -101,6 +101,8 @@ export type ConnectionState = {
   host?: string;
   error?: string;
   collections?: string[];
+  /** Set when MONGODB_URI is absent and the known cluster was probed. */
+  atlas?: "online-auth-required" | "unreachable";
 };
 
 export type FieldCategory =

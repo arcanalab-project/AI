@@ -8,6 +8,7 @@ type MongoGlobal = {
   tinClient?: MongoClient;
   tinMemory?: { uri: string; stop?: () => Promise<void> };
   tinState?: ConnectionState;
+  atlasProbe?: ConnectionState["atlas"];
 };
 
 const g = globalThis as unknown as MongoGlobal;
@@ -84,6 +85,8 @@ export async function getClient(): Promise<MongoClient> {
     );
   }
 
+  const atlas = await probeAtlasReachability();
+
   try {
     const { MongoMemoryServer } = await import("mongodb-memory-server");
     const mongod = await MongoMemoryServer.create({
@@ -98,6 +101,7 @@ export async function getClient(): Promise<MongoClient> {
       mode: "embedded",
       db: DB_NAME,
       host: "localhost (MongoMemoryServer — NOT Atlas)",
+      atlas,
     };
     return client;
   } catch (err) {
@@ -110,6 +114,23 @@ export async function getClient(): Promise<MongoClient> {
 export async function coll<T extends Document>(name: string): Promise<Collection<T>> {
   const db = await getDb();
   return db.collection<T>(name);
+}
+
+async function probeAtlasReachability(): Promise<NonNullable<ConnectionState["atlas"]>> {
+  if (g.atlasProbe) return g.atlasProbe;
+  const client = new MongoClient(`mongodb+srv://${ATLAS_HOST}/?retryWrites=true&w=majority`, {
+    serverSelectionTimeoutMS: 5000,
+    appName: "tin-atlas-probe",
+  });
+  try {
+    await client.db("admin").command({ ping: 1 });
+    g.atlasProbe = "online-auth-required";
+  } catch {
+    g.atlasProbe = "unreachable";
+  } finally {
+    await client.close().catch(() => undefined);
+  }
+  return g.atlasProbe;
 }
 
 export function isBootcampCollection(name: string): boolean {

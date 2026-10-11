@@ -147,7 +147,10 @@ export function LiveView() {
       {connection && (
         <div className={connection.mode === "offline" ? "error-banner" : "ok-banner"} style={{ marginBottom: 12 }}>
           {connection.mode === "atlas" && `Atlas live · DB ${connection.db} · ${connection.host}`}
-          {connection.mode === "embedded" && `Offline embedded MongoDB (NOT Atlas) · ${connection.host}. Set MONGODB_URI for federazionecup.7qr2i.mongodb.net / TIN.`}
+          {connection.mode === "embedded" && connection.atlas === "online-auth-required" &&
+            `Atlas cluster federazionecup.7qr2i.mongodb.net is online, but this server has no database user. Live data stays on embedded MongoDB, not in Atlas. Set server-side MONGODB_URI for database TIN.`}
+          {connection.mode === "embedded" && connection.atlas !== "online-auth-required" &&
+            `Offline embedded MongoDB (NOT Atlas) · ${connection.host}. Set MONGODB_URI for federazionecup.7qr2i.mongodb.net / TIN.`}
           {connection.mode === "offline" && `Offline: ${connection.error ?? "MONGODB_URI missing. No Atlas persistence."}`}
         </div>
       )}
