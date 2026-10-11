@@ -21,9 +21,19 @@ const CITIES = {
   Como: [9.0852, 45.8081] as [number, number],
 };
 
+/** First photo of the people who appear in the lesson or the live deck. */
+const PORTRAIT: Record<string, string> = {
+  giulia: "/avatars/giulia-1.jpg",
+  francesca: "/avatars/francesca-1.jpg",
+  sofia: "/avatars/sofia-1.jpg",
+  luca: "/avatars/luca-1.jpg",
+  samuele: "/avatars/samuele-1.jpg",
+  alessandro: "/avatars/alessandro-1.jpg",
+};
+
 function photos(id: string, n: number, captions: string[] = []): PersonFixture["photos"] {
   return Array.from({ length: n }, (_, i) => ({
-    url: `/avatars/${id}-${i + 1}.svg`,
+    url: i === 0 && PORTRAIT[id] ? PORTRAIT[id] : `/avatars/${id}-${i + 1}.svg`,
     sortOrder: i,
     caption: captions[i],
   }));
@@ -53,7 +63,7 @@ export const PEOPLE: PersonFixture[] = [
     city: "Milano",
     location: point("Milano"),
     bio: "I look for real conversations, natural light, and risotto done properly.",
-    photos: photos("giulia", 3, ["Navigli", "Studio", "Lake"]),
+    photos: photos("giulia", 3, ["Portrait", "Studio", "Lake"]),
     interests: ["photography", "travel", "cooking"],
     hobbies: ["climbing", "jazz"],
     pronouns: "she/her",
@@ -102,7 +112,7 @@ export const PEOPLE: PersonFixture[] = [
     city: "Milano",
     location: point("Milano"),
     bio: "I design spaces and walk cities. An exhibition, a trek, then dinner.",
-    photos: photos("luca", 3, ["Duomo", "Construction site", "Trail"]),
+    photos: photos("luca", 3, ["Portrait", "Construction site", "Trail"]),
     interests: ["architecture", "hiking", "cinema"],
     hobbies: ["sailing"],
     pronouns: "he/him",
@@ -319,7 +329,7 @@ export const PEOPLE: PersonFixture[] = [
     city: "Napoli",
     location: point("Napoli"),
     bio: "I bring people and places together. The gulf helps.",
-    photos: photos("alessandro", 3, ["Waterfront", "Event", "Coffee"]),
+    photos: photos("alessandro", 3, ["Portrait", "Event", "Coffee"]),
     interests: ["events", "music", "sea"],
     hobbies: ["DJ sets"],
     pronouns: "he/him",

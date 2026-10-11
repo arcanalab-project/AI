@@ -123,7 +123,7 @@ export function LessonView({ scene, resetToken }: { scene: number; setScene?: (n
         </div>
         <button type="button" className="giulia-chip" onClick={() => setHighlight("displayName")}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={withBase("/avatars/giulia-1.svg")} alt="" />
+          <img src={withBase("/avatars/giulia-1.jpg")} alt="" />
           <span>
             <strong className={highlight === "displayName" ? "card-hot" : undefined} data-hot={highlight === "displayName" ? "true" : undefined}>
               Giulia Conti

@@ -25,6 +25,10 @@ Headless Chrome, `http://127.0.0.1:3001`, viewports 1366×768 and 1920×1080. Th
 - No on-screen “nine tables” copy.
 - With `/api/*` forced to 404: the live tab shows “Live commands are off. This host has no database API.” and “Live data is unavailable on this host.” Identity, prepare, both resets, and the Discovery / Profile / Preferences / Subscription / Events tabs are disabled.
 
+## Portraits
+
+The six supplied photos are the first picture for Giulia, Francesca, Sofia, Luca, Samuele, and Alessandro. Checked in Chrome on the dev server: the lesson chip loads `giulia-1.jpg`; the live deck shows Giulia and Luca, then Samuele after Pass; switching identity shows Sofia, Alessandro, and Francesca. Each image returned HTTP 200 and rendered with a non-zero width.
+
 ## Not checked
 
 - Republication of https://tin-bootcamp.surge.sh/. `GET /` is still 200, and the published JavaScript still contains “nine tables” and does not contain the scene title “The profile”. This VM has no Surge session.
