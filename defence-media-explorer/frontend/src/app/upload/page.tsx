@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { ApiError, DIRECT_UPLOAD_BYTES, api, asApiError, canUpload } from "@/lib/api";
+import { ApiError, MAX_UPLOAD_BYTES, api, asApiError, canUpload } from "@/lib/api";
 import { usePrefs } from "@/lib/preferences";
 import {
   addUploadFiles,
@@ -42,12 +42,17 @@ export default function UploadPage() {
     try {
       for (const item of draft.items) {
         if (item.phase !== "ready" && item.phase !== "error") continue;
-        updateUploadItem(item.localId, { phase: "uploading", uploadRatio: 0, errorCode: undefined, errorParams: undefined });
+        updateUploadItem(item.localId, { phase: "uploading", uploadRatio: 0, errorCode: undefined, errorParams: undefined, route: "direct" });
         try {
-          const result =
-            item.file.size <= DIRECT_UPLOAD_BYTES
-              ? await uploadDirect(item.localId, item.file, draft, timeZone)
-              : await uploadMultipart(item.localId, item.file, draft, timeZone);
+          if (item.file.size > MAX_UPLOAD_BYTES) {
+            updateUploadItem(item.localId, {
+              phase: "error",
+              errorCode: "UPLOAD_TOO_LARGE",
+              errorParams: { maxMb: 1024 },
+            });
+            continue;
+          }
+          const result = await uploadDirect(item.localId, item.file, draft, timeZone);
           updateUploadItem(item.localId, {
             phase: "processing",
             uploadRatio: 1,
@@ -88,7 +93,7 @@ export default function UploadPage() {
         <p className="text-lg leading-snug">{t("upload.drop")}</p>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{t("upload.types")}</p>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          {t("upload.limit", { size: format.number(64, { style: "unit", unit: "megabyte" }) })}
+          {t("upload.limit", { size: format.number(1024, { style: "unit", unit: "megabyte" }) })}
         </p>
         <label className="mt-5 inline-flex max-w-full cursor-pointer whitespace-normal break-words rounded-full bg-spring px-4 py-2.5 text-sm font-semibold leading-snug text-[#001E2B]">
           {t("upload.browse")}
@@ -165,7 +170,7 @@ export default function UploadPage() {
                   <p className="text-sm text-[var(--muted)]">
                     <FileSize bytes={item.file.size} />
                     {" · "}
-                    {item.file.size <= DIRECT_UPLOAD_BYTES ? t("upload.direct") : t("upload.multipart")}
+                    {t("upload.direct")}
                   </p>
                 </div>
                 <Button type="button" variant="ghost" disabled={item.phase === "uploading"} onClick={() => removeUploadItem(item.localId)} aria-label={t("upload.removeFile", { name: item.file.name })}>
@@ -234,48 +239,6 @@ async function uploadDirect(localId: string, file: File, draft: DraftFields, tim
   return { assetId: asset?.id, jobId: typeof response.jobId === "string" ? response.jobId : undefined };
 }
 
-async function uploadMultipart(localId: string, file: File, draft: DraftFields, timeZone: string) {
-  updateUploadItem(localId, { route: "multipart" });
-  const created = await api<{ assetId: string; partSize: number; parts: { partNumber: number; url: string }[] }>("/api/assets/uploads", {
-    method: "POST",
-    body: JSON.stringify({
-      filename: file.name,
-      size: file.size,
-      title: draft.title,
-      description: draft.description,
-      collectionId: draft.collectionId || null,
-      source: draft.source || null,
-      tags: draft.tags.split(",").map((item) => item.trim()).filter(Boolean),
-      sourceLanguage: draft.sourceLanguage || null,
-      capturedAt: draft.captureDateMode === "user" ? draft.capturedAt : null,
-      captureDateMode: draft.captureDateMode,
-      timeZone,
-    }),
-  });
-  const completed: { etag: string; partNumber: number }[] = [];
-  const loaded = new Map<number, number>();
-  try {
-    for (const part of created.parts) {
-      const start = (part.partNumber - 1) * created.partSize;
-      const blob = file.slice(start, Math.min(file.size, start + created.partSize));
-      const etag = await xhrPut(part.url, blob, (amount) => {
-        loaded.set(part.partNumber, amount);
-        const sum = Array.from(loaded.values()).reduce((total, value) => total + value, 0);
-        updateUploadItem(localId, { uploadRatio: file.size ? sum / file.size : 0 });
-      });
-      completed.push({ etag, partNumber: part.partNumber });
-    }
-    const finished = await api<{ asset?: { id?: string }; jobId?: string }>(`/api/assets/uploads/${created.assetId}/complete`, {
-      method: "POST",
-      body: JSON.stringify({ parts: completed }),
-    });
-    return { assetId: finished.asset?.id || created.assetId, jobId: finished.jobId };
-  } catch (error) {
-    await api(`/api/assets/uploads/${created.assetId}/abort`, { method: "POST" }).catch(() => undefined);
-    throw error;
-  }
-}
-
 function appendMeta(body: FormData, draft: DraftFields, timeZone: string) {
   body.set("title", draft.title);
   body.set("description", draft.description);
@@ -306,23 +269,6 @@ function xhrJson(method: string, url: string, body: FormData, headers: Record<st
       }
     };
     xhr.onerror = () => reject(new ApiError("REQUEST_FAILED", {}, 0));
-    xhr.send(body);
-  });
-}
-
-function xhrPut(url: string, body: Blob, onLoaded: (loaded: number) => void) {
-  return new Promise<string>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("PUT", url);
-    xhr.upload.onprogress = (event) => onLoaded(event.loaded);
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        const etag = xhr.getResponseHeader("ETag") || "";
-        if (!etag) reject(new ApiError("UPLOAD_INCOMPLETE", {}, xhr.status));
-        else resolve(etag);
-      } else reject(new ApiError("OBJECT_STORAGE_FAILED", {}, xhr.status));
-    };
-    xhr.onerror = () => reject(new ApiError("OBJECT_STORAGE_FAILED", {}, 0));
     xhr.send(body);
   });
 }

@@ -10,7 +10,7 @@ from app.db.repository import Repository
 from app.providers.openai_transcription import OpenAITranscriptionProvider
 from app.providers.openai_vision import OpenAIVisionProvider
 from app.providers.voyage import VoyageEmbeddingProvider
-from app.storage.s3 import S3ObjectStore
+from app.storage.gridfs import GridFSStore
 
 
 def build_repo(settings: Settings | None = None):
@@ -23,9 +23,10 @@ def build_repo(settings: Settings | None = None):
 
 def build_storage(settings: Settings | None = None):
     settings = settings or get_settings()
-    if not settings.object_storage_configured:
+    db = database(settings)
+    if db is None:
         return None
-    return S3ObjectStore(settings)
+    return GridFSStore(db)
 
 
 def build_deps(settings: Settings | None = None, workdir: Path | None = None):

@@ -3,7 +3,6 @@ uvicorn[standard]==0.34.0
 pydantic==2.10.6
 pydantic-settings==2.7.1
 pymongo==4.11.1
-boto3==1.36.11
 pillow==11.1.0
 voyageai==0.3.5
 openai==1.68.2

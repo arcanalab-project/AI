@@ -9,6 +9,8 @@ from pymongo.errors import PyMongoError
 from app.config import Settings
 from app.db.client import ping
 from app.db.indexes import list_index_status
+from app.storage.gridfs import BUCKET
+from app.workers.queue import legacy_asset_filter
 
 
 def diagnose(settings: Settings, client=None) -> dict[str, Any]:
@@ -29,13 +31,21 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
     elif not settings.mongodb_configured:
         mongo["errorCode"] = "MONGODB_UNAVAILABLE"
 
+    media_reachable = bool(mongo.get("reachable"))
     storage = {
-        "configured": settings.object_storage_configured,
-        "bucket": settings.s3_bucket if settings.object_storage_configured else None,
-        "publicEndpointConfigured": bool(settings.s3_public_endpoint),
+        "configured": settings.mongodb_configured,
+        "reachable": media_reachable,
+        "bucket": BUCKET if media_reachable else None,
     }
-    if not settings.object_storage_configured:
-        storage["errorCode"] = "OBJECT_STORAGE_UNAVAILABLE"
+    if media_reachable and client is not None:
+        try:
+            storage["legacyObjectStorageCount"] = int(
+                client[settings.mongodb_database].assets.count_documents(legacy_asset_filter())
+            )
+        except PyMongoError:
+            storage["legacyObjectStorageCount"] = None
+    if not media_reachable:
+        storage["errorCode"] = "MONGODB_UNAVAILABLE"
 
     queue_state = {
         "configured": settings.mongodb_configured,
@@ -46,7 +56,7 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
         queue_state["errorCode"] = "MONGODB_UNAVAILABLE"
     capabilities = {
         "mongodb": mongo,
-        "objectStorage": storage,
+        "gridfs": storage,
         "embeddings": {
             "configured": settings.embeddings_configured,
             "model": settings.voyage_multimodal_model,
@@ -77,7 +87,7 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
         name
         for name, value in (
             ("mongodb", not mongo["reachable"]),
-            ("objectStorage", not settings.object_storage_configured),
+            ("gridfs", not media_reachable),
             ("embeddings", not settings.embeddings_configured),
             ("vision", not settings.vision_configured),
             ("transcription", not settings.transcription_configured),

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, File, Form, Request, Response, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.api.parsing import parse_instant, parse_tags, parse_zone, safe_filename
@@ -18,12 +18,15 @@ from app.config import PIPELINE_VERSION, Settings
 from app.db.repository import now
 from app.errors import AppError
 from app.media.detect import detect_mime, media_type_for_mime
-from app.media.local_fixtures import fixture_file, local_playback_url
+from app.media.local_fixtures import fixture_file
+from app.media.playback import playback_url
+from app.media.ranges import parse_byte_range
 from app.media.hashing import sha256_file
 from app.pipeline.text import compose_search_text
 from app.search.filters import build_metadata_filter
 from app.services.deletion import delete_asset_completely
 from app.workers.queue import activation_patch, build_ingestion_job, original_available
+from app.workers.status import worker_view
 
 router = APIRouter(prefix="/api")
 COOKIE = "dme_session"
@@ -68,24 +71,6 @@ class AssetPatch(BaseModel):
     captureDateMode: str | None = None
     reviewState: str | None = None
     timeZone: str | None = None
-
-
-class UploadInit(BaseModel):
-    filename: str
-    size: int
-    title: str = ""
-    description: str = ""
-    collectionId: str | None = None
-    source: str | None = None
-    tags: list[str] = Field(default_factory=list)
-    sourceLanguage: str | None = None
-    capturedAt: str | None = None
-    captureDateMode: str = "file"
-    timeZone: str | None = None
-
-
-class CompleteUpload(BaseModel):
-    parts: list[dict]
 
 
 class SearchBody(BaseModel):
@@ -371,104 +356,6 @@ async def upload_direct(
         temp.unlink(missing_ok=True)
 
 
-@router.post("/assets/uploads")
-def init_upload(body: UploadInit, request: Request) -> dict:
-    user = _require(user_of(request), "uploader")
-    settings = settings_of(request)
-    if body.size > settings.max_upload_bytes:
-        raise AppError("UPLOAD_TOO_LARGE", 413, {"maxMb": settings.max_upload_mb})
-    storage = _storage(request)
-    part_size = 8 * 1024 * 1024
-    part_count = max(1, (body.size + part_size - 1) // part_size)
-    if part_count > 10000:
-        raise AppError("UPLOAD_TOO_LARGE", 413, {"maxMb": settings.max_upload_mb})
-    meta = _metadata(request, user, body.title, body.description, body.collectionId, body.source, body.tags, body.sourceLanguage, body.capturedAt, body.captureDateMode, body.timeZone or user.get("timeZone"))
-    asset = repo_of(request).insert_asset(
-        {
-            **meta,
-            "mediaType": "text",
-            "mimeType": "application/octet-stream",
-            "originalFilename": safe_filename(body.filename),
-            "sha256": None,
-            "byteSize": body.size,
-            "processingStatus": "uploading",
-            "pipelineVersion": PIPELINE_VERSION,
-            "generation": 0,
-            "reviewState": "unreviewed",
-            "originalObject": None,
-            "derivatives": {},
-            "warnings": [],
-            "error": None,
-            "uploadedBy": str(user["_id"]),
-            "indexingState": "not_written",
-        }
-    )
-    key = f"workspaces/{user['workspaceId']}/assets/{asset['_id']}/original/{safe_filename(body.filename)}"
-    upload_id = storage.create_multipart(key, "application/octet-stream")
-    parts = [
-        {"partNumber": number, "url": storage.presign_part(key, upload_id, number)}
-        for number in range(1, part_count + 1)
-    ]
-    repo_of(request).update_asset(
-        asset["_id"],
-        user["workspaceId"],
-        {"upload": {"uploadId": upload_id, "key": key, "partSize": part_size}},
-    )
-    return {"assetId": str(asset["_id"]), "uploadId": upload_id, "partSize": part_size, "parts": parts}
-
-
-@router.post("/assets/uploads/{asset_id}/complete")
-def complete_upload(asset_id: str, body: CompleteUpload, request: Request) -> dict:
-    user = _require(user_of(request), "uploader")
-    asset = _own_asset(request, asset_id, user["workspaceId"])
-    upload = asset.get("upload") or {}
-    storage = _storage(request)
-    storage.complete_multipart(upload["key"], upload["uploadId"], body.parts)
-    repo_of(request).update_asset(
-        asset["_id"],
-        user["workspaceId"],
-        {
-            "originalObject": {"bucket": settings_of(request).s3_bucket, "key": upload["key"]},
-            "upload": None,
-        },
-    )
-    asset = _own_asset(request, asset_id, user["workspaceId"])
-    with tempfile.NamedTemporaryFile(delete=False) as handle:
-        temp = Path(handle.name)
-    try:
-        storage.download(asset["originalObject"], temp)
-        return _finalise_file(
-            request,
-            user,
-            temp,
-            filename=asset["originalFilename"],
-            size=temp.stat().st_size,
-            title=asset.get("title") or "",
-            description=asset.get("description") or "",
-            collection_id=asset.get("collectionId"),
-            source=asset.get("source"),
-            tags=asset.get("tags") or [],
-            source_language=asset.get("sourceLanguage"),
-            captured_at=asset.get("capturedAt").isoformat() if isinstance(asset.get("capturedAt"), datetime) else None,
-            capture_mode=asset.get("captureDateMode") or "file",
-            time_zone=user.get("timeZone") or settings_of(request).default_timezone,
-            existing=asset,
-        )
-    finally:
-        temp.unlink(missing_ok=True)
-
-
-@router.post("/assets/uploads/{asset_id}/abort")
-def abort_upload(asset_id: str, request: Request) -> dict:
-    user = _require(user_of(request), "uploader")
-    asset = _own_asset(request, asset_id, user["workspaceId"])
-    upload = asset.get("upload") or {}
-    if upload.get("uploadId"):
-        _storage(request).abort_multipart(upload["key"], upload["uploadId"])
-    repo_of(request).delete_asset_tree(asset["_id"], user["workspaceId"])
-    return {"ok": True}
-
-
 @router.get("/assets/{asset_id}")
 def get_asset(asset_id: str, request: Request) -> dict:
     user = user_of(request)
@@ -687,16 +574,21 @@ def delete_saved(search_id: str, request: Request) -> dict:
 @router.get("/jobs")
 def list_jobs(request: Request) -> dict:
     user = user_of(request)
-    return {"jobs": [_public_job(job) for job in repo_of(request).list_jobs(user["workspaceId"])]}
+    repo = repo_of(request)
+    return {
+        "jobs": [_public_job(job) for job in repo.list_jobs(user["workspaceId"])],
+        "worker": _worker_view(request, repo),
+    }
 
 
 @router.get("/jobs/{job_id}")
 def get_job(job_id: str, request: Request) -> dict:
     user = user_of(request)
-    job = repo_of(request).get_job(job_id, user["workspaceId"])
+    repo = repo_of(request)
+    job = repo.get_job(job_id, user["workspaceId"])
     if not job:
         raise AppError("NOT_FOUND", 404, {})
-    return {"job": _public_job(job)}
+    return {"job": _public_job(job), "worker": _worker_view(request, repo)}
 
 
 @router.post("/jobs/{job_id}/retry")
@@ -740,20 +632,28 @@ def _search(request: Request):
 def _storage(request: Request):
     storage = request.app.state.storage
     if storage is None:
-        raise AppError("OBJECT_STORAGE_UNAVAILABLE", 503, {"capability": "objectStorage"})
+        raise AppError("OBJECT_STORAGE_UNAVAILABLE", 503, {"capability": "gridfs"})
     return storage
 
 
 def _stamp_original(obj: dict, *, checksum: str, mime: str, size: int) -> dict:
     stamped = {
-        "bucket": obj.get("bucket"),
-        "key": obj.get("key"),
-        "version": obj.get("version"),
+        "gridfsId": obj.get("gridfsId"),
+        "filename": obj.get("filename") or obj.get("key"),
+        "key": obj.get("key") or obj.get("filename"),
         "checksum": checksum,
         "mimeType": mime or obj.get("mimeType"),
         "byteSize": size if size is not None else obj.get("byteSize"),
     }
     return {key: value for key, value in stamped.items() if value is not None}
+
+
+def _worker_view(request: Request, repo) -> dict:
+    try:
+        document = repo.worker_status()
+    except Exception:
+        document = None
+    return worker_view(document, settings_of(request))
 
 
 def _activate_job(request: Request, job: dict, asset: dict) -> None:
@@ -789,7 +689,9 @@ def _finalise_file(request, user, temp: Path, *, filename, size, title, descript
     duplicate = repo_of(request).find_duplicate(user["workspaceId"], digest, exclude_id=None if existing is None else existing["_id"])
     if duplicate:
         if existing is not None:
-            _storage(request).delete(existing["originalObject"]["key"])
+            ref = existing.get("originalObject") or {}
+            if ref.get("key"):
+                _storage(request).delete(ref["key"])
             repo_of(request).delete_asset_tree(existing["_id"], user["workspaceId"])
         raise AppError("DUPLICATE_ASSET", 409, {"existingAssetId": str(duplicate["_id"])})
     meta = _metadata(request, user, title, description, collection_id, source, tags, source_language, captured_at, capture_mode, time_zone, filename=filename)
@@ -976,16 +878,9 @@ def _asset_sort(sort: str) -> list[tuple[str, int]]:
     }.get(sort, [("uploadedAt", -1)])
 
 
-def _sign(storage, obj: dict | None, ttl: int = 900) -> str | None:
-    local = local_playback_url(obj)
-    if local:
-        return local
-    if not storage or not obj or not obj.get("key"):
-        return None
-    try:
-        return storage.presign_get(obj["key"], ttl)
-    except AppError:
-        return None
+def _sign(storage, obj: dict | None) -> str | None:
+    del storage
+    return playback_url(obj)
 
 
 @router.get("/media/fixtures/{name}")
@@ -995,6 +890,50 @@ def local_fixture_media(name: str, request: Request) -> FileResponse:
     if path is None or media_type is None:
         raise AppError("NOT_FOUND", 404, {})
     return FileResponse(path, media_type=media_type)
+
+
+@router.get("/media/gridfs/{file_id}")
+def gridfs_media(file_id: str, request: Request):
+    user = user_of(request)
+    info = _storage(request).info(file_id)
+    if info is None or info.get("workspaceId") != user["workspaceId"]:
+        raise AppError("NOT_FOUND", 404, {})
+    length = int(info["length"])
+    mime = str(info.get("contentType") or "application/octet-stream")
+    try:
+        span = parse_byte_range(request.headers.get("range"), length)
+    except ValueError:
+        return Response(
+            status_code=416,
+            headers={"Content-Range": f"bytes */{length}", "Accept-Ranges": "bytes"},
+        )
+    if span is None:
+        start = 0
+        body_len = length
+        status = 200
+        headers = {
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(body_len),
+            "Content-Type": mime,
+        }
+    else:
+        start, end = span
+        body_len = end - start + 1
+        status = 206
+        headers = {
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(body_len),
+            "Content-Type": mime,
+            "Content-Range": f"bytes {start}-{end}/{length}",
+        }
+    if body_len == 0:
+        return Response(status_code=status, headers=headers)
+    return StreamingResponse(
+        _storage(request).iter_bytes(file_id, start, body_len),
+        status_code=status,
+        headers=headers,
+        media_type=mime,
+    )
 
 
 def _asset_summary(asset: dict, storage) -> dict:
@@ -1034,7 +973,7 @@ def _asset_detail(asset: dict, storage, settings: Settings) -> dict:
     summary = _asset_summary(asset, storage)
     derivatives = asset.get("derivatives") or {}
     playback = derivatives.get("playback") or asset.get("originalObject")
-    summary["playbackUrl"] = _sign(storage, playback, settings.playback_url_ttl_seconds)
+    summary["playbackUrl"] = _sign(storage, playback)
     summary["technical"] = jsonable(asset.get("technical") or {})
     summary["sceneCutsMs"] = asset.get("sceneCutsMs") or []
     summary["originalFilename"] = asset.get("originalFilename")

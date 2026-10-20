@@ -27,6 +27,7 @@ COLLECTION_NAMES = (
     "saved_searches",
     "users",
     "audit_events",
+    "worker_status",
 )
 
 # lucene.standard is the base analyzer: Unicode tokenization without stemming,
@@ -215,6 +216,13 @@ def validators() -> dict[str, dict[str, Any]]:
                 "properties": {"workspaceId": string, "action": string, "at": {"bsonType": "date"}},
             }
         },
+        "worker_status": {
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": ["workerId", "heartbeatAt"],
+                "properties": {"workerId": string, "heartbeatAt": {"bsonType": "date"}},
+            }
+        },
     }
 
 
@@ -263,6 +271,7 @@ def regular_index_specs() -> dict[str, list[tuple[list[tuple[str, int]], dict[st
         "collections": [([("workspaceId", ASCENDING), ("name", ASCENDING)], {"name": "workspace_name"})],
         "saved_searches": [([("workspaceId", ASCENDING), ("userId", ASCENDING)], {"name": "workspace_user"})],
         "audit_events": [([("workspaceId", ASCENDING), ("at", DESCENDING)], {"name": "workspace_at"})],
+        "worker_status": [],
     }
 
 

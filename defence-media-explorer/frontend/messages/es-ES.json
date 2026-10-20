@@ -195,11 +195,11 @@
   "upload": {
     "kicker": "Ingreso",
     "title": "Añadir medios al archivo",
-    "body": "Los archivos de 64 MB o menos se cargan directamente. Los más grandes usan una carga por partes al almacenamiento de objetos y el procesamiento es una etapa aparte.",
+    "body": "El navegador envía el archivo a la API. El procesamiento empieza solo cuando el archivo y el trabajo ya están guardados. Esta página muestra el avance y se detiene con un error si el worker no está en ejecución.",
     "drop": "Suelte los archivos aquí, o explore.",
     "browse": "Explorar archivos",
     "types": "Tipos aceptados: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A y TXT.",
-    "limit": "La carga directa por la API vale para archivos de hasta {size}. Los más grandes usan el flujo por partes.",
+    "limit": "La API acepta archivos de hasta {size}.",
     "metadata": "Metadatos de este lote",
     "titleField": "Título",
     "titleHint": "Déjelo vacío para usar el nombre de cada archivo.",
@@ -221,8 +221,7 @@
     "removeFile": "Quitar {name}",
     "progressUpload": "Carga {value}",
     "progressProcessing": "Procesamiento: {status}",
-    "direct": "Carga directa por la API",
-    "multipart": "Carga por partes",
+    "direct": "Enviado a través de la API",
     "done": "Entregado al procesamiento",
     "viewerOnly": "Su rol puede buscar en el archivo. Cargar requiere un cargador o un administrador.",
     "empty": "No hay archivos en espera.",
@@ -241,7 +240,8 @@
     "asset": "Asset",
     "pipeline": "Canalización {value}",
     "progress": "Progreso {value}%",
-    "stage": "Etapa {value}"
+    "stage": "Etapa {value}",
+    "workerDown": "El worker de ingesta no está en ejecución. Inícielo con la API; si no, el procesamiento sigue en cola. Un proveedor ausente se indica en el trabajo cuando el worker está activo."
   },
   "collections": {
     "kicker": "Organización",
@@ -278,13 +278,13 @@
     "indexingNote": "Una escritura en la base puede registrar el estado de indexación como persistido. Esa escritura no es la disponibilidad del índice de búsqueda. Atlas construye el índice vectorial y el índice de texto según su propio ritmo. Consultable, más abajo, es la señal de disponibilidad.",
     "capability": {
       "mongodb": "MongoDB",
-      "objectStorage": "Almacenamiento de objetos",
       "embeddings": "Incrustaciones",
       "vision": "Descripciones visuales",
       "transcription": "Transcripción",
       "rerank": "Reordenación",
       "queue": "Cola",
-      "session": "Firma de sesión"
+      "session": "Firma de sesión",
+      "gridfs": "Archivos multimedia"
     },
     "configured": "Configurado",
     "reachable": "Alcanzable",
@@ -306,7 +306,8 @@
     "allClear": "Cada capacidad comprobada está disponible.",
     "textChannel": "Canal de texto",
     "textModel": "Modelo de texto",
-    "indexTextVector": "Índice vectorial de texto"
+    "indexTextVector": "Índice vectorial de texto",
+    "legacyObjects": "Aún en el almacén de objetos anterior"
   },
   "health": {
     "status": {
@@ -447,8 +448,8 @@
     "VALIDATION_ERROR": "Hay campos que deben corregirse.",
     "INTERNAL_ERROR": "El servicio encontró un error inesperado.",
     "MONGODB_UNAVAILABLE": "La base de datos no está alcanzable.",
-    "OBJECT_STORAGE_UNAVAILABLE": "El almacenamiento de objetos no está configurado.",
-    "OBJECT_STORAGE_FAILED": "El almacenamiento de objetos no completó la solicitud.",
+    "OBJECT_STORAGE_UNAVAILABLE": "El almacenamiento de medios no está disponible porque la base de datos no responde.",
+    "OBJECT_STORAGE_FAILED": "El almacenamiento de medios no pudo completar la solicitud.",
     "QUEUE_UNAVAILABLE": "La cola de procesamiento no está alcanzable.",
     "UPLOAD_TOO_LARGE": "El archivo supera el límite de carga.",
     "FILE_TYPE_UNSUPPORTED": "Este tipo de archivo no se acepta.",
@@ -492,6 +493,8 @@
       "extension": "Extensión: {value}",
       "mime": "Tipo de medio: {value}",
       "detected": "Detectado: {value}"
-    }
+    },
+    "LEGACY_OBJECT_STORAGE": "Este archivo sigue apuntando al almacén de objetos anterior y no se ha migrado. No se ha eliminado.",
+    "WORKER_NOT_RUNNING": "El worker de ingesta no está en ejecución, así que esta carga no puede terminar."
   }
 }

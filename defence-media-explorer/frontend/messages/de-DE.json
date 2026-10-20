@@ -195,11 +195,11 @@
   "upload": {
     "kicker": "Eingang",
     "title": "Medien ins Archiv aufnehmen",
-    "body": "Dateien bis 64 MB gehen direkt über die API. Größere Dateien nutzen einen mehrteiligen Upload in den Objektspeicher, danach ist die Verarbeitung eine eigene Stufe.",
+    "body": "Der Browser sendet die Datei an die API. Die Verarbeitung startet erst, wenn Datei und Auftrag gespeichert sind. Diese Seite zeigt den Fortschritt und stoppt mit einem Fehler, wenn der Worker nicht läuft.",
     "drop": "Dateien hier ablegen oder durchsuchen.",
     "browse": "Dateien durchsuchen",
     "types": "Zulässige Typen: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A und TXT.",
-    "limit": "Der direkte Upload über die API gilt für Dateien bis {size}. Größere Dateien nutzen den mehrteiligen Ablauf.",
+    "limit": "Die API nimmt Dateien bis {size} an.",
     "metadata": "Metadaten für diesen Stapel",
     "titleField": "Titel",
     "titleHint": "Leer lassen, um den Dateinamen jeder Datei zu verwenden.",
@@ -221,8 +221,7 @@
     "removeFile": "{name} entfernen",
     "progressUpload": "Upload {value}",
     "progressProcessing": "Verarbeitung: {status}",
-    "direct": "Direkter API-Upload",
-    "multipart": "Mehrteiliger Upload",
+    "direct": "Über die API gesendet",
     "done": "An die Verarbeitung übergeben",
     "viewerOnly": "Ihre Rolle darf das Archiv durchsuchen. Hochladen braucht eine hochladende Person oder die Administration.",
     "empty": "Keine Dateien warten.",
@@ -241,7 +240,8 @@
     "asset": "Asset",
     "pipeline": "Pipeline {value}",
     "progress": "Fortschritt {value} %",
-    "stage": "Stufe {value}"
+    "stage": "Stufe {value}",
+    "workerDown": "Der Ingestion-Worker läuft nicht. Starten Sie ihn zusammen mit der API, sonst bleibt die Verarbeitung in der Warteschlange. Ein fehlender Anbieter erscheint am Auftrag, sobald der Worker läuft."
   },
   "collections": {
     "kicker": "Ordnung",
@@ -278,13 +278,13 @@
     "indexingNote": "Ein Schreibvorgang kann den Indexzustand als persistiert festhalten. Dieser Schreibvorgang ist nicht die Verfügbarkeit des Suchindex. Atlas baut den Vektorindex und den Textindex nach eigenem Zeitplan. Abfragbar, unten, ist das Verfügbarkeitssignal.",
     "capability": {
       "mongodb": "MongoDB",
-      "objectStorage": "Objektspeicher",
       "embeddings": "Einbettungen",
       "vision": "Bildbeschreibungen",
       "transcription": "Transkription",
       "rerank": "Neusortierung",
       "queue": "Warteschlange",
-      "session": "Sitzungssignatur"
+      "session": "Sitzungssignatur",
+      "gridfs": "Mediendateien"
     },
     "configured": "Konfiguriert",
     "reachable": "Erreichbar",
@@ -306,7 +306,8 @@
     "allClear": "Jede geprüfte Fähigkeit ist verfügbar.",
     "textChannel": "Textkanal",
     "textModel": "Textmodell",
-    "indexTextVector": "Textvektorindex"
+    "indexTextVector": "Textvektorindex",
+    "legacyObjects": "Noch im früheren Objektspeicher"
   },
   "health": {
     "status": {
@@ -447,8 +448,8 @@
     "VALIDATION_ERROR": "Einige Felder müssen korrigiert werden.",
     "INTERNAL_ERROR": "Der Dienst ist auf einen unerwarteten Fehler gestoßen.",
     "MONGODB_UNAVAILABLE": "Die Datenbank ist nicht erreichbar.",
-    "OBJECT_STORAGE_UNAVAILABLE": "Der Objektspeicher ist nicht konfiguriert.",
-    "OBJECT_STORAGE_FAILED": "Der Objektspeicher konnte die Anfrage nicht abschließen.",
+    "OBJECT_STORAGE_UNAVAILABLE": "Der Medienspeicher ist nicht verfügbar, weil die Datenbank nicht erreichbar ist.",
+    "OBJECT_STORAGE_FAILED": "Der Medienspeicher konnte die Anfrage nicht abschließen.",
     "QUEUE_UNAVAILABLE": "Die Verarbeitungswarteschlange ist nicht erreichbar.",
     "UPLOAD_TOO_LARGE": "Die Datei ist größer als das Upload-Limit.",
     "FILE_TYPE_UNSUPPORTED": "Dieser Dateityp wird nicht angenommen.",
@@ -492,6 +493,8 @@
       "extension": "Endung: {value}",
       "mime": "Medientyp: {value}",
       "detected": "Erkannt: {value}"
-    }
+    },
+    "LEGACY_OBJECT_STORAGE": "Diese Datei verweist noch auf den früheren Objektspeicher und wurde nicht migriert. Sie wurde nicht gelöscht.",
+    "WORKER_NOT_RUNNING": "Der Ingestion-Worker läuft nicht, deshalb kann dieser Upload nicht fertig werden."
   }
 }

@@ -47,14 +47,6 @@ class Settings(BaseSettings):
     vision_model: str = "gpt-4.1-mini"
     transcription_model: str = "whisper-1"
 
-    s3_endpoint: str = ""
-    s3_public_endpoint: str = ""
-    s3_region: str = "us-east-1"
-    s3_bucket: str = "defence-media"
-    s3_access_key_id: str = ""
-    s3_secret_access_key: str = ""
-    s3_force_path_style: bool = True
-
     session_secret: str = ""
     demo_admin_email: str = ""
     demo_admin_password: str = ""
@@ -84,8 +76,6 @@ class Settings(BaseSettings):
     search_top_k: int = 20
     vector_num_candidates: int = 400
     rrf_k: int = 60
-    direct_upload_max_mb: int = 64
-    playback_url_ttl_seconds: int = 900
     nearby_gap_ms: int = 2000
 
     @field_validator("embedding_dimensions", "text_embedding_dimensions")
@@ -111,16 +101,8 @@ class Settings(BaseSettings):
         return self.max_upload_mb * 1024 * 1024
 
     @property
-    def direct_upload_max_bytes(self) -> int:
-        return self.direct_upload_max_mb * 1024 * 1024
-
-    @property
     def mongodb_configured(self) -> bool:
         return bool(self.mongodb_uri.strip())
-
-    @property
-    def object_storage_configured(self) -> bool:
-        return bool(self.s3_endpoint and self.s3_access_key_id and self.s3_secret_access_key and self.s3_bucket)
 
     @property
     def embeddings_configured(self) -> bool:

@@ -38,6 +38,7 @@ PERMANENT_CODES = frozenset(
         "FORBIDDEN",
         "CONFIG_INVALID",
         "PROVIDER_NOT_CONFIGURED",
+        "LEGACY_OBJECT_STORAGE",
         "PASSWORD_POLICY",
         "DELETE_INCOMPLETE",
         "COLLECTION_NOT_EMPTY",
@@ -84,13 +85,28 @@ def retry_delay_seconds(attempt: int, settings, rng: Callable[[], float] | None 
     return growth + (roll * 0.25 * growth)
 
 
+def is_legacy_object_storage(ref: dict | None) -> bool:
+    """An older asset still points at object storage. Leave it in place."""
+
+    if not isinstance(ref, dict) or ref.get("gridfsId"):
+        return False
+    return bool(ref.get("bucket") and ref.get("key"))
+
+
+def legacy_asset_filter() -> dict[str, Any]:
+    return {
+        "originalObject.bucket": {"$type": "string"},
+        "originalObject.gridfsId": {"$exists": False},
+    }
+
+
 def original_object_present(asset: dict | None) -> bool:
-    """Bytes have a bucket and key. Checksum may still be pending until the upload handler hashes them."""
+    """The original is a GridFS file. A bucket and key without a file id is not enough."""
 
     if not asset or asset.get("processingStatus") == "uploading":
         return False
     ref = asset.get("originalObject") or {}
-    return isinstance(ref, dict) and bool(ref.get("bucket") and ref.get("key"))
+    return isinstance(ref, dict) and bool(ref.get("gridfsId"))
 
 
 def original_available(asset: dict | None) -> bool:

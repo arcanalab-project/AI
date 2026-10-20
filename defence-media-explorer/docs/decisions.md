@@ -52,15 +52,17 @@ Missing Voyage or OpenAI credentials stay missing. The pipeline writes the segme
 
 Reprocess writes the next generation, then deletes the other generations. If the new vectors use a different model, dimension, or pipeline version, the previous generation is removed before the new documents are inserted, so a query does not mix incompatible vectors. Otherwise the new documents are inserted first and the old generation is removed afterwards.
 
-## Object storage endpoints
+## Media bytes
 
-`S3_ENDPOINT` is the address the API and the worker use. Inside Compose that is the MinIO service. `S3_PUBLIC_ENDPOINT` is the address placed in signed URLs the browser can open. Signing with the internal hostname makes the browser request fail even when the signature is valid. `infra/minio-cors.json` allows the frontend origin to PUT and GET. The multipart client does not send `X-DME-Request` to MinIO.
+Originals and derivatives are GridFS files in `defence_media_explorer`, bucket `media`. The asset or segment document stores the file id, checksum, MIME type, and size. It does not store the bytes. Playback is an authenticated ranged GET on the API. There is no second object store and no signed URL.
+
+An asset whose ref still has a bucket and key, and no GridFS id, is reported and left in place. Reprocessing it stops with `LEGACY_OBJECT_STORAGE` and does not delete the asset or a previous ready generation.
 
 ## Ingestion queue
 
 Redis and Celery are not part of the running system. `ingestion_jobs` is the queue: atomic claim, a renewable lease, heartbeats that must still own the job, recovery after the lease expires, bounded retries with exponential backoff and jitter, and a terminal `failed` state. Transient provider failures retry. Permanent failures, including a model or dimension mismatch, do not. Stage checkpoints are stored on the job so a recovered attempt can reuse completed work. Segment writes upsert `segmentKey`.
 
-The worker is `python -m app.workers` from the backend directory. That is also the Compose command. Running more than one process does not require a different queue.
+The worker is `python -m app.workers` from the backend directory. `./scripts/dev.sh` starts it with the API and the frontend. Running more than one worker process does not require a different queue. One heartbeat document tells the interface when no worker is running.
 
 ## Interface language
 

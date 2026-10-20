@@ -14,6 +14,8 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from pymongo.errors import PyMongoError
+
 from app.pipeline.runner import process_job
 from app.workers.control import LeaseControl, OwnershipLost
 from app.workers.queue import JobQueue
@@ -37,10 +39,15 @@ def run_worker(queue: JobQueue, deps, settings, *, stop: threading.Event | None 
     logger.info("ingestion worker started id=%s concurrency=%s", worker_id, capacity)
     try:
         while not stop.is_set():
+            _beat_worker(deps, worker_id)
             inflight = {item for item in inflight if not item.done()}
             claimed = None
             if len(inflight) < capacity and disk_has_room(deps.workdir, settings.max_temp_disk_mb):
-                claimed = queue.claim(worker_id)
+                try:
+                    claimed = queue.claim(worker_id)
+                except PyMongoError:
+                    logger.warning("ingestion claim failed because the database did not answer")
+                    claimed = None
             elif len(inflight) < capacity:
                 logger.warning("ingestion paused because free temp disk is below the configured limit")
             if claimed is not None:
@@ -57,6 +64,16 @@ def run_worker(queue: JobQueue, deps, settings, *, stop: threading.Event | None 
         stop.set()
         executor.shutdown(wait=True, cancel_futures=False)
         logger.info("ingestion worker stopped id=%s", worker_id)
+
+
+def _beat_worker(deps, worker_id: str) -> None:
+    repo = getattr(deps, "repo", None)
+    if repo is None:
+        return
+    try:
+        repo.touch_worker(worker_id)
+    except Exception:
+        logger.warning("worker heartbeat was not written")
 
 
 def _delay(settings, idle_steps: int, *, found: bool) -> float:

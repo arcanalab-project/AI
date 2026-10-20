@@ -195,11 +195,11 @@
   "upload": {
     "kicker": "Versement",
     "title": "Ajouter des médias à l'archive",
-    "body": "Les fichiers de 64 Mo ou moins passent directement par l'API. Les fichiers plus volumineux utilisent un téléversement en parties vers le stockage objet, puis le traitement est une étape distincte.",
+    "body": "Le navigateur envoie le fichier à l'API. Le traitement ne commence qu'une fois le fichier et le travail enregistrés. Cette page affiche la progression et s'arrête avec une erreur si le worker n'est pas lancé.",
     "drop": "Déposez les fichiers ici, ou parcourez.",
     "browse": "Parcourir les fichiers",
     "types": "Types acceptés : MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A et TXT.",
-    "limit": "Le téléversement direct par l'API concerne les fichiers jusqu'à {size}. Les fichiers plus volumineux utilisent le flux en parties.",
+    "limit": "L'API accepte les fichiers jusqu'à {size}.",
     "metadata": "Métadonnées de ce lot",
     "titleField": "Titre",
     "titleHint": "Laissez vide pour utiliser le nom de chaque fichier.",
@@ -221,8 +221,7 @@
     "removeFile": "Retirer {name}",
     "progressUpload": "Téléversement {value}",
     "progressProcessing": "Traitement : {status}",
-    "direct": "Téléversement direct par l'API",
-    "multipart": "Téléversement en parties",
+    "direct": "Envoyé via l'API",
     "done": "Remis au traitement",
     "viewerOnly": "Votre rôle peut rechercher dans l'archive. Le téléversement demande un déposant ou un administrateur.",
     "empty": "Aucun fichier en attente.",
@@ -241,7 +240,8 @@
     "asset": "Asset",
     "pipeline": "Pipeline {value}",
     "progress": "Progression {value} %",
-    "stage": "Étape {value}"
+    "stage": "Étape {value}",
+    "workerDown": "Le worker d'ingestion n'est pas en cours d'exécution. Démarrez-le avec l'API, sinon le traitement reste en file. Un fournisseur manquant est indiqué sur le travail une fois le worker lancé."
   },
   "collections": {
     "kicker": "Organisation",
@@ -278,13 +278,13 @@
     "indexingNote": "Une écriture en base peut enregistrer l'état d'indexation comme persisté. Cette écriture n'est pas la disponibilité de l'index de recherche. Atlas construit l'index vectoriel et l'index textuel selon son propre calendrier. Interrogeable, ci-dessous, est le signal de disponibilité.",
     "capability": {
       "mongodb": "MongoDB",
-      "objectStorage": "Stockage objet",
       "embeddings": "Vecteurs",
       "vision": "Descriptions visuelles",
       "transcription": "Transcription",
       "rerank": "Reclassement",
       "queue": "File d'attente",
-      "session": "Signature de session"
+      "session": "Signature de session",
+      "gridfs": "Fichiers média"
     },
     "configured": "Configuré",
     "reachable": "Joignable",
@@ -306,7 +306,8 @@
     "allClear": "Chaque capacité contrôlée est disponible.",
     "textChannel": "Canal textuel",
     "textModel": "Modèle textuel",
-    "indexTextVector": "Index vectoriel du texte"
+    "indexTextVector": "Index vectoriel du texte",
+    "legacyObjects": "Encore sur l'ancien stockage objet"
   },
   "health": {
     "status": {
@@ -447,8 +448,8 @@
     "VALIDATION_ERROR": "Certains champs doivent être corrigés.",
     "INTERNAL_ERROR": "Le service a rencontré une erreur inattendue.",
     "MONGODB_UNAVAILABLE": "La base de données n'est pas joignable.",
-    "OBJECT_STORAGE_UNAVAILABLE": "Le stockage objet n'est pas configuré.",
-    "OBJECT_STORAGE_FAILED": "Le stockage objet n'a pas terminé la requête.",
+    "OBJECT_STORAGE_UNAVAILABLE": "Le stockage des médias n'est pas disponible parce que la base n'est pas joignable.",
+    "OBJECT_STORAGE_FAILED": "Le stockage des médias n'a pas pu terminer la demande.",
     "QUEUE_UNAVAILABLE": "La file de traitement n'est pas joignable.",
     "UPLOAD_TOO_LARGE": "Le fichier dépasse la limite de téléversement.",
     "FILE_TYPE_UNSUPPORTED": "Ce type de fichier n'est pas accepté.",
@@ -492,6 +493,8 @@
       "extension": "Extension : {value}",
       "mime": "Type de média : {value}",
       "detected": "Détecté : {value}"
-    }
+    },
+    "LEGACY_OBJECT_STORAGE": "Ce fichier pointe encore vers l'ancien stockage objet et n'a pas été migré. Il n'a pas été supprimé.",
+    "WORKER_NOT_RUNNING": "Le worker d'ingestion n'est pas lancé, donc ce téléversement ne peut pas se terminer."
   }
 }

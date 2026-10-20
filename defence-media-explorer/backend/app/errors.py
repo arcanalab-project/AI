@@ -38,6 +38,8 @@ ERROR_CODES: frozenset[str] = frozenset(
         "MONGODB_UNAVAILABLE",
         "OBJECT_STORAGE_UNAVAILABLE",
         "OBJECT_STORAGE_FAILED",
+        "LEGACY_OBJECT_STORAGE",
+        "WORKER_NOT_RUNNING",
         "QUEUE_UNAVAILABLE",
         "UPLOAD_TOO_LARGE",
         "FILE_TYPE_UNSUPPORTED",

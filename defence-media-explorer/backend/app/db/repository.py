@@ -295,6 +295,16 @@ class Repository:
             self.db.saved_searches.find({"workspaceId": workspace_id, "userId": user_id}).sort("createdAt", -1)
         )
 
+    def touch_worker(self, worker_id: str) -> None:
+        self.db.worker_status.update_one(
+            {"_id": "primary"},
+            {"$set": {"workerId": worker_id, "heartbeatAt": now()}},
+            upsert=True,
+        )
+
+    def worker_status(self) -> dict | None:
+        return self.db.worker_status.find_one({"_id": "primary"})
+
     def delete_saved_search(self, search_id: str, workspace_id: str, user_id: str) -> bool:
         result = self.db.saved_searches.delete_one(
             {"_id": oid(search_id), "workspaceId": workspace_id, "userId": user_id}

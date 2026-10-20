@@ -195,11 +195,11 @@
   "upload": {
     "kicker": "Acquisizione",
     "title": "Aggiungi media all'archivio",
-    "body": "I file fino a 64 MB passano direttamente dall'API. I file più grandi usano il caricamento in parti verso lo storage oggetti, poi l'elaborazione è una fase separata.",
+    "body": "Il browser invia il file all'API. L'elaborazione parte solo dopo che il file e il lavoro sono stati salvati. Questa pagina mostra l'avanzamento e si ferma con un errore se il worker non è in esecuzione.",
     "drop": "Rilascia i file qui, oppure sfoglia.",
     "browse": "Sfoglia i file",
     "types": "Tipi accettati: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A e TXT.",
-    "limit": "Il caricamento diretto tramite API vale per i file fino a {size}. I file più grandi usano il flusso in parti.",
+    "limit": "L'API accetta file fino a {size}.",
     "metadata": "Metadati di questo gruppo",
     "titleField": "Titolo",
     "titleHint": "Lascia vuoto per usare il nome di ogni file.",
@@ -221,8 +221,7 @@
     "removeFile": "Rimuovi {name}",
     "progressUpload": "Caricamento {value}",
     "progressProcessing": "Elaborazione: {status}",
-    "direct": "Caricamento diretto via API",
-    "multipart": "Caricamento in parti",
+    "direct": "Inviato tramite l'API",
     "done": "Passato all'elaborazione",
     "viewerOnly": "Il tuo ruolo può cercare nell'archivio. Il caricamento richiede un caricatore o un amministratore.",
     "empty": "Nessun file in attesa.",
@@ -241,7 +240,8 @@
     "asset": "Asset",
     "pipeline": "Pipeline {value}",
     "progress": "Avanzamento {value}%",
-    "stage": "Fase {value}"
+    "stage": "Fase {value}",
+    "workerDown": "Il worker di ingestion non è in esecuzione. Avvialo insieme all'API, altrimenti l'elaborazione resta in coda. Un provider mancante compare sul lavoro quando il worker è attivo."
   },
   "collections": {
     "kicker": "Organizzazione",
@@ -278,13 +278,13 @@
     "indexingNote": "Una scrittura nel database può registrare lo stato di indicizzazione come persistito. Quella scrittura non è la disponibilità dell'indice di ricerca. Atlas costruisce l'indice vettoriale e l'indice testuale secondo i propri tempi. Interrogabile, qui sotto, è il segnale di disponibilità.",
     "capability": {
       "mongodb": "MongoDB",
-      "objectStorage": "Storage oggetti",
       "embeddings": "Embedding",
       "vision": "Descrizioni visive",
       "transcription": "Trascrizione",
       "rerank": "Riordino",
       "queue": "Coda",
-      "session": "Firma della sessione"
+      "session": "Firma della sessione",
+      "gridfs": "File multimediali"
     },
     "configured": "Configurato",
     "reachable": "Raggiungibile",
@@ -306,7 +306,8 @@
     "allClear": "Ogni capacità controllata è disponibile.",
     "textChannel": "Canale testuale",
     "textModel": "Modello testuale",
-    "indexTextVector": "Indice vettoriale del testo"
+    "indexTextVector": "Indice vettoriale del testo",
+    "legacyObjects": "Ancora sul precedente object store"
   },
   "health": {
     "status": {
@@ -447,8 +448,8 @@
     "VALIDATION_ERROR": "Alcuni campi vanno corretti.",
     "INTERNAL_ERROR": "Il servizio ha incontrato un errore imprevisto.",
     "MONGODB_UNAVAILABLE": "Il database non è raggiungibile.",
-    "OBJECT_STORAGE_UNAVAILABLE": "Lo storage oggetti non è configurato.",
-    "OBJECT_STORAGE_FAILED": "Lo storage oggetti non ha completato la richiesta.",
+    "OBJECT_STORAGE_UNAVAILABLE": "Lo storage dei media non è disponibile perché il database non è raggiungibile.",
+    "OBJECT_STORAGE_FAILED": "Lo storage dei media non ha completato la richiesta.",
     "QUEUE_UNAVAILABLE": "La coda di elaborazione non è raggiungibile.",
     "UPLOAD_TOO_LARGE": "Il file supera il limite di caricamento.",
     "FILE_TYPE_UNSUPPORTED": "Questo tipo di file non è accettato.",
@@ -492,6 +493,8 @@
       "extension": "Estensione: {value}",
       "mime": "Tipo di media: {value}",
       "detected": "Rilevato: {value}"
-    }
+    },
+    "LEGACY_OBJECT_STORAGE": "Questo file punta ancora al precedente object store e non è stato migrato. Non è stato eliminato.",
+    "WORKER_NOT_RUNNING": "Il worker di ingestion non è in esecuzione, quindi questo caricamento non può finire."
   }
 }

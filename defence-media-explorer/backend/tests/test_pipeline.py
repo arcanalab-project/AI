@@ -23,10 +23,12 @@ class MemoryStorage:
 
     def put_file(self, key: str, path: Path, content_type: str) -> dict:
         self.objects[key] = path.read_bytes()
-        return {"bucket": "test", "key": key}
+        return {"gridfsId": key, "key": key, "filename": key, "mimeType": content_type}
 
     def download(self, obj: dict, dest: Path) -> Path:
-        dest.write_bytes(self.objects[obj["key"]])
+        ident = obj.get("key") or obj.get("gridfsId")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(self.objects[ident])
         return dest
 
     def delete(self, key: str) -> None:
@@ -182,7 +184,7 @@ def _pair(media_type: str, mime: str, filename: str, payload: bytes):
         "mediaType": media_type,
         "mimeType": mime,
         "originalFilename": filename,
-        "originalObject": {"bucket": "test", "key": f"original-{asset_id}"},
+        "originalObject": {"gridfsId": f"original-{asset_id}", "key": f"original-{asset_id}", "checksum": "fixture"},
         "generation": 0,
         "uploadedAt": datetime(2026, 10, 20, tzinfo=timezone.utc),
         "capturedAt": None,

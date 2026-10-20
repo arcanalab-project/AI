@@ -6,13 +6,14 @@ Collections:
 
 | Collection | Holds |
 | --- | --- |
-| `assets` | One original file. The object ref stores bucket, key, version when the store returns one, checksum, MIME type, and size. `capturedAt` and `uploadedAt` stay separate. Unknown capture time stays unknown. `processingStatus` is the lifecycle status. |
+| `assets` | One original file. The object ref stores the GridFS file id, filename, checksum, MIME type, and size. Bytes are not embedded in the document. `capturedAt` and `uploadedAt` stay separate. Unknown capture time stays unknown. `processingStatus` is the lifecycle status. An older ref that still has a bucket and key, and no GridFS id, is left in place. |
 | `segments` | The `asset_segments` contract: one searchable unit per document (text chunk, image, video clip, or timestamped transcript segment). The live collection name stays `segments` because the Atlas vector index `segments_vector_v1` and text index `segments_text_v1` already point at it. There is no second `asset_segments` collection. |
 | `ingestion_jobs` | The ingestion queue. Status, stage, progress, attempts, `nextRunAt`, `workerId`, `leaseUntil`, `heartbeatAt`, ownership token, checkpoints, and structured errors. |
 | `collections` | Named groups used as a filter. |
 | `saved_searches` | A person's query, mode, filters, and sort. |
 | `users` | Email, password hash, role, locale, time zone, workspace. |
 | `audit_events` | Login, upload, update, delete, and saved-search actions. |
+| `worker_status` | One heartbeat document so the interface can tell a stopped worker from a slow job. |
 
 Roles are `viewer`, `uploader`, and `admin`.
 
@@ -36,7 +37,7 @@ Fields Atlas Search reads include title, descriptions, transcript, OCR text, tag
 
 ## Jobs
 
-`ingestion_jobs` is the queue. A job stays `inactive` until the original object is in storage and its checksum is known. The worker then claims it.
+`ingestion_jobs` is the queue. A job stays `inactive` until the original is in GridFS and its checksum is known. The worker then claims it. A ref that only has a bucket and key is not activated.
 
 Statuses move through `uploaded`, `validating`, `extracting`, `enriching`, `embedding`, and `indexing`, and finish as `ready`, `partial`, or `failed`. `retrying` means a transient error is waiting for `nextRunAt`. `partial` means a provider or a derivative was missing and the gap was recorded. `failed` is terminal and carries `{ code, params }` from the stable error list.
 

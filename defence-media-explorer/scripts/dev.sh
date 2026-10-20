@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# One command for the local demo. Bash 3.2 safe (macOS /bin/bash).
+# Starts the API, the ingestion worker, and the frontend. Ctrl+C stops all three.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+missing=0
+need() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "Missing $1. $2"
+    missing=1
+  fi
+}
+
+need python3 "Install Python 3.11 or newer."
+need node "Install Node.js 20 or newer. https://nodejs.org"
+need npm "npm is included with Node.js."
+need ffmpeg "Install FFmpeg. On macOS: brew install ffmpeg"
+need ffprobe "ffprobe ships with FFmpeg. On macOS: brew install ffmpeg"
+
+if ! python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)'; then
+  echo "Python 3.11 or newer is required. This machine has: $(python3 --version 2>/dev/null || echo unknown)"
+  missing=1
+fi
+
+if [ "$missing" -ne 0 ]; then
+  exit 1
+fi
+
+if [ ! -f .env ]; then
+  echo "Missing .env. Copy .env.example to .env and set MONGODB_URI, SESSION_SECRET, and VOYAGE_API_KEY."
+  echo "Do not commit .env."
+  exit 1
+fi
+
+if [ ! -d .venv ]; then
+  echo "Creating .venv"
+  python3 -m venv .venv
+fi
+# shellcheck disable=SC1091
+. .venv/bin/activate
+
+echo "Installing Python dependencies"
+python -m pip install -r backend/requirements.txt
+
+if [ ! -d frontend/node_modules ]; then
+  echo "Installing frontend dependencies"
+  (cd frontend && npm ci)
+fi
+
+echo "Checking Atlas and search indexes"
+(cd backend && python -m app.preflight)
+
+export PYTHONUNBUFFERED=1
+
+pids=""
+kill_tree() {
+  local pid="$1"
+  local child
+  for child in $(pgrep -P "$pid" 2>/dev/null || true); do
+    kill_tree "$child"
+  done
+  kill "$pid" 2>/dev/null || true
+}
+cleanup() {
+  trap - INT TERM EXIT
+  for pid in $pids; do
+    kill_tree "$pid"
+  done
+  wait 2>/dev/null || true
+}
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
+
+echo "Starting API on http://127.0.0.1:8000"
+(cd backend && exec python -m uvicorn app.main:app --host 127.0.0.1 --port 8000) &
+pids="$pids $!"
+
+echo "Starting ingestion worker"
+(cd backend && exec python -m app.workers) &
+pids="$pids $!"
+
+echo "Starting frontend on http://localhost:3000"
+(cd frontend && exec npm run dev -- --hostname 127.0.0.1 --port 3000) &
+pids="$pids $!"
+
+echo "Bastion: http://localhost:3000"
+echo "Logs from the API, worker, and frontend follow. Ctrl+C stops all three."
+echo "A worker on this Mac means ingestion runs only while this command is running."
+
+while true; do
+  for pid in $pids; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      echo "A process exited (pid $pid). Stopping the others."
+      cleanup
+      exit 1
+    fi
+  done
+  sleep 1
+done

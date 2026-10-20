@@ -16,6 +16,6 @@ Voyage embeddings, OpenAI vision, OpenAI transcription, semantic retrieval, hybr
 
 Do not read a partial asset, a tone fixture, or an empty result list as a measurement of model quality. A tone WAV is not speech-recognition evidence.
 
-## Compose
+## Startup
 
-`docker-compose.yml` was checked as YAML. It includes the API, worker, frontend, Redis, and MinIO, and it does not include a MongoDB service. Docker is not installed in the environment where this note was written, so the stack was not started with Compose.
+The local demo starts with `./scripts/dev.sh`. That command is the supported path. Docker, MinIO, Redis, and Celery are not required. Originals and derivatives are GridFS files in `defence_media_explorer`.

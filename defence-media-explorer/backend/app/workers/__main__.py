@@ -4,7 +4,7 @@ Run from the backend directory:
 
     python -m app.workers
 
-The same command is the container command. Point it at Atlas and object storage.
+Point it at Atlas. Originals are GridFS files in the same database.
 A worker on a laptop means ingestion waits for that laptop. Run it on an
 always-on host when uploads must proceed while no one is logged in.
 """

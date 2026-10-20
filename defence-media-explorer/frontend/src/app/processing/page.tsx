@@ -27,12 +27,14 @@ export default function ProcessingPage() {
   const t = useTranslations();
   const { user } = usePrefs();
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [workerAlive, setWorkerAlive] = useState<boolean | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
   async function load() {
     try {
-      const data = await api<{ jobs: Job[] }>("/api/jobs");
+      const data = await api<{ jobs: Job[]; worker?: { alive?: boolean } }>("/api/jobs");
       setJobs(data.jobs);
+      setWorkerAlive(data.worker?.alive ?? null);
       setError(null);
     } catch (reason) {
       setError(asApiError(reason));
@@ -59,6 +61,7 @@ export default function ProcessingPage() {
     <div className="space-y-8">
       <PageIntro kicker={t("processing.kicker")} title={t("processing.title")} body={t("processing.body")} />
       <ErrorNote error={error} />
+      {workerAlive === false ? <p className="panel p-5 leading-relaxed">{t("processing.workerDown")}</p> : null}
       {jobs.length ? (
         <ul className="space-y-3">
           {jobs.map((job) => (

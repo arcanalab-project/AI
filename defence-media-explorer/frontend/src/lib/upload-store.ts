@@ -10,7 +10,7 @@ export type UploadItem = {
   file: File;
   phase: "ready" | "uploading" | "processing" | "done" | "error";
   uploadRatio: number;
-  route: "direct" | "multipart" | null;
+  route: "direct" | null;
   jobId?: string;
   assetId?: string;
   processingStatus?: string;
@@ -103,13 +103,15 @@ export function watchUploadJob(localId: string, jobId: string) {
   if (watching.has(localId)) return;
   watching.add(localId);
   void (async () => {
+    let workerDownSince: number | null = null;
     try {
       while (true) {
         const current = draft.items.find((item) => item.localId === localId);
         if (!current) return;
-        const data = await api<{ job: { status?: string; error?: { code?: string; params?: Record<string, string | number | string[]> } } }>(
-          `/api/jobs/${jobId}`,
-        );
+        const data = await api<{
+          job: { status?: string; error?: { code?: string; params?: Record<string, string | number | string[]> } };
+          worker?: { alive?: boolean };
+        }>(`/api/jobs/${jobId}`);
         const status = data.job.status || "unknown";
         updateUploadItem(localId, { processingStatus: status, phase: "processing" });
         if (status === "ready" || status === "partial") {
@@ -124,6 +126,20 @@ export function watchUploadJob(localId: string, jobId: string) {
             errorParams: data.job.error?.params || {},
           });
           return;
+        }
+        if (data.worker && data.worker.alive === false) {
+          workerDownSince = workerDownSince ?? Date.now();
+          if (Date.now() - workerDownSince >= 20000) {
+            updateUploadItem(localId, {
+              phase: "error",
+              processingStatus: status,
+              errorCode: "WORKER_NOT_RUNNING",
+              errorParams: {},
+            });
+            return;
+          }
+        } else {
+          workerDownSince = null;
         }
         await new Promise((resolve) => setTimeout(resolve, 2500));
       }

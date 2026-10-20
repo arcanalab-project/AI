@@ -1,3 +1,5 @@
-from app.storage.s3 import ObjectRef, ObjectStore, S3ObjectStore, ref
+"""Media bytes live in GridFS. This package is that store, not a second backend."""
 
-__all__ = ["ObjectRef", "ObjectStore", "S3ObjectStore", "ref"]
+from app.storage.gridfs import BUCKET, GridFSStore
+
+__all__ = ["BUCKET", "GridFSStore"]

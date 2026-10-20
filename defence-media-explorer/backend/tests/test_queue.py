@@ -260,14 +260,20 @@ def test_model_and_dimension_mismatch_stay_permanent():
 def test_job_is_not_activated_before_the_original_is_available():
     uploading = {
         "processingStatus": "uploading",
-        "originalObject": {"bucket": "media", "key": "original.bin"},
+        "originalObject": {"gridfsId": "abc123", "key": "original.bin"},
         "sha256": None,
     }
     assert original_available(uploading) is False
     assert activation_patch(uploading, moment=T0)["activated"] is False
-    stored = {
+    legacy = {
         "processingStatus": "uploaded",
         "originalObject": {"bucket": "media", "key": "original.bin", "checksum": "abc"},
+        "sha256": "abc",
+    }
+    assert original_available(legacy) is False
+    stored = {
+        "processingStatus": "uploaded",
+        "originalObject": {"gridfsId": "abc123", "key": "original.bin", "checksum": "abc"},
         "sha256": "abc",
     }
     assert original_available(stored) is True

@@ -16,7 +16,7 @@ type Health = {
   capabilities?: Record<string, Record<string, unknown>>;
 };
 
-const CAPABILITIES = ["mongodb", "objectStorage", "embeddings", "vision", "transcription", "rerank", "queue", "session"] as const;
+const CAPABILITIES = ["mongodb", "gridfs", "embeddings", "vision", "transcription", "rerank", "queue", "session"] as const;
 
 export default function SettingsPage() {
   const t = useTranslations();
@@ -227,6 +227,7 @@ function Capability({ name, value }: { name: string; value: Record<string, unkno
         <Fact label={t("settings.textModel")} value={value.textModel} />
         <Fact label={t("settings.database")} value={value.database} />
         <Fact label={t("settings.bucket")} value={value.bucket} />
+        <Fact label={t("settings.legacyObjects")} value={value.legacyObjectStorageCount} />
         <Fact label={t("settings.publicEndpoint")} value={value.publicEndpointConfigured} />
         {typeof value.errorCode === "string" && t.has(`errors.${value.errorCode}`) ? (
           <div className="text-[var(--warn)]">{t(`errors.${value.errorCode}`)}</div>

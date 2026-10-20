@@ -195,11 +195,11 @@
   "upload": {
     "kicker": "Ingest",
     "title": "Add media to the archive",
-    "body": "Files of 64 MB or smaller upload directly. Larger files use multipart upload to object storage, then processing starts as a separate stage.",
+    "body": "The browser sends the file to the API. Processing starts only after the file and the job are stored. This page shows progress and stops with an error if the worker is not running.",
     "drop": "Drop files here, or browse.",
     "browse": "Browse files",
     "types": "Accepted types: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A, and TXT.",
-    "limit": "Direct upload through the API applies to files up to {size}. Larger files use the multipart flow.",
+    "limit": "The API accepts files up to {size}.",
     "metadata": "Metadata for this batch",
     "titleField": "Title",
     "titleHint": "Leave this empty to use each file name.",
@@ -221,8 +221,7 @@
     "removeFile": "Remove {name}",
     "progressUpload": "Upload {value}",
     "progressProcessing": "Processing: {status}",
-    "direct": "Direct API upload",
-    "multipart": "Multipart upload",
+    "direct": "Sent through the API",
     "done": "Handed to processing",
     "viewerOnly": "Your role can search the archive. Uploading needs an uploader or an administrator.",
     "empty": "No files are waiting.",
@@ -241,7 +240,8 @@
     "asset": "Asset",
     "pipeline": "Pipeline {value}",
     "progress": "Progress {value}%",
-    "stage": "Stage {value}"
+    "stage": "Stage {value}",
+    "workerDown": "The ingestion worker is not running. Start it with the API, or processing stays queued. A missing provider is reported on the job once the worker runs."
   },
   "collections": {
     "kicker": "Organisation",
@@ -278,13 +278,13 @@
     "indexingNote": "A database write can record indexing state as persisted. That write is not the same as search-index availability. Atlas builds the vector index and the text index on their own schedule. Queryable, below, is the availability signal.",
     "capability": {
       "mongodb": "MongoDB",
-      "objectStorage": "Object storage",
       "embeddings": "Embeddings",
       "vision": "Vision descriptions",
       "transcription": "Transcription",
       "rerank": "Rerank",
       "queue": "Queue",
-      "session": "Session signing"
+      "session": "Session signing",
+      "gridfs": "Media files"
     },
     "configured": "Configured",
     "reachable": "Reachable",
@@ -306,7 +306,8 @@
     "allClear": "Every checked capability is available.",
     "textChannel": "Text channel",
     "textModel": "Text model",
-    "indexTextVector": "Text-vector index"
+    "indexTextVector": "Text-vector index",
+    "legacyObjects": "Still on the previous object store"
   },
   "health": {
     "status": {
@@ -447,8 +448,8 @@
     "VALIDATION_ERROR": "Some fields need to be corrected.",
     "INTERNAL_ERROR": "The service hit an unexpected error.",
     "MONGODB_UNAVAILABLE": "The database is not reachable.",
-    "OBJECT_STORAGE_UNAVAILABLE": "Object storage is not configured.",
-    "OBJECT_STORAGE_FAILED": "Object storage could not finish the request.",
+    "OBJECT_STORAGE_UNAVAILABLE": "Media storage is unavailable because the database is not reachable.",
+    "OBJECT_STORAGE_FAILED": "Media storage could not finish the request.",
     "QUEUE_UNAVAILABLE": "The processing queue is not reachable.",
     "UPLOAD_TOO_LARGE": "The file is larger than the upload limit.",
     "FILE_TYPE_UNSUPPORTED": "This file type is not accepted.",
@@ -492,6 +493,8 @@
       "extension": "Extension: {value}",
       "mime": "Media type: {value}",
       "detected": "Detected: {value}"
-    }
+    },
+    "LEGACY_OBJECT_STORAGE": "This file still points at the previous object store and was not migrated. It was not deleted.",
+    "WORKER_NOT_RUNNING": "The ingestion worker is not running, so this upload cannot finish."
   }
 }

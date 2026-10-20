@@ -1,7 +1,7 @@
-"""Serve the project's synthetic fixtures when object storage cannot sign a URL.
+"""Serve the project's synthetic fixtures when a document points at fixtures/synthetic.
 
-Only files that already live in fixtures/synthetic are eligible. Keys from any
-other bucket stay on the object-storage signer.
+Only files that already live in that directory are eligible. GridFS playback is a
+separate route. A bucket and key that are not a fixture do not get a URL.
 """
 
 from __future__ import annotations

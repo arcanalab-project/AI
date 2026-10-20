@@ -1,23 +1,25 @@
 from pathlib import Path
 
-import yaml
-
 from app.db.indexes import SEARCH_INDEX_DEFINITION, text_vector_index_definition, vector_index_definition
 
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_compose_services_exclude_mongodb():
-    document = yaml.safe_load((ROOT / "docker-compose.yml").read_text())
-    services = document["services"]
-    for name in ("frontend", "api", "worker", "minio"):
-        assert name in services
-    assert "redis" not in services
-    assert "mongodb" not in services
-    assert "mongo" not in services
-    assert services["worker"]["command"] == "python -m app.workers"
-    assert "celery" not in str(services["worker"])
+def test_dev_script_starts_the_three_local_processes():
+    script = (ROOT / "scripts" / "dev.sh").read_text()
+    assert "app.workers" in script
+    assert "uvicorn" in script
+    assert "npm run dev" in script
+    assert "localhost:3000" in script
+    assert "minio" not in script.lower()
+    assert "celery" not in script
+    assert "redis" not in script
+    assert not (ROOT / "docker-compose.yml").exists()
+    requirements = (ROOT / "backend" / "requirements.txt").read_text()
+    assert "boto3" not in requirements
+    assert "celery" not in requirements
+    assert not (ROOT / "backend" / "app" / "storage" / "s3.py").exists()
 
 
 def test_env_example_lists_required_keys_without_secrets():

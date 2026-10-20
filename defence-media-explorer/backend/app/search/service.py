@@ -16,6 +16,7 @@ from pymongo.errors import OperationFailure
 from app.config import Settings
 from app.errors import AppError, ProviderError
 from app.pipeline.retry import call_provider
+from app.media.playback import playback_url
 from app.pipeline.text import excerpt
 from app.search.clauses import text_should_clauses, to_search_filter_clauses
 from app.search.filters import build_metadata_filter
@@ -391,7 +392,7 @@ class SearchService:
             "matchText": excerpt(hit.get("transcript"), hit.get("ocrText"), description, hit.get("userDescription")),
             "startMs": hit.get("startMs"),
             "endMs": hit.get("endMs"),
-            "thumbnailUrl": _sign(self.storage, thumb) if thumb.get("key") else None,
+            "thumbnailUrl": playback_url(thumb) if thumb else None,
             "tags": hit.get("tags") or [],
             "categories": hit.get("categories") or [],
             "sourceLanguage": hit.get("sourceLanguage"),
@@ -408,15 +409,6 @@ class SearchService:
                 for item in hit.get("nearby") or []
             ],
         }
-
-
-def _sign(storage, obj: dict) -> str | None:
-    if storage is None or not obj or not obj.get("key"):
-        return None
-    try:
-        return storage.presign_get(obj["key"], 900)
-    except Exception:
-        return None
 
 
 def _mongo_sort(sort: str) -> list[tuple[str, int]]:

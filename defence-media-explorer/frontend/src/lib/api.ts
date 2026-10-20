@@ -133,7 +133,7 @@ export type SearchResult = {
 export const LOCALES = ["it-IT", "en-GB", "fr-FR", "es-ES", "de-DE"] as const;
 export type LocaleId = (typeof LOCALES)[number];
 
-export const DIRECT_UPLOAD_BYTES = 64 * 1024 * 1024;
+export const MAX_UPLOAD_BYTES = 1024 * 1024 * 1024;
 
 export function asApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error;

@@ -24,7 +24,7 @@ from app.pipeline.text import WHISPER_LANGUAGE_CODES, compose_search_text
 from app.providers.base import VideoInput
 from app.media.windows import build_windows, group_transcript_windows, segment_text, snap_window_ends
 from app.workers.control import DirectControl, OwnershipLost, failure_is_retryable
-from app.workers.queue import make_segment_key, original_object_present
+from app.workers.queue import is_legacy_object_storage, make_segment_key, original_object_present
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def process_job(job_id: str, deps: PipelineDeps, control=None) -> None:
     if deps.repo is None:
         raise AppError("MONGODB_UNAVAILABLE", 503, {})
     if deps.storage is None:
-        raise AppError("OBJECT_STORAGE_UNAVAILABLE", 503, {"capability": "objectStorage"})
+        raise AppError("OBJECT_STORAGE_UNAVAILABLE", 503, {"capability": "gridfs"})
     job = deps.repo.get_job(job_id)
     if not job or job.get("status") in {"ready", "partial"}:
         return
@@ -63,6 +63,9 @@ def process_job(job_id: str, deps: PipelineDeps, control=None) -> None:
     asset = deps.repo.get_asset(job["assetId"], job["workspaceId"])
     if asset is None:
         control.fail(job, "NOT_FOUND", {}, False)
+        return
+    if is_legacy_object_storage(asset.get("originalObject")):
+        _stop_legacy(deps, job, asset, control)
         return
     if not original_object_present(asset):
         control.deactivate(job)
@@ -159,6 +162,24 @@ def process_job(job_id: str, deps: PipelineDeps, control=None) -> None:
         _fail(deps, job, asset, "INTERNAL_ERROR", {}, control, exc)
     finally:
         shutil.rmtree(work, ignore_errors=True)
+
+
+def _stop_legacy(deps: PipelineDeps, job: dict, asset: dict, control) -> None:
+    """Stop the job. Do not delete the asset, a previous ready generation, or the old object."""
+
+    params = {"assetId": str(asset["_id"])}
+    outcome = control.fail(job, "LEGACY_OBJECT_STORAGE", params, False)
+    if outcome == "lost":
+        raise OwnershipLost()
+    error = {"code": "LEGACY_OBJECT_STORAGE", "params": params}
+    if asset.get("processingStatus") in {"ready", "partial"}:
+        deps.repo.update_asset(asset["_id"], asset["workspaceId"], {"error": error})
+        return
+    deps.repo.update_asset(
+        asset["_id"],
+        asset["workspaceId"],
+        {"processingStatus": "failed", "error": error},
+    )
 
 
 def _stage(deps: PipelineDeps, job: dict, asset: dict, status: str, control) -> None:
