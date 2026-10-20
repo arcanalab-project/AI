@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, File, Form, Request, Response, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.api.parsing import parse_instant, parse_tags, parse_zone, safe_filename
@@ -17,6 +18,7 @@ from app.config import PIPELINE_VERSION, Settings
 from app.db.repository import now
 from app.errors import AppError
 from app.media.detect import detect_mime, media_type_for_mime
+from app.media.local_fixtures import fixture_file, local_playback_url
 from app.media.hashing import sha256_file
 from app.pipeline.text import compose_search_text
 from app.search.filters import build_metadata_filter
@@ -925,12 +927,24 @@ def _asset_sort(sort: str) -> list[tuple[str, int]]:
 
 
 def _sign(storage, obj: dict | None, ttl: int = 900) -> str | None:
+    local = local_playback_url(obj)
+    if local:
+        return local
     if not storage or not obj or not obj.get("key"):
         return None
     try:
         return storage.presign_get(obj["key"], ttl)
     except AppError:
         return None
+
+
+@router.get("/media/fixtures/{name}")
+def local_fixture_media(name: str, request: Request) -> FileResponse:
+    user_of(request)
+    path, media_type = fixture_file(name)
+    if path is None or media_type is None:
+        raise AppError("NOT_FOUND", 404, {})
+    return FileResponse(path, media_type=media_type)
 
 
 def _asset_summary(asset: dict, storage) -> dict:

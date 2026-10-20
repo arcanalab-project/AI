@@ -83,11 +83,22 @@ export default function AssetPage() {
     if (!node || raw == null) return;
     const seconds = Number(raw) / 1000;
     if (!Number.isFinite(seconds)) return;
+    let cancelled = false;
     const apply = () => {
-      node.currentTime = seconds;
+      if (cancelled || !Number.isFinite(node.duration)) return;
+      const target = Math.min(seconds, Math.max(0, node.duration - 0.05));
+      if (Math.abs(node.currentTime - target) > 0.05) node.currentTime = target;
     };
-    if (node.readyState >= 1) apply();
-    else node.addEventListener("loadedmetadata", apply, { once: true });
+    apply();
+    node.addEventListener("loadedmetadata", apply);
+    node.addEventListener("loadeddata", apply);
+    node.addEventListener("canplay", apply);
+    return () => {
+      cancelled = true;
+      node.removeEventListener("loadedmetadata", apply);
+      node.removeEventListener("loadeddata", apply);
+      node.removeEventListener("canplay", apply);
+    };
   }, [search, asset?.playbackUrl]);
 
   useEffect(() => {
@@ -204,7 +215,7 @@ export default function AssetPage() {
             <img src={asset.playbackUrl || asset.thumbnailUrl || ""} alt="" className="max-h-[36rem] w-full rounded-2xl object-contain" />
           ) : null}
           {asset.mediaType === "video" && asset.playbackUrl ? (
-            <video ref={videoRef} src={asset.playbackUrl} controls className="max-h-[36rem] w-full rounded-2xl bg-[#001E2B]" />
+            <video ref={videoRef} src={asset.playbackUrl} controls preload="auto" className="max-h-[36rem] w-full rounded-2xl bg-[#001E2B]" />
           ) : null}
           {asset.mediaType === "audio" && asset.playbackUrl ? <audio ref={audioRef} src={asset.playbackUrl} controls className="w-full" /> : null}
           {asset.mediaType === "text" ? <pre className="whitespace-pre-wrap break-words font-sans text-base leading-relaxed">{segment?.transcript || asset.description}</pre> : null}
