@@ -47,8 +47,6 @@ class Settings(BaseSettings):
     vision_model: str = "gpt-4.1-mini"
     transcription_model: str = "whisper-1"
 
-    redis_url: str = "redis://redis:6379/0"
-
     s3_endpoint: str = ""
     s3_public_endpoint: str = ""
     s3_region: str = "us-east-1"
@@ -73,6 +71,16 @@ class Settings(BaseSettings):
     text_chunk_chars: int = 1200
     text_chunk_overlap_chars: int = 200
     ingestion_concurrency: int = 2
+    # MongoDB ingestion_jobs queue. Redis is not used.
+    job_poll_interval_seconds: float = 2
+    job_idle_backoff_seconds: float = 8
+    job_lease_seconds: int = 120
+    job_heartbeat_seconds: int = 20
+    job_max_attempts: int = 5
+    job_retry_base_seconds: float = 2
+    job_retry_max_seconds: float = 300
+    max_temp_disk_mb: int = 10240
+    worker_id: str = ""
     search_top_k: int = 20
     vector_num_candidates: int = 400
     rrf_k: int = 60

@@ -85,6 +85,7 @@
     "ready": "Pronto",
     "partial": "Parziale",
     "failed": "Non riuscito",
+    "retrying": "Nuovo tentativo",
     "unreviewed": "Non revisionato",
     "reviewed": "Revisionato",
     "unknown": "Stato sconosciuto"
@@ -238,7 +239,9 @@
     "generation": "Generazione {value}",
     "retry": "Riprova il lavoro non riuscito",
     "asset": "Asset",
-    "pipeline": "Pipeline {value}"
+    "pipeline": "Pipeline {value}",
+    "progress": "Avanzamento {value}%",
+    "stage": "Fase {value}"
   },
   "collections": {
     "kicker": "Organizzazione",
@@ -280,7 +283,7 @@
       "vision": "Descrizioni visive",
       "transcription": "Trascrizione",
       "rerank": "Riordino",
-      "redis": "Coda",
+      "queue": "Coda",
       "session": "Firma della sessione"
     },
     "configured": "Configurato",

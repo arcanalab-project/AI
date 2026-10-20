@@ -52,9 +52,14 @@
   "ingestionJob": {
     "workspaceId": "demo",
     "status": "partial",
+    "stage": "partial",
+    "progress": 100,
     "generation": 1,
     "pipelineVersion": "v1",
     "attempts": 1,
+    "maxAttempts": 5,
+    "activated": true,
+    "queueState": "done",
     "error": null
   },
   "collection": {

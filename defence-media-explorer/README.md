@@ -8,7 +8,7 @@ The product lives in this directory because the repository root README is a diff
 
 - Python 3.12, Node.js 22, ffmpeg and ffprobe
 - An Atlas database named `defence_media_explorer` (not `admin`, `local`, or `config`)
-- Redis and MinIO when you want the queue and object storage
+- MinIO when you want object storage. Ingestion does not use Redis. The queue is the `ingestion_jobs` collection in Atlas.
 - Optional: a Voyage API key for embeddings and rerank, an OpenAI API key for vision and `whisper-1` transcription
 
 Missing Voyage or OpenAI keys stay missing. Those capabilities are reported as unavailable. The app does not fill them with mock vectors or mock text.
@@ -49,12 +49,14 @@ cd backend
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Terminal 2, worker (Redis must be reachable at `REDIS_URL`):
+Terminal 2, worker. This process must stay running for ingestion. The same command is what you run on an always-on host. A worker on a laptop means new uploads wait until that laptop is on. Query embeddings are computed by the API during search and are not queued here.
 
 ```bash
 cd backend
-celery -A app.workers.celery_app:celery_app worker --loglevel=INFO
+python -m app.workers
 ```
+
+Limits have defaults and are listed in `.env.example`: `MAX_UPLOAD_MB`, `MAX_MEDIA_DURATION_SECONDS`, `MAX_TEMP_DISK_MB`, `INGESTION_CONCURRENCY`, `JOB_POLL_INTERVAL_SECONDS`, `JOB_IDLE_BACKOFF_SECONDS`, `JOB_LEASE_SECONDS`, `JOB_HEARTBEAT_SECONDS`, and `JOB_MAX_ATTEMPTS`. The collection `segments` is the `asset_segments` contract: one searchable unit per document. It is not a second collection.
 
 Terminal 3, interface:
 
@@ -75,11 +77,11 @@ python scripts/create_atlas_indexes.py --verify
 
 The verify pass inserts a probe and deletes it. Do not run two ensures at the same time.
 
-Outside Compose, point `REDIS_URL` at a Redis you started yourself, and point `S3_ENDPOINT` and `S3_PUBLIC_ENDPOINT` at MinIO. If those are down, health says so and uploads fail with a named error. Search of documents already in Atlas can still run.
+Outside Compose, point `S3_ENDPOINT` and `S3_PUBLIC_ENDPOINT` at MinIO. If MinIO is down, health says object storage is unavailable. Search of documents already in Atlas can still run. The worker only needs Atlas and, when a job has bytes to read, object storage.
 
 ## Run it with Compose
 
-Compose starts Redis, MinIO, the API, the worker, and the frontend. It does not start MongoDB. Atlas stays outside the stack.
+Compose starts MinIO, the API, the worker, and the frontend. It does not start MongoDB and it does not start Redis. Atlas stays outside the stack. The worker service runs `python -m app.workers`.
 
 ```bash
 docker compose up --build
@@ -106,7 +108,7 @@ python scripts/generate_fixtures.py
 | `docs` | Architecture, decisions, data model, data flow, index JSON, sample documents, demo script, evaluation |
 | `fixtures/synthetic` | Original diagrams, a short generated clip, a tone, a note |
 | `scripts/create_atlas_indexes.py` | Idempotent index ensure for this database only |
-| `docker-compose.yml` | API, worker, frontend, Redis, MinIO |
+| `docker-compose.yml` | API, worker, frontend, MinIO |
 
 ## Behaviour worth knowing
 
@@ -137,7 +139,7 @@ Details and the reasons for these choices are in `docs/decisions.md`, `docs/arch
 | --- | --- |
 | Sign-in says the email or password was not accepted | The admin was not seeded, or the password does not match. Both demo variables must be set on the API process before startup, and the password must meet the length rule. |
 | Health: embeddings, vision, or transcription unavailable | The corresponding key is empty. Leave it empty or set it. Do not expect synthetic vectors. |
-| Health: queue unavailable | Redis is not reachable at `REDIS_URL`. Uploads will record `QUEUE_UNAVAILABLE`. |
+| Health: queue unavailable | Atlas is not reachable, so `ingestion_jobs` cannot be claimed. The queue is that collection. |
 | Health: object storage unavailable | S3 endpoint or keys are missing. |
 | Playback or storyboard images do not load | `S3_PUBLIC_ENDPOINT` is probably the in-cluster hostname. Signed URLs must use an address the browser can open. Check MinIO CORS. |
 | Search returns index not ready | The vector or text index exists in Atlas but is not queryable yet. A successful document write does not change that. |

@@ -6,9 +6,9 @@ Collections:
 
 | Collection | Holds |
 | --- | --- |
-| `assets` | One original file, its metadata, processing status, and derivative pointers. |
-| `segments` | Retrieval units. Embeddings live here, not on a side collection. |
-| `ingestion_jobs` | Pipeline attempts, generation, and errors as codes. |
+| `assets` | One original file. The object ref stores bucket, key, version when the store returns one, checksum, MIME type, and size. `capturedAt` and `uploadedAt` stay separate. Unknown capture time stays unknown. `processingStatus` is the lifecycle status. |
+| `segments` | The `asset_segments` contract: one searchable unit per document (text chunk, image, video clip, or timestamped transcript segment). The live collection name stays `segments` because the Atlas vector index `segments_vector_v1` and text index `segments_text_v1` already point at it. There is no second `asset_segments` collection. |
+| `ingestion_jobs` | The ingestion queue. Status, stage, progress, attempts, `nextRunAt`, `workerId`, `leaseUntil`, `heartbeatAt`, ownership token, checkpoints, and structured errors. |
 | `collections` | Named groups used as a filter. |
 | `saved_searches` | A person's query, mode, filters, and sort. |
 | `users` | Email, password hash, role, locale, time zone, workspace. |
@@ -18,7 +18,9 @@ Roles are `viewer`, `uploader`, and `admin`.
 
 ## Segment
 
-A segment is an image, a video clip, an audio passage, or a text chunk. Video and audio windows keep `startMs` and `endMs` on the original timeline. Text chunks keep character offsets.
+`segments` is the `asset_segments` contract. Each document is one image, one video clip, one audio passage, one text chunk, or one timestamped transcript segment. It carries `assetId`, a stable `segmentId` (also stored as `segmentKey` for the unique upsert), segment type, `startMs` / `endMs` or character offsets, extracted text or transcript, derivative object refs, the embedding, the embedding model and dimensions, `preprocessingVersion`, and processing status. Video and audio windows keep `startMs` and `endMs` on the original timeline.
+
+`segmentKey` is unique. A replayed job upserts that key, so at-least-once delivery does not publish a second copy. The API still addresses a segment by its MongoDB `_id` in search results and in the player link. The full embedding array is not returned to the browser.
 
 Fields the vector index can filter include workspace, media type, segment type, collection, source, source language, processing status, review state, pipeline version, embedding model, capture-date-unknown, capture time, upload time, tags, and categories.
 
@@ -34,4 +36,10 @@ Fields Atlas Search reads include title, descriptions, transcript, OCR text, tag
 
 ## Jobs
 
-Statuses move through `uploaded`, `validating`, `extracting`, `enriching`, `embedding`, and `indexing`, and finish as `ready`, `partial`, or `failed`. `partial` means a provider or a derivative was missing and the gap was recorded. `failed` carries `{ code, params }` from the stable error list.
+`ingestion_jobs` is the queue. A job stays `inactive` until the original object is in storage and its checksum is known. The worker then claims it.
+
+Statuses move through `uploaded`, `validating`, `extracting`, `enriching`, `embedding`, and `indexing`, and finish as `ready`, `partial`, or `failed`. `retrying` means a transient error is waiting for `nextRunAt`. `partial` means a provider or a derivative was missing and the gap was recorded. `failed` is terminal and carries `{ code, params }` from the stable error list.
+
+A claim is one `findOneAndUpdate`. The worker holds `ownershipToken` until `leaseUntil`. Heartbeats and completion match that token and a lease that has not expired. An expired lease can be claimed by another worker. Checkpoints on the job let the next attempt skip stages that already finished. Writes are upserts on `segmentKey`. A worker that loses the lease does not mark the job complete, and segment rows stamped with its token are removed. The worker does not keep a MongoDB transaction open across FFmpeg or provider calls.
+
+`indexingState: persisted` means the segment document was written. It does not mean the Atlas Search or Vector Search index is queryable yet.

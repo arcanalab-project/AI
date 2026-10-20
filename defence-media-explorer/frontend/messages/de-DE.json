@@ -85,6 +85,7 @@
     "ready": "Bereit",
     "partial": "Unvollständig",
     "failed": "Fehlgeschlagen",
+    "retrying": "Erneuter Versuch",
     "unreviewed": "Nicht geprüft",
     "reviewed": "Geprüft",
     "unknown": "Unbekannter Status"
@@ -238,7 +239,9 @@
     "generation": "Generation {value}",
     "retry": "Fehlgeschlagenen Auftrag erneut versuchen",
     "asset": "Asset",
-    "pipeline": "Pipeline {value}"
+    "pipeline": "Pipeline {value}",
+    "progress": "Fortschritt {value} %",
+    "stage": "Stufe {value}"
   },
   "collections": {
     "kicker": "Ordnung",
@@ -280,7 +283,7 @@
       "vision": "Bildbeschreibungen",
       "transcription": "Transkription",
       "rerank": "Neusortierung",
-      "redis": "Warteschlange",
+      "queue": "Warteschlange",
       "session": "Sitzungssignatur"
     },
     "configured": "Konfiguriert",

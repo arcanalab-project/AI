@@ -1,21 +1,22 @@
 # Architecture
 
-Defence Media Explorer is a Next.js interface and a FastAPI service. Media bytes live in object storage. Searchable JSON and embeddings live in MongoDB Atlas, in the database `defence_media_explorer` on the cluster referred to here as federazionecup. Redis carries ingestion jobs. There is no MongoDB container in Compose.
+Defence Media Explorer is a Next.js interface and a FastAPI service. Media bytes live in object storage. Searchable JSON, transcripts, and embeddings live in MongoDB Atlas, in the database `defence_media_explorer` on the cluster referred to here as federazionecup. Ingestion jobs live in the `ingestion_jobs` collection in that same database. There is no Redis process and no MongoDB container in Compose.
 
-```text
-Browser
-  |  same origin, /api rewritten to the API
-  v
-Next.js (next-intl, no locale prefix)
-  |
-  v
-FastAPI
-  |-- sessions, uploads, search, health
-  |-- Celery worker: validate, extract, enrich, embed, write segments
-  |
-  +-- Atlas: assets, segments, jobs, collections, saved searches, users, audit events
-  +-- MinIO: originals and derivatives
-  +-- Redis: ingestion queue
+```mermaid
+flowchart LR
+  browser[Browser]
+  web[Next.js]
+  api[FastAPI]
+  worker[Python worker]
+  atlas[(Atlas defence_media_explorer)]
+  minio[MinIO]
+  voyage[Voyage]
+  browser --> web --> api
+  api --> atlas
+  api --> minio
+  worker --> atlas
+  worker --> minio
+  worker --> voyage
 ```
 
 The browser never receives a MongoDB host or a connection string. Health reports capability names, models, dimensions, index status, and whether an index is queryable.
@@ -25,10 +26,18 @@ The browser never receives a MongoDB host or a connection string. Health reports
 | Process | Role |
 | --- | --- |
 | `frontend` | Pages, locale, time zone, theme. Rewrites `/api` to `API_INTERNAL_URL`. |
-| `api` | Auth, uploads, search, metadata. Ensures indexes in `defence_media_explorer` on startup. |
-| `worker` | Runs the pipeline. One generation is written, then the previous generation is removed. |
-| `redis` | Celery broker. |
-| `minio` | S3-compatible bytes. `S3_ENDPOINT` is what the API uses. `S3_PUBLIC_ENDPOINT` is what signed browser URLs use. |
+| `api` | Auth, uploads, search, metadata. Ensures indexes in `defence_media_explorer` on startup. It writes a job document. It does not run FFmpeg, transcription, or embedding. |
+| `worker` | Claims `ingestion_jobs`, then validates, extracts, embeds, and writes `segments`. One generation is written, then the previous generation is removed. |
+| `minio` | S3-compatible bytes. `S3_ENDPOINT` is what the API and worker use. `S3_PUBLIC_ENDPOINT` is what signed browser URLs use. |
+
+The API, the worker, and MinIO are separate processes. Atlas is remote. If the worker runs on a laptop, ingestion waits for that laptop. If MinIO runs on a laptop, media access waits for that laptop. The worker command is the same on a laptop and on an always-on host:
+
+```bash
+cd backend
+python -m app.workers
+```
+
+More than one worker process can run that command. A job is claimed with `findOneAndUpdate`, so a second process does not take a lease that is still valid.
 
 ## Search
 

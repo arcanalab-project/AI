@@ -16,6 +16,8 @@ type Job = {
   generation?: number;
   pipelineVersion?: string;
   attempts?: number;
+  progress?: number;
+  stage?: string;
   createdAt?: string;
   updatedAt?: string;
   error?: { code?: string; params?: Record<string, string | number | string[]> } | null;
@@ -75,6 +77,19 @@ export default function ProcessingPage() {
                   {job.assetId}
                 </Link>
               </p>
+              {typeof job.progress === "number" ? (
+                <div className="space-y-1">
+                  <p className="text-sm text-[var(--muted)]">{t("processing.progress", { value: job.progress })}</p>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
+                    <div className="h-full bg-spring" style={{ width: `${Math.max(0, Math.min(100, job.progress))}%` }} />
+                  </div>
+                </div>
+              ) : null}
+              {job.stage ? (
+                <p className="text-sm text-[var(--muted)]">
+                  {t("processing.stage", { value: t.has(`status.${job.stage}`) ? t(`status.${job.stage}`) : job.stage })}
+                </p>
+              ) : null}
               <p className="text-sm text-[var(--muted)]">
                 <LocalDate value={job.updatedAt || job.createdAt} />
               </p>

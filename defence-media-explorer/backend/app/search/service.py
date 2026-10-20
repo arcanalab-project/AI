@@ -373,7 +373,7 @@ class SearchService:
         return cleaned
 
     def _card(self, hit: dict, *, rank: int) -> dict:
-        segment_id = str(hit.get("segmentId") or hit.get("_id"))
+        segment_id = str(hit["_id"]) if hit.get("_id") is not None else str(hit.get("segmentId"))
         asset_id = str(hit.get("assetId"))
         thumb = hit.get("thumbnailObject") or {}
         description = hit.get("modelDescription") or hit.get("description") or ""
@@ -400,7 +400,7 @@ class SearchService:
             "nearbyCount": len(hit.get("nearby") or []),
             "nearby": [
                 {
-                    "segmentId": str(item.get("segmentId") or item.get("_id")),
+                    "segmentId": str(item["_id"]) if item.get("_id") is not None else str(item.get("segmentId")),
                     "startMs": item.get("startMs"),
                     "endMs": item.get("endMs"),
                     "matchText": excerpt(item.get("transcript"), item.get("ocrText"), item.get("modelDescription")),

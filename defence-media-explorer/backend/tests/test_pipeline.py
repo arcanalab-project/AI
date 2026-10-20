@@ -88,7 +88,18 @@ class MemoryRepo:
         return None
 
     def insert_segments(self, documents):
-        self.segments.extend(documents)
+        for document in documents:
+            key = document.get("segmentKey")
+            if not key:
+                self.segments.append(document)
+                continue
+            self.segments = [item for item in self.segments if item.get("segmentKey") != key]
+            self.segments.append(document)
+
+    def delete_segments_by_token(self, token):
+        before = len(self.segments)
+        self.segments = [item for item in self.segments if item.get("publishToken") != token]
+        return before - len(self.segments)
 
 
 class FakeVision:
@@ -223,6 +234,25 @@ def test_image_pipeline_keeps_unknown_capture_date_and_one_segment(tmp_path: Pat
     assert embeddings.calls[0][1] == ["Image"]
     assert segment["ocrText"] == "TRAINING"
     assert "mongodb" not in str(segment["annotationProvenance"])
+    assert segment["segmentKey"]
+    assert segment["segmentId"] == segment["segmentKey"]
+
+
+def test_replayed_job_does_not_duplicate_segments(tmp_path: Path):
+    image_path = tmp_path / "vehicle.jpg"
+    Image.new("RGB", (80, 40), "#335544").save(image_path, "JPEG")
+    repo, storage, _asset = _pair("image", "image/jpeg", "vehicle.jpg", image_path.read_bytes())
+    embeddings = FakeEmbeddings()
+    settings = _settings()
+    _run(repo, storage, settings, FakeVision(), FakeTranscription(), embeddings, tmp_path)
+    assert len(repo.segments) == 1
+    calls = len(embeddings.calls)
+    key = repo.segments[0]["segmentKey"]
+    repo.jobs["job-1"]["status"] = "uploaded"
+    _run(repo, storage, settings, FakeVision(), FakeTranscription(), embeddings, tmp_path)
+    assert len(repo.segments) == 1
+    assert repo.segments[0]["segmentKey"] == key
+    assert len(embeddings.calls) == calls
 
 
 def test_video_segments_keep_offsets_and_silent_video_has_no_speech_claim(tmp_path: Path):

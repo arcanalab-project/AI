@@ -11,10 +11,13 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_compose_services_exclude_mongodb():
     document = yaml.safe_load((ROOT / "docker-compose.yml").read_text())
     services = document["services"]
-    for name in ("frontend", "api", "worker", "redis", "minio"):
+    for name in ("frontend", "api", "worker", "minio"):
         assert name in services
+    assert "redis" not in services
     assert "mongodb" not in services
     assert "mongo" not in services
+    assert services["worker"]["command"] == "python -m app.workers"
+    assert "celery" not in str(services["worker"])
 
 
 def test_env_example_lists_required_keys_without_secrets():

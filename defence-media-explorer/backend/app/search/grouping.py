@@ -23,19 +23,25 @@ def _nearby(left: dict[str, Any], right: dict[str, Any], gap_ms: int) -> bool:
     return a0 <= b1 + gap_ms and b0 <= a1 + gap_ms
 
 
+def _hit_id(hit: dict[str, Any]) -> str:
+    if hit.get("_id") is not None:
+        return str(hit["_id"])
+    return str(hit.get("segmentId") or "")
+
+
 def group_nearby_hits(hits: list[dict[str, Any]], *, gap_ms: int = 2000) -> list[dict[str, Any]]:
     """Keep the better-ranked hit as the card and attach nearby segments from the same video."""
 
     used: set[str] = set()
     grouped: list[dict[str, Any]] = []
     for hit in hits:
-        identity = str(hit.get("segmentId") or hit.get("_id"))
+        identity = _hit_id(hit)
         if identity in used:
             continue
         nearby: list[dict[str, Any]] = []
         if hit.get("mediaType") == "video":
             for other in hits:
-                other_id = str(other.get("segmentId") or other.get("_id"))
+                other_id = _hit_id(other)
                 if other_id == identity or other_id in used:
                     continue
                 if _nearby(hit, other, gap_ms):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import shutil
 from dataclasses import dataclass
@@ -22,11 +23,20 @@ from app.pipeline.routing import route_primary, text_for_shared_space, wants_tra
 from app.pipeline.text import WHISPER_LANGUAGE_CODES, compose_search_text
 from app.providers.base import VideoInput
 from app.media.windows import build_windows, group_transcript_windows, segment_text, snap_window_ends
+from app.workers.control import DirectControl, OwnershipLost, failure_is_retryable
+from app.workers.queue import make_segment_key, original_object_present
 
 logger = logging.getLogger(__name__)
 
 MAX_VIDEO_BYTES = 20 * 1024 * 1024
 TRANSCRIBE_LIMIT = 24 * 1024 * 1024
+STAGE_PROGRESS = {
+    "validating": 15,
+    "extracting": 35,
+    "enriching": 55,
+    "embedding": 75,
+    "indexing": 90,
+}
 
 
 @dataclass
@@ -40,7 +50,7 @@ class PipelineDeps:
     workdir: Path
 
 
-def process_job(job_id: str, deps: PipelineDeps) -> None:
+def process_job(job_id: str, deps: PipelineDeps, control=None) -> None:
     if deps.repo is None:
         raise AppError("MONGODB_UNAVAILABLE", 503, {})
     if deps.storage is None:
@@ -48,9 +58,14 @@ def process_job(job_id: str, deps: PipelineDeps) -> None:
     job = deps.repo.get_job(job_id)
     if not job or job.get("status") in {"ready", "partial"}:
         return
+    if control is None:
+        control = DirectControl(deps.repo)
     asset = deps.repo.get_asset(job["assetId"], job["workspaceId"])
     if asset is None:
-        deps.repo.update_job(job_id, {"status": "failed", "error": {"code": "NOT_FOUND", "params": {}}})
+        control.fail(job, "NOT_FOUND", {}, False)
+        return
+    if not original_object_present(asset):
+        control.deactivate(job)
         return
 
     generation = int(job["generation"])
@@ -63,43 +78,90 @@ def process_job(job_id: str, deps: PipelineDeps) -> None:
     warnings: list[str] = []
     stage = "validating"
     try:
-        if int(asset.get("generation") or 0) != generation:
+        checkpoints = job.get("checkpoints") or {}
+        resume_ready = _checkpoint_done(checkpoints, "extracting") or _checkpoint_done(checkpoints, "enriching") or _checkpoint_done(checkpoints, "embedding")
+        if int(asset.get("generation") or 0) != generation and not resume_ready:
             deps.repo.delete_generation(asset_id, generation)
             deps.storage.delete_prefix(_gen_prefix(workspace_id, asset_id, generation))
-        _stage(deps, job, asset, "validating")
-        stage = "validating"
-        local = work / "original"
-        deps.storage.download(asset["originalObject"], local)
-        digest = sha256_file(local)
-        duplicate = deps.repo.find_duplicate(workspace_id, digest, exclude_id=asset_id)
-        if duplicate:
-            deps.storage.delete(asset["originalObject"]["key"])
-            _fail(deps, job, asset, "DUPLICATE_ASSET", {"existingAssetId": str(duplicate["_id"])})
-            return
-        technical, media_patch = _validate(local, asset, deps.settings)
-        _stage(deps, job, asset, "extracting")
-        stage = "extracting"
-        drafts, derived = _extract(local, asset, technical, media_patch, generation, work, deps)
-        _stage(deps, job, asset, "enriching")
-        stage = "enriching"
-        _enrich(drafts, asset, deps, warnings)
-        _stage(deps, job, asset, "embedding")
-        stage = "embedding"
-        _embed(drafts, deps, warnings)
-        _stage(deps, job, asset, "indexing")
+
+        if _checkpoint_done(checkpoints, "validating"):
+            saved = checkpoints["validating"]
+            digest = saved["sha256"]
+            technical = saved["technical"]
+            media_patch = saved["mediaPatch"]
+        else:
+            _stage(deps, job, asset, "validating", control)
+            stage = "validating"
+            local = work / "original"
+            deps.storage.download(asset["originalObject"], local)
+            digest = sha256_file(local)
+            duplicate = deps.repo.find_duplicate(workspace_id, digest, exclude_id=asset_id)
+            if duplicate:
+                deps.storage.delete(asset["originalObject"]["key"])
+                _fail(deps, job, asset, "DUPLICATE_ASSET", {"existingAssetId": str(duplicate["_id"])}, control)
+                return
+            technical, media_patch = _validate(local, asset, deps.settings)
+            _remember(
+                control,
+                job,
+                "validating",
+                {"sha256": digest, "technical": copy.deepcopy(technical), "mediaPatch": copy.deepcopy(media_patch)},
+            )
+            checkpoints = job.get("checkpoints") or {}
+
+        if _checkpoint_done(checkpoints, "embedding"):
+            drafts, derived, warnings = _load_checkpoint(checkpoints, "embedding")
+        elif _checkpoint_done(checkpoints, "enriching"):
+            drafts, derived, warnings = _load_checkpoint(checkpoints, "enriching")
+            _rehydrate_drafts(drafts, work, deps)
+            _stage(deps, job, asset, "embedding", control)
+            stage = "embedding"
+            _embed(drafts, deps, warnings)
+            _remember(control, job, "embedding", _stage_payload(drafts, derived, warnings))
+        elif _checkpoint_done(checkpoints, "extracting"):
+            drafts, derived, warnings = _load_checkpoint(checkpoints, "extracting")
+            _rehydrate_drafts(drafts, work, deps)
+            _stage(deps, job, asset, "enriching", control)
+            stage = "enriching"
+            _enrich(drafts, asset, deps, warnings)
+            _remember(control, job, "enriching", _stage_payload(drafts, derived, warnings))
+            _stage(deps, job, asset, "embedding", control)
+            stage = "embedding"
+            _embed(drafts, deps, warnings)
+            _remember(control, job, "embedding", _stage_payload(drafts, derived, warnings))
+        else:
+            local = work / "original"
+            if not local.exists():
+                deps.storage.download(asset["originalObject"], local)
+            _stage(deps, job, asset, "extracting", control)
+            stage = "extracting"
+            drafts, derived = _extract(local, asset, technical, media_patch, generation, work, deps)
+            _remember(control, job, "extracting", _stage_payload(drafts, derived, warnings))
+            _stage(deps, job, asset, "enriching", control)
+            stage = "enriching"
+            _enrich(drafts, asset, deps, warnings)
+            _remember(control, job, "enriching", _stage_payload(drafts, derived, warnings))
+            _stage(deps, job, asset, "embedding", control)
+            stage = "embedding"
+            _embed(drafts, deps, warnings)
+            _remember(control, job, "embedding", _stage_payload(drafts, derived, warnings))
+        _stage(deps, job, asset, "indexing", control)
         stage = "indexing"
-        _commit(deps, job, asset, drafts, derived, technical, media_patch, digest, warnings)
+        _commit(deps, job, asset, drafts, derived, technical, media_patch, digest, warnings, control)
+    except OwnershipLost:
+        logger.info("pipeline stopped because ownership was lost stage=%s", stage)
+        raise
     except AppError as exc:
         logger.warning("pipeline app error code=%s stage=%s", exc.code, stage)
-        _fail(deps, job, asset, exc.code, exc.params)
-    except Exception:
+        _fail(deps, job, asset, exc.code, exc.params, control, exc)
+    except Exception as exc:
         logger.exception("pipeline failed stage=%s", stage)
-        _fail(deps, job, asset, "INTERNAL_ERROR", {})
+        _fail(deps, job, asset, "INTERNAL_ERROR", {}, control, exc)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
 
-def _stage(deps: PipelineDeps, job: dict, asset: dict, status: str) -> None:
+def _stage(deps: PipelineDeps, job: dict, asset: dict, status: str, control) -> None:
     moment = datetime.now(timezone.utc)
     steps = list(job.get("steps") or [])
     if steps and steps[-1].get("status") == "running":
@@ -110,18 +172,21 @@ def _stage(deps: PipelineDeps, job: dict, asset: dict, status: str) -> None:
             steps[-1]["elapsedMs"] = int((moment - started).total_seconds() * 1000)
     steps.append({"name": status, "status": "running", "startedAt": moment})
     job["steps"] = steps
-    deps.repo.update_job(job["_id"], {"status": status, "steps": steps, "error": None})
+    progress = STAGE_PROGRESS.get(status, int(job.get("progress") or 0))
+    if not control.mark(job, status, progress, steps):
+        raise OwnershipLost()
     deps.repo.update_asset(asset["_id"], asset["workspaceId"], {"processingStatus": status, "error": None})
 
 
-def _fail(deps: PipelineDeps, job: dict, asset: dict, code: str, params: dict) -> None:
-    moment = datetime.now(timezone.utc)
-    steps = list(job.get("steps") or [])
-    if steps and steps[-1].get("status") == "running":
-        steps[-1]["status"] = "failed"
-        steps[-1]["finishedAt"] = moment
+def _fail(deps: PipelineDeps, job: dict, asset: dict, code: str, params: dict, control, exc: Exception | None = None) -> None:
+    retryable = failure_is_retryable(code, exc)
+    outcome = control.fail(job, code, params, retryable)
+    if outcome == "lost":
+        raise OwnershipLost()
     error = {"code": code, "params": params}
-    deps.repo.update_job(job["_id"], {"status": "failed", "steps": steps, "error": error})
+    if outcome == "retry":
+        deps.repo.update_asset(asset["_id"], asset["workspaceId"], {"processingStatus": "retrying", "error": error})
+        return
     # A failed reprocess must not erase a previous ready generation.
     if int(asset.get("generation") or 0) == int(job["generation"]) or int(asset.get("generation") or 0) == 0:
         deps.repo.update_asset(
@@ -131,6 +196,76 @@ def _fail(deps: PipelineDeps, job: dict, asset: dict, code: str, params: dict) -
         )
     else:
         deps.repo.update_asset(asset["_id"], asset["workspaceId"], {"error": error})
+
+
+def _remember(control, job: dict, stage: str, payload: dict) -> None:
+    progress = STAGE_PROGRESS.get(stage, int(job.get("progress") or 0))
+    if not control.remember(job, stage, progress, payload):
+        raise OwnershipLost()
+
+
+def _checkpoint_done(checkpoints: dict, stage: str) -> bool:
+    block = checkpoints.get(stage) or {}
+    return bool(block.get("done"))
+
+
+def _stage_payload(drafts: list[dict], derived: dict, warnings: list[str]) -> dict:
+    return {
+        "drafts": [_strip_local(draft) for draft in drafts],
+        "derived": _strip_local(derived),
+        "warnings": list(warnings),
+    }
+
+
+def _load_checkpoint(checkpoints: dict, stage: str) -> tuple[list[dict], dict, list[str]]:
+    block = checkpoints[stage]
+    drafts = copy.deepcopy(block.get("drafts") or [])
+    derived = copy.deepcopy(block.get("derived") or {})
+    warnings = list(block.get("warnings") or [])
+    return drafts, derived, warnings
+
+
+def _strip_local(value):
+    if isinstance(value, Path):
+        return None
+    if isinstance(value, dict):
+        cleaned = {}
+        for key, item in value.items():
+            if key in {"localFrames", "localClip"} or isinstance(item, Path):
+                continue
+            cleaned[key] = _strip_local(item)
+        return cleaned
+    if isinstance(value, list):
+        return [_strip_local(item) for item in value if not isinstance(item, Path)]
+    if isinstance(value, tuple):
+        return [_strip_local(item) for item in value if not isinstance(item, Path)]
+    return value
+
+
+def _rehydrate_drafts(drafts: list[dict], work: Path, deps: PipelineDeps) -> None:
+    work.mkdir(parents=True, exist_ok=True)
+    for index, draft in enumerate(drafts):
+        if draft.get("localFrames") or draft.get("localClip"):
+            continue
+        frames: list[Path] = []
+        for frame_index, item in enumerate(draft.get("storyboard") or []):
+            obj = item.get("object") if isinstance(item, dict) else None
+            if isinstance(obj, dict) and obj.get("key"):
+                dest = work / f"rehydrate-{index}-{frame_index}.jpg"
+                deps.storage.download(obj, dest)
+                frames.append(dest)
+        preview = draft.get("previewObject")
+        if not frames and isinstance(preview, dict) and preview.get("key"):
+            dest = work / f"rehydrate-{index}.jpg"
+            deps.storage.download(preview, dest)
+            frames.append(dest)
+        if frames:
+            draft["localFrames"] = frames
+        proxy = draft.get("proxyObject")
+        if isinstance(proxy, dict) and proxy.get("key"):
+            dest = work / f"rehydrate-{index}.mp4"
+            deps.storage.download(proxy, dest)
+            draft["localClip"] = dest
 
 
 def _validate(local: Path, asset: dict, settings: Settings) -> tuple[dict, dict]:
@@ -560,7 +695,7 @@ def _transcript_sibling(draft: dict) -> dict:
     return sibling
 
 
-def _commit(deps, job, asset, drafts, derived, technical, media_patch, digest, warnings) -> None:
+def _commit(deps, job, asset, drafts, derived, technical, media_patch, digest, warnings, control) -> None:
     generation = int(job["generation"])
     ready_docs = []
     partial = bool(warnings) or any(draft.get("warnings") for draft in drafts)
@@ -598,8 +733,14 @@ def _commit(deps, job, asset, drafts, derived, technical, media_patch, digest, w
         next_text_model=deps.settings.voyage_text_model if deps.settings.enable_text_embeddings else None,
         next_text_dimensions=deps.settings.text_embedding_dimensions if deps.settings.enable_text_embeddings else None,
     )
+    if not control.allow_publish(job):
+        raise OwnershipLost()
     if delete_first:
         deps.repo.delete_other_generations(asset["_id"], generation)
+    token = getattr(control, "token", None)
+    if token:
+        for document in ready_docs:
+            document["publishToken"] = token
     deps.repo.insert_segments(ready_docs)
     if not delete_first:
         deps.repo.delete_other_generations(asset["_id"], generation)
@@ -628,8 +769,12 @@ def _commit(deps, job, asset, drafts, derived, technical, media_patch, digest, w
         "embeddingDimensions": int(next_dims) if any(doc.get("embedding") for doc in ready_docs) else None,
         "indexingState": "persisted",
     }
+    job_patch = {"status": status, "steps": steps, "error": None, "warnings": sorted(set(warnings)), "progress": 100, "stage": status}
+    if not control.finish(job, job_patch):
+        if token:
+            deps.repo.delete_segments_by_token(token)
+        raise OwnershipLost()
     deps.repo.update_asset(asset["_id"], asset["workspaceId"], asset_patch)
-    deps.repo.update_job(job["_id"], {"status": status, "steps": steps, "error": None, "warnings": sorted(set(warnings))})
 
 
 def _segment_document(asset: dict, draft: dict, generation: int, status: str, media_patch: dict) -> dict:
@@ -645,7 +790,18 @@ def _segment_document(asset: dict, draft: dict, generation: int, status: str, me
         asset.get("tags"),
         draft.get("categories"),
     )
+    segment_key = make_segment_key(
+        asset["_id"],
+        generation,
+        draft["segmentType"],
+        draft.get("startMs"),
+        draft.get("endMs"),
+        draft.get("startChar"),
+        draft.get("endChar"),
+    )
     document = {
+        "segmentKey": segment_key,
+        "segmentId": segment_key,
         "assetId": asset["_id"],
         "workspaceId": asset["workspaceId"],
         "collectionId": asset.get("collectionId"),

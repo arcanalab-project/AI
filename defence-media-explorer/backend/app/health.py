@@ -37,7 +37,13 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
     if not settings.object_storage_configured:
         storage["errorCode"] = "OBJECT_STORAGE_UNAVAILABLE"
 
-    redis_state = _redis(settings.redis_url)
+    queue_state = {
+        "configured": settings.mongodb_configured,
+        "reachable": bool(mongo.get("reachable")),
+        "backend": "ingestion_jobs",
+    }
+    if not queue_state["reachable"]:
+        queue_state["errorCode"] = "MONGODB_UNAVAILABLE"
     capabilities = {
         "mongodb": mongo,
         "objectStorage": storage,
@@ -64,7 +70,7 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
             "configured": settings.embeddings_configured,
             "model": settings.voyage_rerank_model,
         },
-        "redis": redis_state,
+        "queue": queue_state,
         "session": {"configured": settings.session_configured},
     }
     unavailable = [
@@ -75,7 +81,7 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
             ("embeddings", not settings.embeddings_configured),
             ("vision", not settings.vision_configured),
             ("transcription", not settings.transcription_configured),
-            ("redis", not redis_state.get("reachable")),
+            ("queue", not queue_state.get("reachable")),
             ("session", not settings.session_configured),
         )
         if value
@@ -88,16 +94,3 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
         "unavailable": unavailable,
         "serverVersion": version,
     }
-
-
-def _redis(url: str) -> dict[str, Any]:
-    if not url:
-        return {"configured": False, "reachable": False, "errorCode": "QUEUE_UNAVAILABLE"}
-    try:
-        import redis
-
-        client = redis.Redis.from_url(url, socket_connect_timeout=1, socket_timeout=1)
-        client.ping()
-        return {"configured": True, "reachable": True}
-    except Exception:
-        return {"configured": True, "reachable": False, "errorCode": "QUEUE_UNAVAILABLE"}

@@ -148,7 +148,26 @@ class Repository:
         document.setdefault("createdAt", now())
         document["updatedAt"] = document["createdAt"]
         document.setdefault("steps", [])
-        result = self.db.ingestion_jobs.insert_one(document)
+        document.setdefault("checkpoints", {})
+        document.setdefault("attempts", 0)
+        document.setdefault("progress", 0)
+        document.setdefault("stage", document.get("status") or "uploaded")
+        document.setdefault("activated", False)
+        document.setdefault("queueState", "queued" if document["activated"] else "inactive")
+        document.setdefault("nextRunAt", document["createdAt"] if document["activated"] else None)
+        document.setdefault("workerId", None)
+        document.setdefault("leaseUntil", None)
+        document.setdefault("heartbeatAt", None)
+        document.setdefault("ownershipToken", None)
+        if document.get("assetId") is not None and document.get("generation") is not None:
+            document.setdefault("dedupeKey", f"{document['assetId']}:{document['generation']}")
+        try:
+            result = self.db.ingestion_jobs.insert_one(document)
+        except DuplicateKeyError:
+            existing = self.db.ingestion_jobs.find_one({"dedupeKey": document.get("dedupeKey")}) if document.get("dedupeKey") else None
+            if existing:
+                return existing
+            raise
         document["_id"] = result.inserted_id
         return document
 
@@ -175,8 +194,18 @@ class Repository:
         )
 
     def insert_segments(self, documents: list[dict]) -> None:
-        if documents:
-            self.db.segments.insert_many(documents, ordered=True)
+        for document in documents:
+            key = document.get("segmentKey")
+            if not key:
+                self.db.segments.insert_one(document)
+                continue
+            self.db.segments.replace_one({"segmentKey": key}, document, upsert=True)
+
+    def delete_segments_by_token(self, token: str) -> int:
+        if not token:
+            return 0
+        result = self.db.segments.delete_many({"publishToken": token})
+        return result.deleted_count
 
     def delete_generation(self, asset_id: Any, generation: int) -> int:
         result = self.db.segments.delete_many({"assetId": oid(asset_id), "generation": generation})

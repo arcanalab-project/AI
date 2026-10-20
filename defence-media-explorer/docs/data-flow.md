@@ -5,8 +5,8 @@
 1. The browser keeps the draft in a module store: files plus title, description, collection, source, tags, source language, and capture mode (`user`, `unknown`, or `file`).
 2. A file of 64 MB or less is posted as multipart form data to `POST /api/assets/direct` with `X-DME-Request: 1`. Upload progress comes from the request body. Processing progress comes later from the job status.
 3. A larger file calls `POST /api/assets/uploads`, receives part URLs, PUTs each part to object storage without the API header, and posts `{ etag, partNumber }` to `POST /api/assets/uploads/{id}/complete`.
-4. The API detects the type from the header and the extension, rejects a hash already stored in the workspace, writes the original, and inserts an `ingestion_jobs` document.
-5. Celery runs the worker. If Redis is down, the job is marked failed with `QUEUE_UNAVAILABLE`.
+4. The API detects the type from the header and the extension, rejects a hash already stored in the workspace, writes the original, and only then inserts an activated `ingestion_jobs` document. A multipart upload creates the asset while parts are still arriving, and does not activate a job until the original object is complete and hashed.
+5. A separate Python worker claims the job. The API process does not run FFmpeg, transcription, or embedding. Query embeddings for interactive search are built in the API and are not put on this queue.
 
 ## Pipeline
 

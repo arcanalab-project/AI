@@ -16,7 +16,7 @@ type Health = {
   capabilities?: Record<string, Record<string, unknown>>;
 };
 
-const CAPABILITIES = ["mongodb", "objectStorage", "embeddings", "vision", "transcription", "rerank", "redis", "session"] as const;
+const CAPABILITIES = ["mongodb", "objectStorage", "embeddings", "vision", "transcription", "rerank", "queue", "session"] as const;
 
 export default function SettingsPage() {
   const t = useTranslations();

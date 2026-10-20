@@ -241,11 +241,24 @@ def regular_index_specs() -> dict[str, list[tuple[list[tuple[str, int]], dict[st
             ),
             ([("workspaceId", ASCENDING), ("uploadedAt", DESCENDING)], {"name": "workspace_uploaded"}),
             ([("workspaceId", ASCENDING), ("processingStatus", ASCENDING)], {"name": "workspace_status"}),
+            (
+                [("segmentKey", ASCENDING)],
+                {"unique": True, "name": "segment_key", "partialFilterExpression": {"segmentKey": {"$type": "string"}}},
+            ),
         ],
         "users": [([("email", ASCENDING)], {"unique": True, "name": "email"})],
         "ingestion_jobs": [
             ([("assetId", ASCENDING), ("createdAt", DESCENDING)], {"name": "asset_created"}),
             ([("workspaceId", ASCENDING), ("status", ASCENDING), ("updatedAt", DESCENDING)], {"name": "workspace_status"}),
+            (
+                [("activated", ASCENDING), ("queueState", ASCENDING), ("nextRunAt", ASCENDING)],
+                {"name": "claim_queue"},
+            ),
+            ([("leaseUntil", ASCENDING), ("queueState", ASCENDING)], {"name": "lease_expiry"}),
+            (
+                [("dedupeKey", ASCENDING)],
+                {"unique": True, "name": "job_dedupe", "partialFilterExpression": {"dedupeKey": {"$type": "string"}}},
+            ),
         ],
         "collections": [([("workspaceId", ASCENDING), ("name", ASCENDING)], {"name": "workspace_name"})],
         "saved_searches": [([("workspaceId", ASCENDING), ("userId", ASCENDING)], {"name": "workspace_user"})],
@@ -318,7 +331,10 @@ def _ensure_regular_indexes(collection: Collection, specs: list[tuple[list[tuple
     for keys, options in specs:
         if options["name"] in existing:
             continue
-        collection.create_index(keys, **options)
+        try:
+            collection.create_index(keys, **options)
+        except PyMongoError as exc:
+            logger.warning("index create failed name=%s code=%s", options.get("name"), getattr(exc, "code", type(exc).__name__))
 
 
 def _ensure_search_index(collection: Collection, *, name: str, definition: dict[str, Any], index_type: str) -> dict[str, Any]:

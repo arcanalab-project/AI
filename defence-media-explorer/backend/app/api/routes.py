@@ -23,6 +23,7 @@ from app.media.hashing import sha256_file
 from app.pipeline.text import compose_search_text
 from app.search.filters import build_metadata_filter
 from app.services.deletion import delete_asset_completely
+from app.workers.queue import activation_patch, build_ingestion_job, original_available
 
 router = APIRouter(prefix="/api")
 COOKIE = "dme_session"
@@ -411,7 +412,7 @@ def init_upload(body: UploadInit, request: Request) -> dict:
     repo_of(request).update_asset(
         asset["_id"],
         user["workspaceId"],
-        {"upload": {"uploadId": upload_id, "key": key, "partSize": part_size}, "originalObject": {"bucket": settings.s3_bucket, "key": key}},
+        {"upload": {"uploadId": upload_id, "key": key, "partSize": part_size}},
     )
     return {"assetId": str(asset["_id"]), "uploadId": upload_id, "partSize": part_size, "parts": parts}
 
@@ -423,6 +424,15 @@ def complete_upload(asset_id: str, body: CompleteUpload, request: Request) -> di
     upload = asset.get("upload") or {}
     storage = _storage(request)
     storage.complete_multipart(upload["key"], upload["uploadId"], body.parts)
+    repo_of(request).update_asset(
+        asset["_id"],
+        user["workspaceId"],
+        {
+            "originalObject": {"bucket": settings_of(request).s3_bucket, "key": upload["key"]},
+            "upload": None,
+        },
+    )
+    asset = _own_asset(request, asset_id, user["workspaceId"])
     with tempfile.NamedTemporaryFile(delete=False) as handle:
         temp = Path(handle.name)
     try:
@@ -522,18 +532,18 @@ def reprocess(asset_id: str, request: Request) -> dict:
         raise AppError("VALIDATION_ERROR", 409, {"fields": ["processingStatus"]})
     generation = int(asset.get("generation") or 0) + 1
     job = repo_of(request).insert_job(
-        {
-            "workspaceId": user["workspaceId"],
-            "assetId": asset["_id"],
-            "status": "uploaded",
-            "generation": generation,
-            "pipelineVersion": PIPELINE_VERSION,
-            "attempts": 1,
-        }
+        build_ingestion_job(
+            workspace_id=user["workspaceId"],
+            asset_id=asset["_id"],
+            generation=generation,
+            asset=asset,
+            max_attempts=settings_of(request).job_max_attempts,
+        )
     )
-    _enqueue(request, job, asset)
+    _activate_job(request, job, asset)
     repo_of(request).audit(user["workspaceId"], "reprocess", actor_id=str(user["_id"]), target_type="asset", target_id=str(asset["_id"]))
-    return {"job": jsonable(job)}
+    job = repo_of(request).get_job(job["_id"], user["workspaceId"])
+    return {"job": _public_job(job)}
 
 
 @router.get("/assets/{asset_id}/segments")
@@ -566,6 +576,7 @@ def technical(segment_id: str, request: Request) -> dict:
         "assetId": str(segment["assetId"]),
         "database": settings_of(request).mongodb_database,
         "collection": "segments",
+        "contract": "asset_segments",
         "indexingState": segment.get("indexingState"),
         "processingStatus": segment.get("processingStatus"),
         "pipelineVersion": segment.get("pipelineVersion"),
@@ -676,7 +687,7 @@ def delete_saved(search_id: str, request: Request) -> dict:
 @router.get("/jobs")
 def list_jobs(request: Request) -> dict:
     user = user_of(request)
-    return {"jobs": [jsonable(job) | {"id": str(job["_id"]), "assetId": str(job["assetId"])} for job in repo_of(request).list_jobs(user["workspaceId"])]}
+    return {"jobs": [_public_job(job) for job in repo_of(request).list_jobs(user["workspaceId"])]}
 
 
 @router.get("/jobs/{job_id}")
@@ -685,7 +696,7 @@ def get_job(job_id: str, request: Request) -> dict:
     job = repo_of(request).get_job(job_id, user["workspaceId"])
     if not job:
         raise AppError("NOT_FOUND", 404, {})
-    return {"job": jsonable(job) | {"id": str(job["_id"]), "assetId": str(job["assetId"])}}
+    return {"job": _public_job(job)}
 
 
 @router.post("/jobs/{job_id}/retry")
@@ -697,10 +708,21 @@ def retry_job(job_id: str, request: Request) -> dict:
     if job.get("status") != "failed":
         raise AppError("JOB_NOT_RETRYABLE", 409, {"status": job.get("status")})
     asset = _own_asset(request, str(job["assetId"]), user["workspaceId"])
-    repo_of(request).update_job(job["_id"], {"status": "uploaded", "error": None, "steps": [], "attempts": int(job.get("attempts") or 1) + 1})
+    if not original_available(asset):
+        raise AppError("UPLOAD_INCOMPLETE", 409, {})
+    repo_of(request).update_job(
+        job["_id"],
+        {
+            **activation_patch(asset),
+            "steps": [],
+            "attempts": 0,
+            "progress": 0,
+            "stage": "uploaded",
+            "finishedAt": None,
+        },
+    )
     job = repo_of(request).get_job(job["_id"], user["workspaceId"])
-    _enqueue(request, job, asset)
-    return {"job": jsonable(job) | {"id": str(job["_id"])}}
+    return {"job": _public_job(job)}
 
 
 def _search(request: Request):
@@ -722,16 +744,31 @@ def _storage(request: Request):
     return storage
 
 
-def _enqueue(request: Request, job: dict, asset: dict) -> None:
-    try:
-        from app.workers.tasks import process_asset_task
+def _stamp_original(obj: dict, *, checksum: str, mime: str, size: int) -> dict:
+    stamped = {
+        "bucket": obj.get("bucket"),
+        "key": obj.get("key"),
+        "version": obj.get("version"),
+        "checksum": checksum,
+        "mimeType": mime or obj.get("mimeType"),
+        "byteSize": size if size is not None else obj.get("byteSize"),
+    }
+    return {key: value for key, value in stamped.items() if value is not None}
 
-        process_asset_task.delay(str(job["_id"]))
+
+def _activate_job(request: Request, job: dict, asset: dict) -> None:
+    """Queue the job only after the original object and its checksum are stored."""
+
+    patch = activation_patch(asset)
+    repo_of(request).update_job(job["_id"], patch)
+    if patch["activated"]:
         repo_of(request).update_asset(asset["_id"], asset["workspaceId"], {"processingStatus": "uploaded", "error": None})
-    except Exception:
-        error = {"code": "QUEUE_UNAVAILABLE", "params": {}}
-        repo_of(request).update_job(job["_id"], {"status": "failed", "error": error})
-        repo_of(request).update_asset(asset["_id"], asset["workspaceId"], {"processingStatus": "failed", "error": error})
+
+
+def _public_job(job: dict) -> dict:
+    data = jsonable(job) | {"id": str(job["_id"]), "assetId": str(job["assetId"])}
+    data.pop("ownershipToken", None)
+    return data
 
 
 def _own_asset(request: Request, asset_id: str, workspace_id: str) -> dict:
@@ -779,25 +816,38 @@ def _finalise_file(request, user, temp: Path, *, filename, size, title, descript
             }
         )
         key = f"workspaces/{user['workspaceId']}/assets/{asset['_id']}/original/{safe_filename(filename)}"
-        original = storage.put_file(key, temp, mime)
-        repo_of(request).update_asset(asset["_id"], user["workspaceId"], {"originalObject": original, "mediaType": media_type, "mimeType": mime})
+        original = _stamp_original(storage.put_file(key, temp, mime), checksum=digest, mime=mime, size=size)
+        repo_of(request).update_asset(
+            asset["_id"],
+            user["workspaceId"],
+            {"originalObject": original, "mediaType": media_type, "mimeType": mime, "sha256": digest},
+        )
     else:
+        original = _stamp_original(existing.get("originalObject") or {}, checksum=digest, mime=mime, size=size)
         asset = repo_of(request).update_asset(
             existing["_id"],
             user["workspaceId"],
-            {**meta, "mediaType": media_type, "mimeType": mime, "sha256": digest, "byteSize": size, "processingStatus": "uploaded"},
+            {
+                **meta,
+                "mediaType": media_type,
+                "mimeType": mime,
+                "sha256": digest,
+                "byteSize": size,
+                "processingStatus": "uploaded",
+                "originalObject": original,
+            },
         )
+    asset = repo_of(request).get_asset(asset["_id"], user["workspaceId"])
     job = repo_of(request).insert_job(
-        {
-            "workspaceId": user["workspaceId"],
-            "assetId": asset["_id"],
-            "status": "uploaded",
-            "generation": 1,
-            "pipelineVersion": PIPELINE_VERSION,
-            "attempts": 1,
-        }
+        build_ingestion_job(
+            workspace_id=user["workspaceId"],
+            asset_id=asset["_id"],
+            generation=1 if existing is None else int(asset.get("generation") or 0) or 1,
+            asset=asset,
+            max_attempts=settings.job_max_attempts,
+        )
     )
-    _enqueue(request, job, asset)
+    _activate_job(request, job, asset)
     repo_of(request).audit(user["workspaceId"], "upload", actor_id=str(user["_id"]), target_type="asset", target_id=str(asset["_id"]), metadata={"mediaType": media_type, "bytes": size})
     fresh = repo_of(request).get_asset(asset["_id"], user["workspaceId"])
     return {"asset": _asset_summary(fresh, storage), "jobId": str(job["_id"])}
@@ -1014,6 +1064,8 @@ def _segment_public(segment: dict, storage) -> dict:
     data["storyboard"] = board
     data.pop("_id", None)
     data.pop("embedding", None)
+    data.pop("textEmbedding", None)
+    data.pop("publishToken", None)
     return data
 
 

@@ -56,6 +56,12 @@ Reprocess writes the next generation, then deletes the other generations. If the
 
 `S3_ENDPOINT` is the address the API and the worker use. Inside Compose that is the MinIO service. `S3_PUBLIC_ENDPOINT` is the address placed in signed URLs the browser can open. Signing with the internal hostname makes the browser request fail even when the signature is valid. `infra/minio-cors.json` allows the frontend origin to PUT and GET. The multipart client does not send `X-DME-Request` to MinIO.
 
+## Ingestion queue
+
+Redis and Celery are not part of the running system. `ingestion_jobs` is the queue: atomic claim, a renewable lease, heartbeats that must still own the job, recovery after the lease expires, bounded retries with exponential backoff and jitter, and a terminal `failed` state. Transient provider failures retry. Permanent failures, including a model or dimension mismatch, do not. Stage checkpoints are stored on the job so a recovered attempt can reuse completed work. Segment writes upsert `segmentKey`.
+
+The worker is `python -m app.workers` from the backend directory. That is also the Compose command. Running more than one process does not require a different queue.
+
 ## Interface language
 
 Changing locale changes labels, dates, numbers, and plurals. It does not translate source media, rewrite `searchText`, or re-embed segments. Full-text search still does not translate the query. The time zone is a separate setting.

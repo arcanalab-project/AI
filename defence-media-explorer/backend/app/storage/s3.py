@@ -65,7 +65,7 @@ class S3ObjectStore:
 
     def put_file(self, key: str, path: Path, content_type: str) -> ObjectRef:
         self._call(self._internal.upload_file, str(path), self.bucket, key, ExtraArgs={"ContentType": content_type})
-        return ref(self.bucket, key)
+        return self._describe(key, content_type)
 
     def put_bytes(self, key: str, data: bytes, content_type: str) -> ObjectRef:
         self._call(
@@ -75,7 +75,28 @@ class S3ObjectStore:
             Body=data,
             ContentType=content_type,
         )
-        return ref(self.bucket, key)
+        return self._describe(key, content_type)
+
+    def head(self, key: str) -> dict:
+        info = self._call(self._internal.head_object, Bucket=self.bucket, Key=key)
+        return {
+            "version": info.get("VersionId"),
+            "byteSize": info.get("ContentLength"),
+            "etag": info.get("ETag"),
+        }
+
+    def _describe(self, key: str, content_type: str) -> ObjectRef:
+        reference = ref(self.bucket, key)
+        reference["mimeType"] = content_type
+        try:
+            info = self._internal.head_object(Bucket=self.bucket, Key=key)
+        except (BotoCoreError, ClientError):
+            return reference
+        if info.get("VersionId"):
+            reference["version"] = info["VersionId"]
+        if info.get("ContentLength") is not None:
+            reference["byteSize"] = int(info["ContentLength"])
+        return reference
 
     def download(self, obj: dict, dest: Path) -> Path:
         dest.parent.mkdir(parents=True, exist_ok=True)
