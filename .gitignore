@@ -1,0 +1,7 @@
+.env
+defence-media-explorer/.env
+node_modules/
+.next/
+__pycache__/
+.pytest_cache/
+.venv/

@@ -1,0 +1,93 @@
+{
+  "note": "Shapes only. The embedding array is omitted. A live segment stores a float array whose length is embeddingDimensions. These values are not a retrieval result.",
+  "asset": {
+    "workspaceId": "demo",
+    "title": "Synthetic training diagram",
+    "description": "Original diagram generated for this project.",
+    "mediaType": "image",
+    "mimeType": "image/jpeg",
+    "source": "Original synthetic fixture",
+    "tags": ["training", "synthetic"],
+    "collectionId": null,
+    "capturedAt": null,
+    "captureDateUnknown": true,
+    "capturedAtSource": "unknown",
+    "captureDateMode": "unknown",
+    "processingStatus": "partial",
+    "pipelineVersion": "v1",
+    "generation": 1,
+    "indexingState": "persisted",
+    "reviewState": "unreviewed",
+    "warnings": ["PROVIDER_NOT_CONFIGURED"],
+    "sourceLanguage": null
+  },
+  "segment": {
+    "workspaceId": "demo",
+    "mediaType": "image",
+    "segmentType": "image",
+    "startMs": null,
+    "endMs": null,
+    "title": "Synthetic training diagram",
+    "description": "Original diagram generated for this project.",
+    "modelDescription": null,
+    "transcript": null,
+    "ocrText": null,
+    "searchText": "Synthetic training diagram\nOriginal diagram generated for this project.\ntraining synthetic",
+    "tags": ["training", "synthetic"],
+    "categories": [],
+    "sourceLanguage": null,
+    "processingStatus": "partial",
+    "pipelineVersion": "v1",
+    "generation": 1,
+    "indexingState": "persisted",
+    "captureDateUnknown": true,
+    "capturedAt": null,
+    "embeddingModel": null,
+    "embeddingDimensions": null,
+    "embeddingStrategy": null,
+    "embeddingInputType": null,
+    "embedding": null,
+    "textStale": false
+  },
+  "ingestionJob": {
+    "workspaceId": "demo",
+    "status": "partial",
+    "generation": 1,
+    "pipelineVersion": "v1",
+    "attempts": 1,
+    "error": null
+  },
+  "collection": {
+    "workspaceId": "demo",
+    "name": "Training diagrams",
+    "description": "Synthetic holdings only."
+  },
+  "savedSearch": {
+    "workspaceId": "demo",
+    "name": "Muddy ground",
+    "query": "Tracked vehicles on muddy terrain during a training exercise.",
+    "mode": "hybrid",
+    "queryLanguage": "en-GB",
+    "filters": {
+      "dateField": "capturedAt",
+      "unknownCapture": "include",
+      "timeZone": "Europe/Rome",
+      "mediaTypes": ["video", "image"]
+    },
+    "sort": "relevance"
+  },
+  "user": {
+    "email": "person@example.com",
+    "displayName": "Archive reader",
+    "role": "viewer",
+    "workspaceId": "demo",
+    "locale": "en-GB",
+    "timeZone": "Europe/Rome"
+  },
+  "auditEvent": {
+    "workspaceId": "demo",
+    "action": "search_saved",
+    "targetType": "saved_search",
+    "at": "2026-10-20T12:00:00+00:00"
+  }
+}

@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #eef3f1;
+  --bg-elev: #ffffff;
+  --ink: #001e2b;
+  --muted: #3e5560;
+  --line: #d5e2dc;
+  --spring: #00ed64;
+  --pine: #001e2b;
+  --danger: #8d2b2b;
+  --warn: #8a5a00;
+  --ok: #0c6b3c;
+  --shadow: 0 18px 50px rgba(0, 30, 43, 0.08);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #001820;
+  --bg-elev: #062633;
+  --ink: #f3faf6;
+  --muted: #b7c9c2;
+  --line: #1d4654;
+  --spring: #00ed64;
+  --pine: #d7efe4;
+  --danger: #ffb4b4;
+  --warn: #f0c36a;
+  --ok: #8dffa9;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(900px 320px at 0% -10%, rgba(0, 237, 100, 0.18), transparent 55%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans), "Segoe UI", sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--spring);
+  outline-offset: 3px;
+}
+
+::selection { background: #00ed64; color: #001e2b; }
+
+a { color: inherit; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+.panel {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.field {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
+}
+
+.field:focus { border-color: #00ed64; }
