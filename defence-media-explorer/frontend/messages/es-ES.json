@@ -300,7 +300,10 @@
     "role": "Rol",
     "createUser": "Crear persona",
     "passwordHint": "Al menos 10 caracteres, con una letra y un dígito.",
-    "allClear": "Cada capacidad comprobada está disponible."
+    "allClear": "Cada capacidad comprobada está disponible.",
+    "textChannel": "Canal de texto",
+    "textModel": "Modelo de texto",
+    "indexTextVector": "Índice vectorial de texto"
   },
   "health": {
     "status": {
@@ -389,7 +392,8 @@
       "image_multimodal": "Imagen y texto",
       "text": "Texto",
       "query": "Consulta",
-      "unknown": "No registrado"
+      "unknown": "No registrado",
+      "image": "Imagen"
     },
     "textFields": "Texto que usa Atlas Search",
     "textExplainer": "La búsqueda de texto completo compara estas cadenas. No las traduce, y cambiar el idioma de la interfaz no las reescribe.",
@@ -411,7 +415,15 @@
     "thumbnail": "Miniatura",
     "previewObject": "Avance",
     "proxy": "Clip proxy",
-    "none": "No almacenado"
+    "none": "No almacenado",
+    "modality": "Modalidad",
+    "modalityName": {
+      "image": "Imagen",
+      "video": "Vídeo",
+      "audio": "Audio",
+      "text": "Texto",
+      "unknown": "Sin registrar"
+    }
   },
   "captureMode": {
     "user": "Introducida por una persona",

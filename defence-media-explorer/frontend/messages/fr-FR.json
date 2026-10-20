@@ -300,7 +300,10 @@
     "role": "Rôle",
     "createUser": "Créer une personne",
     "passwordHint": "Au moins 10 caractères, avec une lettre et un chiffre.",
-    "allClear": "Chaque capacité contrôlée est disponible."
+    "allClear": "Chaque capacité contrôlée est disponible.",
+    "textChannel": "Canal textuel",
+    "textModel": "Modèle textuel",
+    "indexTextVector": "Index vectoriel du texte"
   },
   "health": {
     "status": {
@@ -389,7 +392,8 @@
       "image_multimodal": "Image et texte",
       "text": "Texte",
       "query": "Requête",
-      "unknown": "Non enregistré"
+      "unknown": "Non enregistré",
+      "image": "Image"
     },
     "textFields": "Texte utilisé par Atlas Search",
     "textExplainer": "La recherche en texte intégral compare ces chaînes. Elle ne les traduit pas, et changer la langue de l'interface ne les réécrit pas.",
@@ -411,7 +415,15 @@
     "thumbnail": "Vignette",
     "previewObject": "Aperçu",
     "proxy": "Clip proxy",
-    "none": "Non stocké"
+    "none": "Non stocké",
+    "modality": "Modalité",
+    "modalityName": {
+      "image": "Image",
+      "video": "Vidéo",
+      "audio": "Audio",
+      "text": "Texte",
+      "unknown": "Non enregistrée"
+    }
   },
   "captureMode": {
     "user": "Saisie par une personne",

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol
 
 from PIL import Image
@@ -9,6 +10,13 @@ from PIL import Image
 
 class EmbeddingResult(dict):
     pass
+
+
+class VideoInput:
+    """A local MP4 clip. The provider reads the bytes; it does not use a second model."""
+
+    def __init__(self, path: str | Path) -> None:
+        self.path = str(path)
 
 
 class EmbeddingProvider(Protocol):

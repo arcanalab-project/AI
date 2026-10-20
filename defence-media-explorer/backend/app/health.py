@@ -45,6 +45,8 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
             "configured": settings.embeddings_configured,
             "model": settings.voyage_multimodal_model,
             "dimensions": settings.embedding_dimensions,
+            "textChannelEnabled": settings.enable_text_embeddings,
+            "textModel": settings.voyage_text_model if settings.enable_text_embeddings else None,
             **({} if settings.embeddings_configured else {"errorCode": "PROVIDER_NOT_CONFIGURED"}),
         },
         "vision": {

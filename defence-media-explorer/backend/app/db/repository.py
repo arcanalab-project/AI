@@ -189,19 +189,19 @@ class Repository:
     def committed_segment_meta(self, asset_id: Any, generation: int) -> dict | None:
         return self.db.segments.find_one(
             {"assetId": oid(asset_id), "generation": generation, "embeddingModel": {"$type": "string"}},
-            projection={"embedding": 0},
+            projection={"embedding": 0, "textEmbedding": 0},
         )
 
     def list_segments(self, asset_id: Any, workspace_id: str) -> list[dict]:
         return list(
             self.db.segments.find(
                 {"assetId": oid(asset_id), "workspaceId": workspace_id},
-                projection={"embedding": 0},
+                projection={"embedding": 0, "textEmbedding": 0},
             ).sort("startMs", 1)
         )
 
     def get_segment(self, segment_id: Any, workspace_id: str, *, include_embedding: bool = False) -> dict | None:
-        projection = None if include_embedding else {"embedding": 0}
+        projection = None if include_embedding else {"embedding": 0, "textEmbedding": 0}
         return self.db.segments.find_one({"_id": oid(segment_id), "workspaceId": workspace_id}, projection=projection)
 
     def update_segment_fields(self, asset_id: Any, workspace_id: str, patch: dict) -> int:
@@ -209,7 +209,7 @@ class Repository:
         return result.modified_count
 
     def rewrite_segment_search_text(self, asset_id: Any, workspace_id: str, shared: dict, text_builder) -> None:
-        cursor = self.db.segments.find({"assetId": oid(asset_id), "workspaceId": workspace_id}, projection={"embedding": 0})
+        cursor = self.db.segments.find({"assetId": oid(asset_id), "workspaceId": workspace_id}, projection={"embedding": 0, "textEmbedding": 0})
         for segment in cursor:
             search_text = text_builder(segment, shared)
             self.db.segments.update_one(
@@ -222,7 +222,7 @@ class Repository:
 
     def find_segments(self, query: dict, sort: list[tuple[str, int]] | None, skip: int, limit: int) -> tuple[list[dict], int]:
         total = self.db.segments.count_documents(query)
-        cursor = self.db.segments.find(query, projection={"embedding": 0})
+        cursor = self.db.segments.find(query, projection={"embedding": 0, "textEmbedding": 0})
         if sort:
             cursor = cursor.sort(sort)
         return list(cursor.skip(skip).limit(limit)), total
@@ -236,7 +236,7 @@ class Repository:
             return {}
         cursor = self.db.segments.find(
             {"workspaceId": workspace_id, "_id": {"$in": ids}},
-            projection={"embedding": 0},
+            projection={"embedding": 0, "textEmbedding": 0},
         )
         return {item["_id"]: item for item in cursor}
 

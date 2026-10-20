@@ -209,7 +209,7 @@ export default function SettingsPage() {
 
 function Capability({ name, value }: { name: string; value: Record<string, unknown> }) {
   const t = useTranslations();
-  const search = value.search as { vectorIndex?: Record<string, unknown>; textIndex?: Record<string, unknown> } | undefined;
+  const search = value.search as { vectorIndex?: Record<string, unknown>; textIndex?: Record<string, unknown>; textVectorIndex?: Record<string, unknown> } | undefined;
   const unavailable = typeof value.errorCode === "string";
   return (
     <article className="min-w-0 rounded-2xl border border-[var(--line)] p-4">
@@ -223,6 +223,8 @@ function Capability({ name, value }: { name: string; value: Record<string, unkno
         <Fact label={t("settings.enabled")} value={value.enabled} />
         <Fact label={t("settings.model")} value={value.model} />
         <Fact label={t("settings.dimensions")} value={value.dimensions} />
+        <Fact label={t("settings.textChannel")} value={value.textChannelEnabled} />
+        <Fact label={t("settings.textModel")} value={value.textModel} />
         <Fact label={t("settings.database")} value={value.database} />
         <Fact label={t("settings.bucket")} value={value.bucket} />
         <Fact label={t("settings.publicEndpoint")} value={value.publicEndpointConfigured} />
@@ -232,6 +234,7 @@ function Capability({ name, value }: { name: string; value: Record<string, unkno
       </dl>
       {search?.vectorIndex ? <IndexLine title={t("settings.indexVector")} index={search.vectorIndex} /> : null}
       {search?.textIndex ? <IndexLine title={t("settings.indexText")} index={search.textIndex} /> : null}
+      {search?.textVectorIndex ? <IndexLine title={t("settings.indexTextVector")} index={search.textVectorIndex} /> : null}
     </article>
   );
 }

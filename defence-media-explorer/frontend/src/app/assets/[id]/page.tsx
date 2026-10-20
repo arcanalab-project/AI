@@ -23,9 +23,12 @@ type Technical = {
     dimensions?: number | null;
     strategy?: string | null;
     inputType?: string | null;
+    modality?: string | null;
+    preprocessingVersion?: string | null;
     preview?: number[];
     previewLength?: number;
   };
+  textChannel?: { model?: string | null; dimensions?: number | null; inputType?: string | null } | null;
   extractedText?: {
     transcript?: string | null;
     ocrText?: string | null;
@@ -417,8 +420,16 @@ function TechnicalPanel({ technical }: { technical: Technical | null }) {
                 {" · "}
                 {t("technical.inputType")}: {technical.embedding.inputType || t("common.notAvailable")}
                 {" · "}
-                {t("technical.pipeline")}: {technical.pipelineVersion || t("common.notAvailable")}
+                {t("technical.modality")}: {t.has(`technical.modalityName.${technical.embedding.modality}`) ? t(`technical.modalityName.${technical.embedding.modality}`) : t("technical.modalityName.unknown")}
+                {" · "}
+                {t("technical.pipeline")}: {technical.embedding.preprocessingVersion || technical.pipelineVersion || t("common.notAvailable")}
               </p>
+              {technical.textChannel?.model ? (
+                <p>
+                  {t("settings.textChannel")}: {technical.textChannel.model}
+                  {technical.textChannel.dimensions ? ` · ${format.number(technical.textChannel.dimensions)}` : ""}
+                </p>
+              ) : null}
               <p>{t("technical.previewLength", { count: technical.embedding.previewLength || technical.embedding.preview.length, dimensions: technical.embedding.dimensions || 0 })}</p>
               <p className="break-words font-mono text-xs">
                 {t("technical.preview")}: {technical.embedding.preview.map((value) => format.number(value, { maximumFractionDigits: 4 })).join(", ")}

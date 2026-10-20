@@ -14,8 +14,8 @@
 2. Extract windows, thumbnails, storyboard frames, and a playback derivative when the original is not already playable H.264 MP4.
 3. If OpenAI vision is configured, describe frames. If not, record `PROVIDER_NOT_CONFIGURED` and continue.
 4. If OpenAI transcription is configured and the media has audio, transcribe with `whisper-1` so timestamps exist. A silent or tone-only file is not described as speech.
-5. If Voyage is configured, embed. Video tries native Voyage video, then sampled frames. The request sets `output_dimension` and float output, then checks the length. If Voyage is not configured, no vector is written.
-6. Insert the new generation of segment documents with `indexingState: persisted`, then drop the other generation according to the swap rules.
+5. If Voyage is configured, embed with `voyage-multimodal-3.5`. Images send the picture. Video sends the clip, then ordered frames with timestamps if native video cannot be sent. Audio and text send the transcript or chunk. OCR stays on the document for full-text search. A video transcript is also its own document in the same space. The request sets `output_dimension` and float output, then checks the length. If Voyage is not configured, no vector is written. `ENABLE_TEXT_EMBEDDINGS` is false by default; when true, `voyage-4-large` is written only to `textEmbedding`.
+6. Insert the new generation of segment documents with `indexingState: persisted`, source id, segment id, modality, model, dimensions, preprocessing version, and timestamps. Drop the other generation according to the swap rules, including a text-model change when that channel is on.
 7. Atlas updates its search indexes asynchronously. Search availability is the index `queryable` flag, not this write.
 
 ## Search
@@ -23,7 +23,7 @@
 1. The page writes the query, mode, sort, and filters into the URL, including the active time zone.
 2. `POST /api/search` builds one metadata filter for browse, `$search`, and `$vectorSearch`.
 3. Empty query: count and page the matching segments. `countKind` is `matching_segments`, and `completeMatchCount` is that count.
-4. Semantic: embed the query with Voyage (`input_type` query) and run `$vectorSearch`. Missing Voyage returns `PROVIDER_NOT_CONFIGURED`.
+4. Semantic: embed the query with `voyage-multimodal-3.5` (`input_type` query) and run `$vectorSearch` on `embedding`. Missing Voyage returns `PROVIDER_NOT_CONFIGURED`. When the text channel is enabled, a `voyage-4-large` query vector searches `textEmbedding` and the ranks are fused. The raw scores are not compared.
 5. Full-text: `$search` on `segments_text_v1`. Language multi-fields are extra clauses. The standard field does not translate.
 6. Hybrid: `$rankFusion` when the server is MongoDB 8 and accepts the stage; otherwise backend reciprocal rank fusion. The response `fusion` field says which path ran.
 7. Optional text rerank runs only when `ENABLE_RERANK` is true and Voyage is configured. It does not see pixels. A failure is a warning, not a fabricated order.

@@ -126,7 +126,7 @@ class FakeEmbeddings:
         self.dimensions = 1024
 
     def embed_document(self, parts, strategy):
-        self.calls.append(strategy)
+        self.calls.append((strategy, [type(part).__name__ for part in parts], [part for part in parts if isinstance(part, str)]))
         if self.fail:
             raise ProviderError("PROVIDER_NOT_CONFIGURED", {"provider": "voyage", "capability": "embeddings"}, retryable=False)
         if strategy == "native_video":
@@ -215,7 +215,12 @@ def test_image_pipeline_keeps_unknown_capture_date_and_one_segment(tmp_path: Pat
     assert segment["segmentType"] == "image"
     assert len(segment["embedding"]) == 1024
     assert segment["embeddingModel"] == "voyage-multimodal-3.5"
-    assert segment["embeddingStrategy"] == "image_multimodal"
+    assert segment["embeddingStrategy"] == "image"
+    assert segment["modality"] == "image"
+    assert segment["preprocessingVersion"] == "v1"
+    assert "textEmbedding" not in segment
+    assert embeddings.calls[0][0] == "image"
+    assert embeddings.calls[0][1] == ["Image"]
     assert segment["ocrText"] == "TRAINING"
     assert "mongodb" not in str(segment["annotationProvenance"])
 
@@ -229,13 +234,16 @@ def test_video_segments_keep_offsets_and_silent_video_has_no_speech_claim(tmp_pa
     )
     repo, storage, _asset = _pair("video", "video/mp4", "clip.mp4", path.read_bytes())
     transcription = FakeTranscription()
-    _run(repo, storage, _settings(), FakeVision(), transcription, FakeEmbeddings(), tmp_path)
+    embeddings = FakeEmbeddings()
+    _run(repo, storage, _settings(), FakeVision(), transcription, embeddings, tmp_path)
     assert transcription.calls == 0
     assert len(repo.segments) >= 2
     assert repo.segments[0]["startMs"] == 0
     assert repo.segments[-1]["endMs"] == 12000
     assert all(item["audioAbsent"] is True for item in repo.segments)
-    assert all(item["embeddingStrategy"] in {"native_video", "sampled_frames"} for item in repo.segments)
+    assert all(item["embeddingStrategy"] == "native_video" for item in repo.segments)
+    assert all(item["modality"] == "video" for item in repo.segments)
+    assert all(call[1] == ["VideoInput"] for call in embeddings.calls)
     assert repo.assets["asset-1"]["capturedAt"] is None
 
 
@@ -250,6 +258,8 @@ def test_audio_without_speech(tmp_path: Path):
     _run(repo, storage, _settings(), FakeVision(), FakeTranscription([]), FakeEmbeddings(), tmp_path)
     assert repo.segments
     assert all(item["noSpeech"] is True for item in repo.segments)
+    assert all(item["modality"] == "audio" for item in repo.segments)
+    assert all(item["embeddingStrategy"] == "text" for item in repo.segments)
     assert all(item.get("transcript") in {None, ""} for item in repo.segments)
 
 

@@ -16,11 +16,24 @@ def swap_deletes_previous_first(
     next_model: str,
     next_dimensions: int,
     next_pipeline_version: str,
+    text_channel_enabled: bool = False,
+    previous_text_model: str | None = None,
+    previous_text_dimensions: int | None = None,
+    next_text_model: str | None = None,
+    next_text_dimensions: int | None = None,
 ) -> bool:
     if previous_model is None:
         return False
-    return not (
+    shared_changed = not (
         previous_model == next_model
         and previous_dimensions == next_dimensions
         and previous_pipeline_version == next_pipeline_version
+    )
+    if shared_changed:
+        return True
+    if not text_channel_enabled:
+        return False
+    return not (
+        previous_text_model == next_text_model
+        and previous_text_dimensions == next_text_dimensions
     )

@@ -20,6 +20,14 @@ The Atlas Search index uses `lucene.standard` as the base analyzer so a mixed-la
 
 MongoDB 8 can run `$rankFusion` over the vector pipeline and the text pipeline. If this deployment rejects that stage, the API loads both lists and fuses them with reciprocal rank fusion (`k` from `RRF_K`, default 60). Duplicate ids inside one list take the first rank only. Raw engine scores are never added.
 
+## Media routing
+
+`voyage-multimodal-3.5` at 1024 dimensions is the shared space. Ingestion picks the input from the media type: image pixels, a native video clip, ordered frames with timestamps when native video cannot be sent, or the transcript or text chunk. OCR stays on `ocrText` for full-text search and is not part of the image vector. Speech on a video is transcribed and stored as its own transcript document in the same space. The clip vector stays a video vector. `input_type` is `document` when the segment is stored and `query` when the question is embedded. The pinned `voyageai` 0.3.5 client does not send video or `output_dimension` on its multimodal method, so that call uses the multimodal HTTP API. The returned length is checked. A mismatch fails the segment.
+
+## Optional text channel
+
+`ENABLE_TEXT_EMBEDDINGS` defaults to false. When it is true, `voyage-4-large` embeddings are stored on `textEmbedding` and searched through `segments_text_vector_v1`. Query vectors for that index use `voyage-4-large`. Rank fusion combines that list with the multimodal list. The two vectors are never written to the same field, and their raw scores are never added or compared.
+
 ## Video embeddings
 
 Voyage native video is requested when the clip is within the provider limits used by the pipeline. If that path fails, the pipeline embeds sampled frames and records the strategy `sampled_frames`. Sampled frames can miss an event shorter than the gap between frames. That caveat is stored in the technical explanation, not papered over.

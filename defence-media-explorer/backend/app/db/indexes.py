@@ -47,6 +47,8 @@ SEARCH_INDEX_DEFINITION: dict[str, Any] = {
             "reviewState": {"type": "token"},
             "pipelineVersion": {"type": "token"},
             "embeddingModel": {"type": "token"},
+            "textEmbeddingModel": {"type": "token"},
+            "modality": {"type": "token"},
             "captureDateUnknown": {"type": "boolean"},
             "capturedAt": {"type": "date"},
             "uploadedAt": {"type": "date"},
@@ -91,6 +93,7 @@ def vector_index_definition(dimensions: int) -> dict[str, Any]:
         "uploadedAt",
         "tags",
         "categories",
+        "modality",
     ]
     fields: list[dict[str, Any]] = [
         {
@@ -101,6 +104,19 @@ def vector_index_definition(dimensions: int) -> dict[str, Any]:
         }
     ]
     fields.extend({"type": "filter", "path": path} for path in filter_paths)
+    return {"fields": fields}
+
+
+def text_vector_index_definition(dimensions: int) -> dict[str, Any]:
+    """Separate index for voyage-4-large. The path is not the shared multimodal vector."""
+
+    shared = vector_index_definition(dimensions)
+    fields = []
+    for field in shared["fields"]:
+        if field["type"] == "vector":
+            fields.append({**field, "path": "textEmbedding"})
+        else:
+            fields.append(field)
     return {"fields": fields}
 
 
@@ -265,12 +281,21 @@ def ensure_database(client: MongoClient, settings: Settings) -> dict[str, Any]:
         definition=SEARCH_INDEX_DEFINITION,
         index_type="search",
     )
+    text_vector_status = None
+    if settings.enable_text_embeddings:
+        text_vector_status = _ensure_search_index(
+            database["segments"],
+            name=settings.atlas_text_vector_index,
+            definition=text_vector_index_definition(settings.text_embedding_dimensions),
+            index_type="vectorSearch",
+        )
     return {
         "database": settings.mongodb_database,
         "pipelineVersion": PIPELINE_VERSION,
         "embeddingDimensions": settings.embedding_dimensions,
         "vectorIndex": vector_status,
         "textIndex": text_status,
+        "textVectorIndex": text_vector_status,
     }
 
 
@@ -279,10 +304,13 @@ def list_index_status(client: MongoClient, settings: Settings) -> dict[str, Any]
     if "segments" not in set(database.list_collection_names()):
         return {"vectorIndex": {"name": settings.atlas_vector_index, "status": "missing"}, "textIndex": {"name": settings.atlas_search_index, "status": "missing"}}
     found = {item["name"]: item for item in database["segments"].list_search_indexes()}
-    return {
+    status = {
         "vectorIndex": _public_status(found.get(settings.atlas_vector_index), settings.atlas_vector_index),
         "textIndex": _public_status(found.get(settings.atlas_search_index), settings.atlas_search_index),
     }
+    if settings.enable_text_embeddings:
+        status["textVectorIndex"] = _public_status(found.get(settings.atlas_text_vector_index), settings.atlas_text_vector_index)
+    return status
 
 
 def _ensure_regular_indexes(collection: Collection, specs: list[tuple[list[tuple[str, int]], dict[str, Any]]]) -> None:

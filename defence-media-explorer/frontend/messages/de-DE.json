@@ -300,7 +300,10 @@
     "role": "Rolle",
     "createUser": "Person anlegen",
     "passwordHint": "Mindestens 10 Zeichen, mit einem Buchstaben und einer Ziffer.",
-    "allClear": "Jede geprüfte Fähigkeit ist verfügbar."
+    "allClear": "Jede geprüfte Fähigkeit ist verfügbar.",
+    "textChannel": "Textkanal",
+    "textModel": "Textmodell",
+    "indexTextVector": "Textvektorindex"
   },
   "health": {
     "status": {
@@ -389,7 +392,8 @@
       "image_multimodal": "Bild und Text",
       "text": "Text",
       "query": "Abfrage",
-      "unknown": "Nicht erfasst"
+      "unknown": "Nicht erfasst",
+      "image": "Bild"
     },
     "textFields": "Text für Atlas Search",
     "textExplainer": "Die Volltextsuche vergleicht diese Zeichenfolgen. Sie übersetzt sie nicht, und ein Sprachwechsel der Oberfläche schreibt sie nicht um.",
@@ -411,7 +415,15 @@
     "thumbnail": "Vorschaubild",
     "previewObject": "Vorschau",
     "proxy": "Proxy-Clip",
-    "none": "Nicht gespeichert"
+    "none": "Nicht gespeichert",
+    "modality": "Modalität",
+    "modalityName": {
+      "image": "Bild",
+      "video": "Video",
+      "audio": "Audio",
+      "text": "Text",
+      "unknown": "Nicht erfasst"
+    }
   },
   "captureMode": {
     "user": "Von einer Person eingetragen",

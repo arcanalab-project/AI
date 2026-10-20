@@ -18,7 +18,9 @@ from app.media.images import inspect_image, write_thumbnail
 from app.media.hashing import sha256_file
 from app.pipeline.generations import swap_deletes_previous_first
 from app.pipeline.retry import call_provider
+from app.pipeline.routing import route_primary, text_for_shared_space, wants_transcript_document
 from app.pipeline.text import WHISPER_LANGUAGE_CODES, compose_search_text
+from app.providers.base import VideoInput
 from app.media.windows import build_windows, group_transcript_windows, segment_text, snap_window_ends
 
 logger = logging.getLogger(__name__)
@@ -260,13 +262,13 @@ def _extract_audio(local: Path, asset: dict, technical: dict, generation: int, w
         draft["noSpeech"] = no_speech
         draft["audioAbsent"] = False
         draft["detectedLanguage"] = language
-        draft["embeddingPlan"] = "text"
+        draft["embeddingPlan"] = "audio"
         draft["warnings"] = list(audio_warnings)
         drafts.append(draft)
     if not drafts:
         draft = _base_draft(asset, generation, "audio_passage", 0, duration_ms)
         draft["noSpeech"] = True
-        draft["embeddingPlan"] = "text"
+        draft["embeddingPlan"] = "audio"
         draft["warnings"] = list(audio_warnings)
         drafts.append(draft)
     poster = _slate(work / "poster.jpg", "AUDIO")
@@ -403,63 +405,159 @@ def _embed(drafts: list[dict], deps: PipelineDeps, warnings: list[str]) -> None:
         warnings.append("PROVIDER_NOT_CONFIGURED")
         for draft in drafts:
             draft.setdefault("warnings", []).append("PROVIDER_NOT_CONFIGURED")
+            draft["modality"] = route_primary(
+                draft.get("embeddingPlan") or "text",
+                clip_within_limit=False,
+                has_frames=bool(draft.get("localFrames")),
+                native_failed=True,
+            ).modality
         return
-    for draft in drafts:
-        text = _embedding_text(draft)
+    extras: list[dict] = []
+    for draft in list(drafts):
         try:
-            if draft.get("embeddingPlan") == "video" and draft.get("localClip"):
-                result = _embed_video(draft, text, deps)
-            elif draft.get("embeddingPlan") == "image" and draft.get("localFrames"):
-                image = Image.open(draft["localFrames"][0]).convert("RGB")
-                try:
-                    result = call_provider(
-                        lambda: deps.embeddings.embed_document([text, image], "image_multimodal")
-                    )
-                finally:
-                    image.close()
-            else:
-                result = call_provider(lambda: deps.embeddings.embed_document([text], "text"))
+            _embed_one(draft, deps)
         except ProviderError as exc:
             draft.setdefault("warnings", []).append(exc.code)
             warnings.append(exc.code)
-            continue
-        draft["embedding"] = result["vector"]
-        draft["embeddingModel"] = result["model"]
-        draft["embeddingDimensions"] = result["dimensions"]
-        draft["embeddingStrategy"] = result["strategy"]
-        draft["embeddingInputType"] = result.get("inputType", "document")
+        if wants_transcript_document(draft.get("embeddingPlan") or "", draft.get("transcript")):
+            sibling = _transcript_sibling(draft)
+            try:
+                _embed_one(sibling, deps)
+            except ProviderError as exc:
+                sibling.setdefault("warnings", []).append(exc.code)
+                warnings.append(exc.code)
+            extras.append(sibling)
+    drafts.extend(extras)
 
 
-def _embed_video(draft: dict, text: str, deps: PipelineDeps):
-    clip = Path(draft["localClip"])
-    if clip.stat().st_size <= MAX_VIDEO_BYTES:
+def _embed_one(draft: dict, deps: PipelineDeps) -> None:
+    plan = draft.get("embeddingPlan") or "text"
+    clip = Path(draft["localClip"]) if draft.get("localClip") else None
+    clip_ok = bool(clip and clip.exists() and clip.stat().st_size <= MAX_VIDEO_BYTES)
+    native_failed = False
+    if plan == "video" and clip_ok:
         try:
-            from voyageai.video_utils import Video
-
-            video = Video.from_path(str(clip), model=deps.settings.voyage_multimodal_model, optimize=True)
-            estimated = getattr(video, "estimated_num_tokens", None)
-            if estimated is not None and estimated > 30000:
-                raise ProviderError("PROVIDER_FAILED", {"provider": "voyage", "capability": "video_tokens"}, retryable=False)
-            if len(video.to_bytes()) > MAX_VIDEO_BYTES:
-                raise ProviderError("PROVIDER_FAILED", {"provider": "voyage", "capability": "video_bytes"}, retryable=False)
-            return call_provider(lambda: deps.embeddings.embed_document([text, video], "native_video"))
+            result = call_provider(lambda: deps.embeddings.embed_document([VideoInput(clip)], "native_video"))
+            _store_vector(draft, result, route_primary(plan, clip_within_limit=True, has_frames=True, native_failed=False))
+            _maybe_text_channel(draft, deps)
+            return
         except ProviderError as exc:
             if exc.code == "PROVIDER_NOT_CONFIGURED":
                 raise
+            native_failed = True
             logger.info("native video embedding unavailable; using sampled frames")
-        except Exception:
-            logger.info("native video embedding failed; using sampled frames")
-    parts: list[Any] = [text + "\nSampled frames can miss events shorter than the sample interval."]
+    route = route_primary(
+        plan,
+        clip_within_limit=clip_ok,
+        has_frames=bool(draft.get("localFrames")),
+        native_failed=native_failed,
+    )
+    if route.kind == "image":
+        image = Image.open(draft["localFrames"][0]).convert("RGB")
+        try:
+            result = call_provider(lambda: deps.embeddings.embed_document([image], route.strategy))
+        finally:
+            image.close()
+    elif route.kind == "frames":
+        result = _embed_frames(draft, deps, route.strategy)
+    else:
+        text = text_for_shared_space(
+            "audio" if route.modality == "audio" else plan,
+            transcript=draft.get("transcript"),
+            source_text=draft.get("sourceText"),
+            no_speech=bool(draft.get("noSpeech")),
+        )
+        if not text:
+            text = _embedding_text(draft)
+        result = call_provider(lambda: deps.embeddings.embed_document([text], route.strategy))
+    _store_vector(draft, result, route)
+    _maybe_text_channel(draft, deps)
+
+
+def _embed_frames(draft: dict, deps: PipelineDeps, strategy: str):
+    parts: list[Any] = []
     for path, board in zip(draft.get("localFrames") or [], draft.get("storyboard") or [], strict=False):
         image = Image.open(path).convert("RGB")
-        parts.append(f"Frame at {board['timestampMs']} ms")
+        parts.append(f"Frame at {board.get('timestampMs')} ms")
         parts.append(image)
+    if not parts:
+        raise ProviderError("PROVIDER_FAILED", {"provider": "voyage", "capability": "embeddings"}, retryable=False)
     try:
-        return call_provider(lambda: deps.embeddings.embed_document(parts, "sampled_frames"))
+        return call_provider(lambda: deps.embeddings.embed_document(parts, strategy))
     finally:
         for part in parts:
             if isinstance(part, Image.Image):
                 part.close()
+
+
+def _store_vector(draft: dict, result: dict, route) -> None:
+    draft["embedding"] = result["vector"]
+    draft["embeddingModel"] = result["model"]
+    draft["embeddingDimensions"] = result["dimensions"]
+    draft["embeddingStrategy"] = result.get("strategy") or route.strategy
+    draft["embeddingInputType"] = result.get("inputType", "document")
+    draft["modality"] = route.modality
+    draft["preprocessingVersion"] = PIPELINE_VERSION
+
+
+def _maybe_text_channel(draft: dict, deps: PipelineDeps) -> None:
+    if not deps.settings.enable_text_embeddings:
+        return
+    text = _text_channel_input(draft)
+    if not text:
+        return
+    result = call_provider(lambda: deps.embeddings.embed_text_document(text))
+    if len(result["vector"]) != deps.settings.text_embedding_dimensions or result["model"] != deps.settings.voyage_text_model:
+        raise ProviderError(
+            "EMBEDDING_MODEL_MISMATCH",
+            {"expected": deps.settings.voyage_text_model, "actual": result.get("model")},
+            retryable=False,
+        )
+    draft["textEmbedding"] = result["vector"]
+    draft["textEmbeddingModel"] = result["model"]
+    draft["textEmbeddingDimensions"] = result["dimensions"]
+    draft["textEmbeddingInputType"] = result.get("inputType", "document")
+
+
+def _text_channel_input(draft: dict) -> str:
+    return " ".join(
+        part
+        for part in (
+            draft.get("transcript"),
+            draft.get("ocrText"),
+            draft.get("sourceText"),
+            draft.get("title"),
+            draft.get("userDescription"),
+        )
+        if isinstance(part, str) and part.strip()
+    ).strip()[:8000]
+
+
+def _transcript_sibling(draft: dict) -> dict:
+    sibling = {
+        key: draft.get(key)
+        for key in (
+            "startMs",
+            "endMs",
+            "transcript",
+            "transcriptProvenance",
+            "detectedLanguage",
+            "thumbnailObject",
+            "title",
+            "userDescription",
+            "generation",
+            "audioAbsent",
+            "noSpeech",
+        )
+    }
+    sibling["segmentType"] = "audio_passage"
+    sibling["embeddingPlan"] = "audio"
+    sibling["warnings"] = []
+    sibling["categories"] = list(draft.get("categories") or [])
+    sibling["activities"] = list(draft.get("activities") or [])
+    sibling["uncertainties"] = []
+    sibling["sourceText"] = draft.get("transcript")
+    return sibling
 
 
 def _commit(deps, job, asset, drafts, derived, technical, media_patch, digest, warnings) -> None:
@@ -494,6 +592,11 @@ def _commit(deps, job, asset, drafts, derived, technical, media_patch, digest, w
         next_model=next_model,
         next_dimensions=int(next_dims),
         next_pipeline_version=PIPELINE_VERSION,
+        text_channel_enabled=deps.settings.enable_text_embeddings,
+        previous_text_model=(previous or {}).get("textEmbeddingModel"),
+        previous_text_dimensions=(previous or {}).get("textEmbeddingDimensions"),
+        next_text_model=deps.settings.voyage_text_model if deps.settings.enable_text_embeddings else None,
+        next_text_dimensions=deps.settings.text_embedding_dimensions if deps.settings.enable_text_embeddings else None,
     )
     if delete_first:
         deps.repo.delete_other_generations(asset["_id"], generation)
@@ -570,11 +673,13 @@ def _segment_document(asset: dict, draft: dict, generation: int, status: str, me
         "sourceLanguage": language,
         "detectedLanguage": draft.get("detectedLanguage"),
         "searchText": search_text,
+        "modality": draft.get("modality"),
         "embeddingModel": draft.get("embeddingModel"),
         "embeddingDimensions": draft.get("embeddingDimensions"),
         "embeddingStrategy": draft.get("embeddingStrategy"),
         "embeddingInputType": draft.get("embeddingInputType"),
         "pipelineVersion": PIPELINE_VERSION,
+        "preprocessingVersion": draft.get("preprocessingVersion") or PIPELINE_VERSION,
         "generation": generation,
         "thumbnailObject": draft.get("thumbnailObject"),
         "previewObject": draft.get("previewObject"),
@@ -596,6 +701,11 @@ def _segment_document(asset: dict, draft: dict, generation: int, status: str, me
         document["captureDateUnknown"] = False
     if draft.get("embedding"):
         document["embedding"] = draft["embedding"]
+    if draft.get("textEmbedding"):
+        document["textEmbedding"] = draft["textEmbedding"]
+        document["textEmbeddingModel"] = draft.get("textEmbeddingModel")
+        document["textEmbeddingDimensions"] = draft.get("textEmbeddingDimensions")
+        document["textEmbeddingInputType"] = draft.get("textEmbeddingInputType")
     return document
 
 

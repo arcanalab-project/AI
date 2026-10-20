@@ -31,12 +31,17 @@ class Settings(BaseSettings):
     mongodb_database: str = "defence_media_explorer"
     atlas_vector_index: str = "segments_vector_v1"
     atlas_search_index: str = "segments_text_v1"
+    atlas_text_vector_index: str = "segments_text_vector_v1"
 
     voyage_api_key: str = ""
     voyage_multimodal_model: str = "voyage-multimodal-3.5"
     embedding_dimensions: int = 1024
     voyage_rerank_model: str = "rerank-3"
     enable_rerank: bool = False
+    # Optional second text space. Off by default. Never stored in `embedding`.
+    enable_text_embeddings: bool = False
+    voyage_text_model: str = "voyage-4-large"
+    text_embedding_dimensions: int = 1024
 
     openai_api_key: str = ""
     vision_model: str = "gpt-4.1-mini"
@@ -75,11 +80,11 @@ class Settings(BaseSettings):
     playback_url_ttl_seconds: int = 900
     nearby_gap_ms: int = 2000
 
-    @field_validator("embedding_dimensions")
+    @field_validator("embedding_dimensions", "text_embedding_dimensions")
     @classmethod
     def _dims(cls, value: int) -> int:
         if value not in SUPPORTED_DIMENSIONS:
-            raise ValueError(f"EMBEDDING_DIMENSIONS must be one of {sorted(SUPPORTED_DIMENSIONS)}")
+            raise ValueError(f"embedding dimensions must be one of {sorted(SUPPORTED_DIMENSIONS)}")
         return value
 
     @field_validator("video_segment_overlap_seconds")

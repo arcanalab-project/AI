@@ -572,8 +572,17 @@ def technical(segment_id: str, request: Request) -> dict:
             "dimensions": segment.get("embeddingDimensions"),
             "strategy": segment.get("embeddingStrategy"),
             "inputType": segment.get("embeddingInputType"),
+            "modality": segment.get("modality"),
+            "preprocessingVersion": segment.get("preprocessingVersion"),
             "preview": preview,
             "previewLength": len(preview),
+        },
+        "textChannel": None
+        if not segment.get("textEmbeddingModel")
+        else {
+            "model": segment.get("textEmbeddingModel"),
+            "dimensions": segment.get("textEmbeddingDimensions"),
+            "inputType": segment.get("textEmbeddingInputType"),
         },
         "extractedText": {
             "transcript": segment.get("transcript"),

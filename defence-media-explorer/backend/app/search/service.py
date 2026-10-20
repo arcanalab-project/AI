@@ -51,7 +51,7 @@ class SearchService:
         else:
             window = max(self.settings.search_top_k, page * page_size)
             if mode == "semantic":
-                hits, fusion = self._semantic(workspace_id, query, filters, window), None
+                hits, fusion = self._semantic(workspace_id, query, filters, window)
             elif mode == "fulltext":
                 hits, fusion = self._fulltext(workspace_id, query, filters, window, body.get("queryLanguage")), None
             else:
@@ -141,10 +141,21 @@ class SearchService:
             "countKind": "matching_segments",
         }
 
-    def _semantic(self, workspace_id: str, query: str, filters: dict, limit: int) -> list[dict]:
+    def _semantic(self, workspace_id: str, query: str, filters: dict, limit: int) -> tuple[list[dict], str | None]:
         vector = self._query_vector(query)
         filt = build_metadata_filter(workspace_id, filters)
-        return self._vector_query(vector, filt, limit)
+        text_vector = self._text_query_vector(query)
+        if text_vector is None:
+            return self._vector_query(vector, filt, limit), None
+        if self._supports_rank_fusion():
+            try:
+                return self._rank_fusion(vector, filt, query, None, limit, text_vector=text_vector, include_lexical=False), "rankFusion"
+            except OperationFailure as exc:
+                if not _rank_fusion_rejected(exc):
+                    raise _search_error(exc) from exc
+        visual = self._vector_query(vector, filt, limit)
+        textual = self._text_vector_query(text_vector, filt, limit)
+        return _fuse_hits([visual, textual], self.settings.rrf_k), "backend_rrf"
 
     def _fulltext(self, workspace_id: str, query: str, filters: dict, limit: int, query_language: str | None) -> list[dict]:
         filt = build_metadata_filter(workspace_id, filters)
@@ -160,7 +171,7 @@ class SearchService:
                 }
             },
             {"$limit": limit},
-            {"$project": {"embedding": 0}},
+            {"$project": {"embedding": 0, "textEmbedding": 0}},
         ]
         try:
             rows = self.repo.aggregate_segments(pipeline)
@@ -171,61 +182,89 @@ class SearchService:
     def _hybrid(self, workspace_id: str, query: str, filters: dict, limit: int, query_language: str | None) -> tuple[list[dict], str]:
         vector = self._query_vector(query)
         filt = build_metadata_filter(workspace_id, filters)
+        text_vector = self._text_query_vector(query)
         if self._supports_rank_fusion():
             try:
-                return self._rank_fusion(vector, filt, query, query_language, limit), "rankFusion"
+                return self._rank_fusion(vector, filt, query, query_language, limit, text_vector=text_vector, include_lexical=True), "rankFusion"
             except OperationFailure as exc:
                 if not _rank_fusion_rejected(exc):
                     raise _search_error(exc) from exc
-        vector_hits = self._vector_query(vector, filt, limit)
-        text_hits = self._fulltext(workspace_id, query, filters, limit, query_language)
-        fused = reciprocal_rank_fusion(
-            [[str(item["_id"]) for item in vector_hits], [str(item["_id"]) for item in text_hits]],
-            k=self.settings.rrf_k,
-        )
-        by_id = {str(item["_id"]): item for item in vector_hits}
-        by_id.update({str(item["_id"]): item for item in text_hits})
-        ordered = [by_id[doc_id] for doc_id, _score in fused if doc_id in by_id]
-        return ordered, "backend_rrf"
+        groups = [self._vector_query(vector, filt, limit), self._fulltext(workspace_id, query, filters, limit, query_language)]
+        if text_vector is not None:
+            groups.append(self._text_vector_query(text_vector, filt, limit))
+        return _fuse_hits(groups, self.settings.rrf_k), "backend_rrf"
 
-    def _rank_fusion(self, vector: list[float], filt: dict, query: str, query_language: str | None, limit: int) -> list[dict]:
+    def _rank_fusion(
+        self,
+        vector: list[float],
+        filt: dict,
+        query: str,
+        query_language: str | None,
+        limit: int,
+        *,
+        text_vector: list[float] | None = None,
+        include_lexical: bool = True,
+    ) -> list[dict]:
         candidates = max(self.settings.vector_num_candidates, limit)
+        pipelines: dict[str, list] = {
+            "vector": [
+                {
+                    "$vectorSearch": {
+                        "index": self.settings.atlas_vector_index,
+                        "path": "embedding",
+                        "queryVector": vector,
+                        "numCandidates": candidates,
+                        "limit": limit,
+                        "filter": filt,
+                    }
+                }
+            ]
+        }
+        if include_lexical:
+            pipelines["text"] = [
+                {
+                    "$search": {
+                        "index": self.settings.atlas_search_index,
+                        "compound": {
+                            "filter": to_search_filter_clauses(filt),
+                            "should": text_should_clauses(query, query_language),
+                            "minimumShouldMatch": 1,
+                        },
+                    }
+                },
+                {"$limit": limit},
+            ]
+        if text_vector is not None:
+            if len(text_vector) != self.settings.text_embedding_dimensions:
+                raise AppError(
+                    "EMBEDDING_DIMENSION_MISMATCH",
+                    502,
+                    {
+                        "expected": self.settings.text_embedding_dimensions,
+                        "actual": len(text_vector),
+                        "model": self.settings.voyage_text_model,
+                    },
+                )
+            pipelines["textVector"] = [
+                {
+                    "$vectorSearch": {
+                        "index": self.settings.atlas_text_vector_index,
+                        "path": "textEmbedding",
+                        "queryVector": text_vector,
+                        "numCandidates": candidates,
+                        "limit": limit,
+                        "filter": filt,
+                    }
+                }
+            ]
         pipeline = [
             {
                 "$rankFusion": {
-                    "input": {
-                        "pipelines": {
-                            "vector": [
-                                {
-                                    "$vectorSearch": {
-                                        "index": self.settings.atlas_vector_index,
-                                        "path": "embedding",
-                                        "queryVector": vector,
-                                        "numCandidates": candidates,
-                                        "limit": limit,
-                                        "filter": filt,
-                                    }
-                                }
-                            ],
-                            "text": [
-                                {
-                                    "$search": {
-                                        "index": self.settings.atlas_search_index,
-                                        "compound": {
-                                            "filter": to_search_filter_clauses(filt),
-                                            "should": text_should_clauses(query, query_language),
-                                            "minimumShouldMatch": 1,
-                                        },
-                                    }
-                                },
-                                {"$limit": limit},
-                            ],
-                        }
-                    },
-                    "combination": {"weights": {"vector": 1, "text": 1}},
+                    "input": {"pipelines": pipelines},
+                    "combination": {"weights": {name: 1 for name in pipelines}},
                 }
             },
-            {"$project": {"embedding": 0}},
+            {"$project": {"embedding": 0, "textEmbedding": 0}},
             {"$limit": limit},
         ]
         return self.repo.aggregate_segments(pipeline)
@@ -248,7 +287,32 @@ class SearchService:
                     "filter": filt,
                 }
             },
-            {"$project": {"embedding": 0}},
+            {"$project": {"embedding": 0, "textEmbedding": 0}},
+        ]
+        try:
+            return self.repo.aggregate_segments(pipeline)
+        except OperationFailure as exc:
+            raise _search_error(exc) from exc
+
+    def _text_vector_query(self, vector: list[float], filt: dict, limit: int) -> list[dict]:
+        if len(vector) != self.settings.text_embedding_dimensions:
+            raise AppError(
+                "EMBEDDING_DIMENSION_MISMATCH",
+                502,
+                {"expected": self.settings.text_embedding_dimensions, "actual": len(vector), "model": self.settings.voyage_text_model},
+            )
+        pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": self.settings.atlas_text_vector_index,
+                    "path": "textEmbedding",
+                    "queryVector": vector,
+                    "numCandidates": max(self.settings.vector_num_candidates, limit),
+                    "limit": limit,
+                    "filter": filt,
+                }
+            },
+            {"$project": {"embedding": 0, "textEmbedding": 0}},
         ]
         try:
             return self.repo.aggregate_segments(pipeline)
@@ -263,6 +327,16 @@ class SearchService:
         except ProviderError as exc:
             raise AppError(exc.code, exc.status_code, exc.params) from exc
         return vector
+
+    def _text_query_vector(self, query: str) -> list[float] | None:
+        if not self.settings.enable_text_embeddings:
+            return None
+        if not self.settings.embeddings_configured:
+            raise AppError("PROVIDER_NOT_CONFIGURED", 503, {"provider": "voyage", "capability": "textEmbeddings"})
+        try:
+            return call_provider(lambda: self.embeddings.embed_text_query(query))
+        except ProviderError as exc:
+            raise AppError(exc.code, exc.status_code, exc.params) from exc
 
     def _maybe_rerank(self, query: str, hits: list[dict]) -> tuple[list[dict], bool, dict | None]:
         if not self.settings.enable_rerank or not hits:
@@ -363,6 +437,15 @@ def _sort_window(hits: list[dict], sort: str) -> list[dict]:
     missing = [item for item in hits if not isinstance(item.get(field), datetime)]
     dated.sort(key=lambda item: item[field], reverse=direction != "asc")
     return dated + missing
+
+
+def _fuse_hits(groups: list[list[dict]], k: int) -> list[dict]:
+    fused = reciprocal_rank_fusion([[str(item["_id"]) for item in group] for group in groups], k=k)
+    by_id: dict[str, dict] = {}
+    for group in groups:
+        for item in group:
+            by_id[str(item["_id"])] = item
+    return [by_id[doc_id] for doc_id, _score in fused if doc_id in by_id]
 
 
 def _rank_fusion_rejected(exc: OperationFailure) -> bool:

@@ -122,6 +122,7 @@ Details and the reasons for these choices are in `docs/decisions.md`, `docs/arch
 ## Limitations
 
 - No Voyage key: semantic search, similar segments, native video embeddings, sampled-frame embeddings, and rerank are unavailable.
+- `ENABLE_TEXT_EMBEDDINGS` defaults to false. `voyage-4-large` is a separate vector field and index, combined only by rank fusion.
 - No OpenAI key: frame descriptions, OCR, and transcription are unavailable. Segments can still be stored as partial.
 - Full-text search does not translate. Cross-language quality is not claimed. See `docs/evaluation.md`.
 - EXIF without a time-zone offset stays an unknown capture date.

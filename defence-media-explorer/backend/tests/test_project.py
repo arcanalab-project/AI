@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from app.db.indexes import SEARCH_INDEX_DEFINITION, vector_index_definition
+from app.db.indexes import SEARCH_INDEX_DEFINITION, text_vector_index_definition, vector_index_definition
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,6 +25,8 @@ def test_env_example_lists_required_keys_without_secrets():
         "VOYAGE_MULTIMODAL_MODEL=voyage-multimodal-3.5",
         "EMBEDDING_DIMENSIONS=1024",
         "ENABLE_RERANK=false",
+        "ENABLE_TEXT_EMBEDDINGS=false",
+        "VOYAGE_TEXT_MODEL=voyage-4-large",
         "TRANSCRIPTION_MODEL=whisper-1",
         "DEFAULT_LOCALE=en-GB",
         "SUPPORTED_LOCALES=it-IT,en-GB,fr-FR,es-ES,de-DE",
@@ -40,8 +42,13 @@ def test_vector_index_dimensions_and_filters():
     assert vector["numDimensions"] == 1024
     assert vector["similarity"] == "cosine"
     paths = {field["path"] for field in definition["fields"] if field["type"] == "filter"}
-    for required in ("workspaceId", "mediaType", "capturedAt", "uploadedAt", "tags", "sourceLanguage"):
+    for required in ("workspaceId", "mediaType", "capturedAt", "uploadedAt", "tags", "sourceLanguage", "modality"):
         assert required in paths
+    text_vector = text_vector_index_definition(1024)
+    text_field = next(field for field in text_vector["fields"] if field["type"] == "vector")
+    assert text_field["path"] == "textEmbedding"
+    assert text_field["numDimensions"] == 1024
+    assert text_field["path"] != vector["path"]
 
 
 def test_search_index_has_five_language_analyzers():

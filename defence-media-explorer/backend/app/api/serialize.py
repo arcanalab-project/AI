@@ -7,7 +7,7 @@ from typing import Any
 
 from bson import ObjectId
 
-HIDDEN = {"embedding", "passwordHash"}
+HIDDEN = {"embedding", "textEmbedding", "passwordHash"}
 
 
 def jsonable(value: Any) -> Any:

@@ -300,7 +300,10 @@
     "role": "Role",
     "createUser": "Create person",
     "passwordHint": "At least 10 characters, with a letter and a digit.",
-    "allClear": "Every checked capability is available."
+    "allClear": "Every checked capability is available.",
+    "textChannel": "Text channel",
+    "textModel": "Text model",
+    "indexTextVector": "Text-vector index"
   },
   "health": {
     "status": {
@@ -389,7 +392,8 @@
       "image_multimodal": "Image and text",
       "text": "Text",
       "query": "Query",
-      "unknown": "Not recorded"
+      "unknown": "Not recorded",
+      "image": "Image"
     },
     "textFields": "Text used by Atlas Search",
     "textExplainer": "Full-text search matches these strings. It does not translate them, and changing the interface language does not rewrite them.",
@@ -411,7 +415,15 @@
     "thumbnail": "Thumbnail",
     "previewObject": "Preview",
     "proxy": "Proxy clip",
-    "none": "Not stored"
+    "none": "Not stored",
+    "modality": "Modality",
+    "modalityName": {
+      "image": "Image",
+      "video": "Video",
+      "audio": "Audio",
+      "text": "Text",
+      "unknown": "Not recorded"
+    }
   },
   "captureMode": {
     "user": "Entered by a person",
