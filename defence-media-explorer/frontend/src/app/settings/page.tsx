@@ -84,10 +84,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageIntro kicker={t("settings.kicker")} title={t("settings.title")} body={t("settings.body")} />
       <ErrorNote error={error} />
-      <section className="panel min-w-0 space-y-4 p-5">
+      <section className="panel min-w-0 space-y-3 p-3">
         <FieldLabel label={t("settings.language")} hint={t("settings.languageHint")}>
           <Select value={locale} onChange={(event) => setLocale(event.target.value as (typeof LOCALES)[number])}>
             {LOCALES.map((item) => (
@@ -118,8 +118,8 @@ export default function SettingsPage() {
         </div>
       </section>
       {user ? (
-        <form className="panel min-w-0 space-y-4 p-5" onSubmit={(event) => void saveProfile(event)}>
-          <h2 className="font-serif text-2xl">{t("settings.profile")}</h2>
+        <form className="panel min-w-0 space-y-3 p-3" onSubmit={(event) => void saveProfile(event)}>
+          <h2 className="section-title">{t("settings.profile")}</h2>
           <FieldLabel label={t("settings.displayName")}>
             <TextInput value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
           </FieldLabel>
@@ -127,8 +127,8 @@ export default function SettingsPage() {
           {notice ? <p className="text-sm">{notice}</p> : null}
         </form>
       ) : null}
-      <section className="panel min-w-0 space-y-4 p-5">
-        <h2 className="font-serif text-2xl">{t("settings.health")}</h2>
+      <section className="panel min-w-0 space-y-3 p-3">
+        <h2 className="section-title">{t("settings.health")}</h2>
         <p className="leading-relaxed text-[var(--muted)]">{t("settings.healthBody")}</p>
         <p className="leading-relaxed">{t("settings.indexingNote")}</p>
         {health ? (
@@ -153,10 +153,23 @@ export default function SettingsPage() {
             ) : (
               <p>{t("settings.allClear")}</p>
             )}
-            <div className="grid min-w-0 gap-3">
-              {CAPABILITIES.map((name) => (
-                <Capability key={name} name={name} value={health.capabilities?.[name] || {}} />
-              ))}
+            <div className="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t("settings.health")}</th>
+                    <th>{t("settings.statusLabel")}</th>
+                    <th>{t("settings.model")}</th>
+                    <th>{t("settings.reachable")}</th>
+                    <th>{t("common.details")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CAPABILITIES.map((name) => (
+                    <Capability key={name} name={name} value={health.capabilities?.[name] || {}} />
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         ) : (
@@ -164,8 +177,8 @@ export default function SettingsPage() {
         )}
       </section>
       {isAdmin(user?.role) ? (
-        <section className="panel min-w-0 space-y-4 p-5">
-          <h2 className="font-serif text-2xl">{t("settings.users")}</h2>
+        <section className="panel min-w-0 space-y-3 p-3">
+          <h2 className="section-title">{t("settings.users")}</h2>
           <p className="leading-relaxed text-[var(--muted)]">{t("settings.usersBody")}</p>
           <form className="grid min-w-0 gap-3" onSubmit={(event) => void createUser(event)}>
             <FieldLabel label={t("settings.email")}>
@@ -186,21 +199,32 @@ export default function SettingsPage() {
             </FieldLabel>
             <Button type="submit">{t("settings.createUser")}</Button>
           </form>
-          <ul className="space-y-3">
-            {users.map((person) => (
-              <li key={person.id} className="flex min-w-0 flex-wrap items-center gap-3 rounded-2xl border border-[var(--line)] p-3">
-                <div className="min-w-0">
-                  <p className="break-words font-medium">{person.displayName}</p>
-                  <p className="break-words text-sm text-[var(--muted)]">{person.email}</p>
-                </div>
-                <Select value={person.role} onChange={(event) => void changeRole(person.id, event.target.value)} aria-label={t("settings.role")}>
-                  <option value="viewer">{t("role.viewer")}</option>
-                  <option value="uploader">{t("role.uploader")}</option>
-                  <option value="admin">{t("role.admin")}</option>
-                </Select>
-              </li>
-            ))}
-          </ul>
+          <div className="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>{t("settings.displayName")}</th>
+                  <th>{t("settings.email")}</th>
+                  <th>{t("settings.role")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((person) => (
+                  <tr key={person.id}>
+                    <td className="font-sans font-semibold text-[var(--ink)]">{person.displayName}</td>
+                    <td className="break-words">{person.email}</td>
+                    <td>
+                      <Select value={person.role} onChange={(event) => void changeRole(person.id, event.target.value)} aria-label={t("settings.role")}>
+                        <option value="viewer">{t("role.viewer")}</option>
+                        <option value="uploader">{t("role.uploader")}</option>
+                        <option value="admin">{t("role.admin")}</option>
+                      </Select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       ) : null}
     </div>
@@ -212,31 +236,35 @@ function Capability({ name, value }: { name: string; value: Record<string, unkno
   const search = value.search as { vectorIndex?: Record<string, unknown>; textIndex?: Record<string, unknown>; textVectorIndex?: Record<string, unknown> } | undefined;
   const unavailable = typeof value.errorCode === "string";
   return (
-    <article className="min-w-0 rounded-2xl border border-[var(--line)] p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 className="break-words font-semibold">{t(`settings.capability.${name}`)}</h3>
+    <tr>
+      <th scope="row" className="font-sans normal-case tracking-normal text-[var(--ink)]">
+        {t(`settings.capability.${name}`)}
+      </th>
+      <td>
         <Badge tone={unavailable ? "warn" : "ok"}>{unavailable ? t("settings.unavailable") : t("health.status.ok")}</Badge>
-      </div>
-      <dl className="mt-3 grid gap-1 text-sm leading-snug">
-        <Fact label={t("settings.configured")} value={value.configured} />
-        <Fact label={t("settings.reachable")} value={value.reachable} />
-        <Fact label={t("settings.enabled")} value={value.enabled} />
-        <Fact label={t("settings.model")} value={value.model} />
-        <Fact label={t("settings.dimensions")} value={value.dimensions} />
-        <Fact label={t("settings.textChannel")} value={value.textChannelEnabled} />
-        <Fact label={t("settings.textModel")} value={value.textModel} />
-        <Fact label={t("settings.database")} value={value.database} />
-        <Fact label={t("settings.bucket")} value={value.bucket} />
-        <Fact label={t("settings.legacyObjects")} value={value.legacyObjectStorageCount} />
-        <Fact label={t("settings.publicEndpoint")} value={value.publicEndpointConfigured} />
-        {typeof value.errorCode === "string" && t.has(`errors.${value.errorCode}`) ? (
-          <div className="text-[var(--warn)]">{t(`errors.${value.errorCode}`)}</div>
-        ) : null}
-      </dl>
-      {search?.vectorIndex ? <IndexLine title={t("settings.indexVector")} index={search.vectorIndex} /> : null}
-      {search?.textIndex ? <IndexLine title={t("settings.indexText")} index={search.textIndex} /> : null}
-      {search?.textVectorIndex ? <IndexLine title={t("settings.indexTextVector")} index={search.textVectorIndex} /> : null}
-    </article>
+      </td>
+      <td className="num">{typeof value.model === "string" ? value.model : t("common.notAvailable")}</td>
+      <td>{typeof value.reachable === "boolean" ? (value.reachable ? t("common.yes") : t("common.no")) : t("common.notAvailable")}</td>
+      <td>
+        <dl className="grid gap-0.5 text-xs leading-snug">
+          <Fact label={t("settings.configured")} value={value.configured} />
+          <Fact label={t("settings.enabled")} value={value.enabled} />
+          <Fact label={t("settings.dimensions")} value={value.dimensions} />
+          <Fact label={t("settings.textChannel")} value={value.textChannelEnabled} />
+          <Fact label={t("settings.textModel")} value={value.textModel} />
+          <Fact label={t("settings.database")} value={value.database} />
+          <Fact label={t("settings.bucket")} value={value.bucket} />
+          <Fact label={t("settings.legacyObjects")} value={value.legacyObjectStorageCount} />
+          <Fact label={t("settings.publicEndpoint")} value={value.publicEndpointConfigured} />
+          {typeof value.errorCode === "string" && t.has(`errors.${value.errorCode}`) ? (
+            <div className="text-[var(--danger-text)]">{t(`errors.${value.errorCode}`)}</div>
+          ) : null}
+        </dl>
+        {search?.vectorIndex ? <IndexLine title={t("settings.indexVector")} index={search.vectorIndex} /> : null}
+        {search?.textIndex ? <IndexLine title={t("settings.indexText")} index={search.textIndex} /> : null}
+        {search?.textVectorIndex ? <IndexLine title={t("settings.indexTextVector")} index={search.textVectorIndex} /> : null}
+      </td>
+    </tr>
   );
 }
 

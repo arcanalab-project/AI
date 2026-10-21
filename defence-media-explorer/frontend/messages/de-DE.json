@@ -496,5 +496,20 @@
     },
     "LEGACY_OBJECT_STORAGE": "Diese Datei verweist noch auf den früheren Objektspeicher und wurde nicht migriert. Sie wurde nicht gelöscht.",
     "WORKER_NOT_RUNNING": "Der Ingestion-Worker läuft nicht, deshalb kann dieser Upload nicht fertig werden."
+  },
+  "shell": {
+    "restricted": "RESTRICTED",
+    "unclassified": "UNCLASSIFIED",
+    "utc": "UTC",
+    "operator": "Bediener",
+    "syncLive": "Synchronisiert",
+    "syncDegraded": "Beeinträchtigt",
+    "syncOffline": "Keine Verbindung",
+    "syncPending": "Prüfung"
+  },
+  "columns": {
+    "attempts": "Versuche",
+    "progress": "Fortschritt",
+    "stage": "Phase"
   }
 }

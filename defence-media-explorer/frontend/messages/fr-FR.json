@@ -496,5 +496,20 @@
     },
     "LEGACY_OBJECT_STORAGE": "Ce fichier pointe encore vers l'ancien stockage objet et n'a pas été migré. Il n'a pas été supprimé.",
     "WORKER_NOT_RUNNING": "Le worker d'ingestion n'est pas lancé, donc ce téléversement ne peut pas se terminer."
+  },
+  "shell": {
+    "restricted": "RESTRICTED",
+    "unclassified": "UNCLASSIFIED",
+    "utc": "UTC",
+    "operator": "Opérateur",
+    "syncLive": "Synchronisé",
+    "syncDegraded": "Dégradé",
+    "syncOffline": "Aucune liaison",
+    "syncPending": "Vérification"
+  },
+  "columns": {
+    "attempts": "Tentatives",
+    "progress": "Avancement",
+    "stage": "Étape"
   }
 }

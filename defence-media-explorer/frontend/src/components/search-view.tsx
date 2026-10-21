@@ -173,10 +173,10 @@ export function SearchView() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageIntro kicker={t("search.kicker")} title={t("search.title")} body={t("search.body")} />
       <form
-        className="panel min-w-0 p-4 md:p-6"
+        className="panel min-w-0 p-3"
         onSubmit={(event) => {
           event.preventDefault();
           replace({ ...state, page: 1 });
@@ -189,7 +189,7 @@ export function SearchView() {
             value={state.q}
             onChange={(event) => replace({ ...state, q: event.target.value, page: 1 })}
             placeholder={t("search.placeholder")}
-            className="w-full min-w-0 rounded-3xl border border-[var(--line)] bg-transparent px-5 py-4 text-xl leading-snug"
+            className="field"
           />
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -209,7 +209,7 @@ export function SearchView() {
             <button
               key={key}
               type="button"
-              className="max-w-full whitespace-normal break-words rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] px-4 py-3 text-left text-sm leading-snug"
+              className="choice text-left"
               onClick={() => replace({ ...state, q: t(`search.examples.${key}`), mode: "hybrid", page: 1 })}
             >
               {t(`search.examples.${key}`)}
@@ -261,8 +261,8 @@ export function SearchView() {
               />
             </>
           ) : null}
-          <section className="panel min-w-0 space-y-3 p-5">
-            <h2 className="font-serif text-2xl">{t("search.saved")}</h2>
+          <section className="panel min-w-0 space-y-2 p-3">
+            <h2 className="section-title">{t("search.saved")}</h2>
             <form
               className="flex min-w-0 flex-wrap gap-2"
               onSubmit={(event) => {

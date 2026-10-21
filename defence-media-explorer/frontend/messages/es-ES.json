@@ -496,5 +496,20 @@
     },
     "LEGACY_OBJECT_STORAGE": "Este archivo sigue apuntando al almacén de objetos anterior y no se ha migrado. No se ha eliminado.",
     "WORKER_NOT_RUNNING": "El worker de ingesta no está en ejecución, así que esta carga no puede terminar."
+  },
+  "shell": {
+    "restricted": "RESTRICTED",
+    "unclassified": "UNCLASSIFIED",
+    "utc": "UTC",
+    "operator": "Operador",
+    "syncLive": "Sincronizado",
+    "syncDegraded": "Degradado",
+    "syncOffline": "Sin enlace",
+    "syncPending": "Comprobando"
+  },
+  "columns": {
+    "attempts": "Intentos",
+    "progress": "Avance",
+    "stage": "Fase"
   }
 }

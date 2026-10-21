@@ -8,7 +8,7 @@ import { ApiError, api, asApiError, type Asset } from "@/lib/api";
 import { usePrefs } from "@/lib/preferences";
 import { readFilters, writeFilters, type FilterState } from "@/lib/search-state";
 import { Badge } from "@/components/ui";
-import { ErrorNote, PageIntro } from "@/components/shell";
+import { ErrorNote, PageIntro, statusTone } from "@/components/shell";
 import { FilterPanel } from "@/components/filters";
 import { FileSize, LocalDate } from "@/components/format";
 import { Pager } from "@/components/results";
@@ -82,7 +82,7 @@ export default function LibraryPage() {
   const visible = { ...state, sort: state.sort === "relevance" ? "uploadedAt_desc" : state.sort };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageIntro kicker={t("library.kicker")} title={t("library.title")} body={t("library.body")} />
       <div className="grid min-w-0 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
         <FilterPanel
@@ -95,38 +95,57 @@ export default function LibraryPage() {
         />
         <div className="min-w-0 space-y-5">
           <ErrorNote error={error} />
-          <p className="text-sm text-[var(--muted)]">{t("library.count", { count: total })}</p>
+          <p className="metric text-xs text-[var(--muted)]">{t("library.count", { count: total })}</p>
           {assets.length ? (
-            <div className="grid min-w-0 gap-5 md:grid-cols-2">
-              {assets.map((asset) => (
-                <article key={asset.id} className="panel flex min-w-0 flex-col">
-                  <div className="aspect-video overflow-hidden rounded-t-[20px] bg-[#001E2B]">
-                    {asset.thumbnailUrl ? <img src={asset.thumbnailUrl} alt="" className="h-full w-full object-cover" /> : null}
-                  </div>
-                  <div className="space-y-3 p-5">
-                    <div className="flex flex-wrap gap-2">
-                      <Badge>{t.has(`mediaType.${asset.mediaType}`) ? t(`mediaType.${asset.mediaType}`) : t("mediaType.unknown")}</Badge>
-                      <Badge tone={asset.processingStatus === "failed" ? "danger" : asset.processingStatus === "ready" ? "ok" : "warn"}>
-                        {asset.processingStatus && t.has(`status.${asset.processingStatus}`) ? t(`status.${asset.processingStatus}`) : t("status.unknown")}
-                      </Badge>
-                    </div>
-                    <h2 className="break-words font-serif text-2xl leading-tight">{asset.title}</h2>
-                    <p className="text-sm leading-snug text-[var(--muted)]">
-                      {asset.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={asset.capturedAt} />}
-                      {" · "}
-                      <LocalDate value={asset.uploadedAt} />
-                      {" · "}
-                      <FileSize bytes={asset.byteSize} />
-                    </p>
-                    <Link href={`/assets/${asset.id}`} className="inline-flex rounded-full bg-spring px-4 py-2 text-sm font-semibold text-[#001E2B]">
-                      {t("common.open")}
-                    </Link>
-                  </div>
-                </article>
-              ))}
+            <div className="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t("upload.titleField")}</th>
+                    <th>{t("search.mediaType")}</th>
+                    <th>{t("search.processingStatus")}</th>
+                    <th>{t("asset.captured")}</th>
+                    <th>{t("asset.uploaded")}</th>
+                    <th>{t("asset.size")}</th>
+                    <th>{t("common.open")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assets.map((asset) => (
+                    <tr key={asset.id}>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          {asset.thumbnailUrl ? <img src={asset.thumbnailUrl} alt="" className="h-8 w-12 object-cover" /> : null}
+                          <span className="break-words font-sans font-semibold text-[var(--ink)]">{asset.title}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <Badge>{t.has(`mediaType.${asset.mediaType}`) ? t(`mediaType.${asset.mediaType}`) : t("mediaType.unknown")}</Badge>
+                      </td>
+                      <td>
+                        <Badge tone={statusTone(asset.processingStatus)}>
+                          {asset.processingStatus && t.has(`status.${asset.processingStatus}`) ? t(`status.${asset.processingStatus}`) : t("status.unknown")}
+                        </Badge>
+                      </td>
+                      <td>{asset.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={asset.capturedAt} />}</td>
+                      <td>
+                        <LocalDate value={asset.uploadedAt} />
+                      </td>
+                      <td>
+                        <FileSize bytes={asset.byteSize} />
+                      </td>
+                      <td>
+                        <Link href={`/assets/${asset.id}`} className="btn btn-primary">
+                          {t("common.open")}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <p className="text-[var(--muted)]">{t("library.empty")}</p>
+            <p className="text-sm text-[var(--muted)]">{t("library.empty")}</p>
           )}
           <Pager page={state.page} pageSize={PAGE_SIZE} complete={total} returned={assets.length} onPage={(page) => replace({ ...visible, page })} />
         </div>

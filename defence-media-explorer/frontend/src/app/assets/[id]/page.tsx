@@ -196,7 +196,7 @@ export default function AssetPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <Link href="/library" className="text-sm font-semibold">
         {t("common.back")}
       </Link>
@@ -206,16 +206,16 @@ export default function AssetPage() {
       <div className="flex flex-wrap gap-2">
         <Badge>{t.has(`mediaType.${asset.mediaType}`) ? t(`mediaType.${asset.mediaType}`) : t("mediaType.unknown")}</Badge>
         <Badge>{asset.processingStatus && t.has(`status.${asset.processingStatus}`) ? t(`status.${asset.processingStatus}`) : t("status.unknown")}</Badge>
-        {asset.indexingState ? <Badge tone="warn">{t.has(`indexingState.${asset.indexingState}`) ? t(`indexingState.${asset.indexingState}`) : t("indexingState.unknown")}</Badge> : null}
+        {asset.indexingState ? <Badge>{t.has(`indexingState.${asset.indexingState}`) ? t(`indexingState.${asset.indexingState}`) : t("indexingState.unknown")}</Badge> : null}
       </div>
       <section className="panel min-w-0 overflow-hidden">
-        <h2 className="px-5 pt-5 font-serif text-2xl">{t("asset.player")}</h2>
-        <div className="p-5">
+        <h2 className="section-title px-3 pt-3">{t("asset.player")}</h2>
+        <div className="p-3">
           {asset.mediaType === "image" && (asset.playbackUrl || asset.thumbnailUrl) ? (
             <img src={asset.playbackUrl || asset.thumbnailUrl || ""} alt="" className="max-h-[36rem] w-full rounded-2xl object-contain" />
           ) : null}
           {asset.mediaType === "video" && asset.playbackUrl ? (
-            <video ref={videoRef} src={asset.playbackUrl} controls preload="auto" className="max-h-[36rem] w-full rounded-2xl bg-[#001E2B]" />
+            <video ref={videoRef} src={asset.playbackUrl} controls preload="auto" className="max-h-[36rem] w-full bg-[var(--canvas)]" />
           ) : null}
           {asset.mediaType === "audio" && asset.playbackUrl ? <audio ref={audioRef} src={asset.playbackUrl} controls className="w-full" /> : null}
           {asset.mediaType === "text" ? <pre className="whitespace-pre-wrap break-words font-sans text-base leading-relaxed">{segment?.transcript || asset.description}</pre> : null}
@@ -223,14 +223,15 @@ export default function AssetPage() {
         </div>
       </section>
       <section className="space-y-3">
-        <h2 className="font-serif text-2xl">{t("asset.timeline")}</h2>
+        <h2 className="section-title">{t("asset.timeline")}</h2>
         <div className="flex flex-wrap gap-2">
           {segments.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => seek(item.id, item.startMs)}
-              className={`max-w-full whitespace-normal break-words rounded-full px-3 py-2 text-left text-sm leading-snug ${item.id === segment?.id ? "bg-[#001E2B] text-white dark:bg-spring dark:text-[#001E2B]" : "border border-[var(--line)]"}`}
+              className="seg-btn"
+              aria-current={item.id === segment?.id ? "true" : undefined}
             >
               <Clock ms={item.startMs} /> – <Clock ms={item.endMs} />
             </button>
@@ -238,8 +239,8 @@ export default function AssetPage() {
         </div>
       </section>
       <section className="grid min-w-0 gap-6 lg:grid-cols-2">
-        <article className="panel min-w-0 space-y-3 p-5">
-          <h2 className="font-serif text-2xl">{t("asset.transcript")}</h2>
+        <article className="panel min-w-0 space-y-2 p-3">
+          <h2 className="section-title">{t("asset.transcript")}</h2>
           {segments.some((item) => item.transcript) ? (
             <ul className="space-y-3">
               {segments.map((item) => (
@@ -257,8 +258,8 @@ export default function AssetPage() {
             <p className="text-[var(--muted)]">{t("asset.noTranscript")}</p>
           )}
         </article>
-        <article className="panel min-w-0 space-y-3 p-5">
-          <h2 className="font-serif text-2xl">{t("asset.storyboard")}</h2>
+        <article className="panel min-w-0 space-y-2 p-3">
+          <h2 className="section-title">{t("asset.storyboard")}</h2>
           {segment?.storyboard?.some((frame) => frame.url) ? (
             <div className="grid grid-cols-2 gap-3">
               {segment.storyboard.map((frame, index) =>
@@ -277,8 +278,8 @@ export default function AssetPage() {
           )}
         </article>
       </section>
-      <section id="metadata" className="panel min-w-0 space-y-4 p-5">
-        <h2 className="font-serif text-2xl">{t("asset.metadata")}</h2>
+      <section id="metadata" className="panel min-w-0 space-y-3 p-3">
+        <h2 className="section-title">{t("asset.metadata")}</h2>
         {editing ? (
           <form className="grid min-w-0 gap-4" onSubmit={(event) => void save(event)}>
             <FieldLabel label={t("asset.title")}>
@@ -386,7 +387,7 @@ export default function AssetPage() {
       </section>
       {similar ? (
         <section className="space-y-4">
-          <h2 className="font-serif text-2xl">{t("asset.similar")}</h2>
+          <h2 className="section-title">{t("asset.similar")}</h2>
           {similar.length ? <ResultGrid results={similar} /> : <p className="text-[var(--muted)]">{t("asset.similarEmpty")}</p>}
         </section>
       ) : null}
@@ -408,8 +409,8 @@ function TechnicalPanel({ technical }: { technical: Technical | null }) {
   const t = useTranslations();
   const format = useFormatter();
   return (
-    <details className="panel min-w-0 p-5">
-      <summary className="cursor-pointer break-words font-serif text-2xl">{t("asset.technical")}</summary>
+    <details className="panel min-w-0 p-3">
+      <summary className="section-title cursor-pointer">{t("asset.technical")}</summary>
       {!technical ? (
         <p className="mt-4 text-[var(--muted)]">{t("common.loading")}</p>
       ) : (

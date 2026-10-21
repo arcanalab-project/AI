@@ -496,5 +496,20 @@
     },
     "LEGACY_OBJECT_STORAGE": "Questo file punta ancora al precedente object store e non è stato migrato. Non è stato eliminato.",
     "WORKER_NOT_RUNNING": "Il worker di ingestion non è in esecuzione, quindi questo caricamento non può finire."
+  },
+  "shell": {
+    "restricted": "RESTRICTED",
+    "unclassified": "UNCLASSIFIED",
+    "utc": "UTC",
+    "operator": "Operatore",
+    "syncLive": "Sincronizzato",
+    "syncDegraded": "Degradato",
+    "syncOffline": "Nessun collegamento",
+    "syncPending": "Verifica"
+  },
+  "columns": {
+    "attempts": "Tentativi",
+    "progress": "Avanzamento",
+    "stage": "Fase"
   }
 }

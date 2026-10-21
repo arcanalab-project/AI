@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <PageIntro kicker={t("auth.loginKicker")} title={t("auth.loginTitle")} body={t("auth.loginBody")} />
       <p className="text-sm leading-relaxed text-[var(--muted)]">{t("auth.missingAdmin")}</p>
-      <form className="panel min-w-0 space-y-4 p-6" onSubmit={(event) => void submit(event)}>
+      <form className="panel min-w-0 space-y-3 p-3" onSubmit={(event) => void submit(event)}>
         <ErrorNote error={error} />
         <FieldLabel label={t("auth.email")}>
           <TextInput type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required />

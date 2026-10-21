@@ -30,9 +30,9 @@ export function FilterPanel({
   const chips = chipsOf(state, t, collections);
 
   return (
-    <section className="panel min-w-0 space-y-5 p-5">
-      <h2 className="font-serif text-2xl">{t("search.filters")}</h2>
-      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+    <section className="panel min-w-0 space-y-3 p-3">
+      <h2 className="section-title">{t("search.filters")}</h2>
+      <div className="grid min-w-0 gap-3 md:grid-cols-2">
         <FieldLabel label={t("search.dateField")}>
           <Select value={state.dateField} onChange={(event) => patch({ dateField: event.target.value === "uploadedAt" ? "uploadedAt" : "capturedAt" })}>
             <option value="capturedAt">{t("asset.captured")}</option>
@@ -58,7 +58,7 @@ export function FilterPanel({
         <legend className="mb-2 text-sm font-medium">{t("search.mediaType")}</legend>
         <div className="flex flex-wrap gap-2">
           {MEDIA.map((type) => (
-            <label key={type} className="flex max-w-full items-center gap-2 rounded-full border border-[var(--line)] px-3 py-2 text-sm leading-snug">
+            <label key={type} className="choice">
               <input
                 type="checkbox"
                 checked={state.mediaTypes.includes(type)}
@@ -73,7 +73,7 @@ export function FilterPanel({
         <legend className="mb-2 text-sm font-medium">{t("search.processingStatus")}</legend>
         <div className="flex flex-wrap gap-2">
           {STATUSES.map((status) => (
-            <label key={status} className="flex max-w-full items-center gap-2 rounded-full border border-[var(--line)] px-3 py-2 text-sm leading-snug">
+            <label key={status} className="choice">
               <input
                 type="checkbox"
                 checked={state.processingStatuses.includes(status)}

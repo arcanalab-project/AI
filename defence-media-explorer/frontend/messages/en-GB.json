@@ -496,5 +496,20 @@
     },
     "LEGACY_OBJECT_STORAGE": "This file still points at the previous object store and was not migrated. It was not deleted.",
     "WORKER_NOT_RUNNING": "The ingestion worker is not running, so this upload cannot finish."
+  },
+  "shell": {
+    "restricted": "RESTRICTED",
+    "unclassified": "UNCLASSIFIED",
+    "utc": "UTC",
+    "operator": "Operator",
+    "syncLive": "Synced",
+    "syncDegraded": "Degraded",
+    "syncOffline": "No link",
+    "syncPending": "Checking"
+  },
+  "columns": {
+    "attempts": "Attempts",
+    "progress": "Progress",
+    "stage": "Stage"
   }
 }

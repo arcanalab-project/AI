@@ -5,12 +5,25 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
-        serif: ["var(--font-serif)", "ui-serif", "Georgia", "serif"],
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["Roboto Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+        serif: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
-        pine: "#001E2B",
-        spring: "#00ED64",
+        canvas: "#0F172A",
+        inset: "#1E293B",
+        surface: "#334155",
+        line: "#475569",
+        institutional: "#004494",
+        signal: "#1D4ED8",
+        pine: "#F8FAFC",
+        spring: "#004494",
+        ok: "#10B981",
+        warn: "#F59E0B",
+        danger: "#EF4444",
+      },
+      borderRadius: {
+        tactical: "2px",
       },
     },
   },
