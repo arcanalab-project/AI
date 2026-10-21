@@ -16,6 +16,7 @@ import {
 import { Badge, Button, FieldLabel, Select, TextArea, TextInput } from "@/components/ui";
 import { ErrorNote, PageIntro } from "@/components/shell";
 import { FileSize } from "@/components/format";
+import { statusLabel } from "@/i18n";
 
 const ACCEPT = ".mp4,.mov,.jpg,.jpeg,.png,.webp,.mp3,.wav,.m4a,.txt";
 
@@ -78,12 +79,12 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageIntro kicker={t("upload.kicker")} title={t("upload.title")} body={t("upload.body")} />
-      {user && !canUpload(user.role) ? <p className="panel p-5 leading-relaxed">{t("upload.viewerOnly")}</p> : null}
+      {user && !canUpload(user.role) ? <p className="panel p-3 text-sm leading-snug">{t("upload.viewerOnly")}</p> : null}
       <ErrorNote error={error} />
       <section
-        className="panel min-w-0 border-dashed p-8 text-center"
+        className="panel min-w-0 border-dashed p-4 text-center"
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault();
@@ -95,7 +96,7 @@ export default function UploadPage() {
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
           {t("upload.limit", { size: format.number(1024, { style: "unit", unit: "megabyte" }) })}
         </p>
-        <label className="mt-5 inline-flex max-w-full cursor-pointer whitespace-normal break-words rounded-full bg-spring px-4 py-2.5 text-sm font-semibold leading-snug text-[#001E2B]">
+        <label className="btn btn-primary mt-3 cursor-pointer">
           {t("upload.browse")}
           <input
             type="file"
@@ -110,8 +111,8 @@ export default function UploadPage() {
         </label>
       </section>
       <p className="text-sm leading-snug text-[var(--muted)]">{t("upload.draftNote")}</p>
-      <section className="panel min-w-0 space-y-4 p-5">
-        <h2 className="font-serif text-2xl">{t("upload.metadata")}</h2>
+      <section className="panel min-w-0 space-y-3 p-3">
+        <h2 className="section-title">{t("upload.metadata")}</h2>
         <div className="grid min-w-0 gap-4 md:grid-cols-2">
           <FieldLabel label={t("upload.titleField")} hint={t("upload.titleHint")}>
             <TextInput value={draft.title} onChange={(event) => patchUpload({ title: event.target.value })} />
@@ -180,7 +181,7 @@ export default function UploadPage() {
               <Progress label={t("upload.progressUpload", { value: format.number(item.uploadRatio, { style: "percent" }) })} ratio={item.uploadRatio} />
               <p className="text-sm leading-snug">
                 {t("upload.progressProcessing", {
-                  status: item.processingStatus && t.has(`status.${item.processingStatus}`) ? t(`status.${item.processingStatus}`) : t("common.notAvailable"),
+                  status: item.processingStatus ? statusLabel(t, item.processingStatus) : t("common.notAvailable"),
                 })}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -191,9 +192,7 @@ export default function UploadPage() {
                       ? t("upload.queued")
                       : item.phase === "uploading"
                         ? t("status.uploading")
-                        : item.processingStatus && t.has(`status.${item.processingStatus}`)
-                          ? t(`status.${item.processingStatus}`)
-                          : t("status.unknown")}
+                        : statusLabel(t, item.processingStatus)}
                 </Badge>
               </div>
               {item.errorCode ? <ErrorNote error={new ApiError(item.errorCode, item.errorParams || {}, item.errorStatus || 400)} /> : null}
@@ -212,8 +211,8 @@ function Progress({ label, ratio }: { label: string; ratio: number }) {
   return (
     <div>
       <p className="mb-1 text-sm">{label}</p>
-      <div className="h-2 rounded-full bg-[var(--line)]" aria-hidden>
-        <div className="h-2 rounded-full bg-spring" style={{ width: `${width}%` }} />
+      <div className="meter" aria-hidden>
+        <span style={{ width: `${width}%` }} />
       </div>
     </div>
   );

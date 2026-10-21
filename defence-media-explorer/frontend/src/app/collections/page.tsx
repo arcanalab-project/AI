@@ -64,12 +64,12 @@ export default function CollectionsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageIntro kicker={t("collections.kicker")} title={t("collections.title")} body={t("collections.body")} />
       <ErrorNote error={error} />
       {user && !canUpload(user.role) ? <p>{t("collections.viewerOnly")}</p> : null}
       {canUpload(user?.role) ? (
-        <form className="panel min-w-0 space-y-4 p-5" onSubmit={(event) => void create(event)}>
+        <form className="panel min-w-0 space-y-3 p-3" onSubmit={(event) => void create(event)}>
           <FieldLabel label={t("collections.name")}>
             <TextInput value={name} onChange={(event) => setName(event.target.value)} required />
           </FieldLabel>
@@ -80,48 +80,64 @@ export default function CollectionsPage() {
         </form>
       ) : null}
       {rows.length ? (
-        <ul className="space-y-3">
-          {rows.map((row) => (
-            <li key={row.id} className="panel min-w-0 space-y-3 p-5">
-              {editing === row.id ? (
-                <>
-                  <TextInput value={row.name} onChange={(event) => setRows(rows.map((item) => (item.id === row.id ? { ...item, name: event.target.value } : item)))} />
-                  <TextArea value={row.description} onChange={(event) => setRows(rows.map((item) => (item.id === row.id ? { ...item, description: event.target.value } : item)))} />
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" onClick={() => void save(row)}>
-                      {t("collections.save")}
-                    </Button>
-                    <Button type="button" variant="quiet" onClick={() => setEditing(null)}>
-                      {t("common.cancel")}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h2 className="break-words font-serif text-2xl">{row.name}</h2>
-                  {row.description ? <p className="break-words leading-relaxed text-[var(--muted)]">{row.description}</p> : null}
-                  <p className="text-sm text-[var(--muted)]">
-                    <LocalDate value={row.createdAt} />
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {canUpload(user?.role) ? (
-                      <Button type="button" variant="quiet" onClick={() => setEditing(row.id)}>
-                        {t("common.edit")}
-                      </Button>
-                    ) : null}
-                    {isAdmin(user?.role) ? (
-                      <Button type="button" variant="danger" onClick={() => void remove(row.id)}>
-                        {t("collections.delete")}
-                      </Button>
-                    ) : (
-                      <p className="text-sm text-[var(--muted)]">{t("collections.adminDelete")}</p>
-                    )}
-                  </div>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
+        <div className="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th>{t("collections.name")}</th>
+                <th>{t("collections.description")}</th>
+                <th>{t("asset.uploaded")}</th>
+                <th>{t("common.edit")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  {editing === row.id ? (
+                    <td colSpan={4}>
+                      <div className="space-y-2">
+                        <TextInput value={row.name} onChange={(event) => setRows(rows.map((item) => (item.id === row.id ? { ...item, name: event.target.value } : item)))} />
+                        <TextArea value={row.description} onChange={(event) => setRows(rows.map((item) => (item.id === row.id ? { ...item, description: event.target.value } : item)))} />
+                        <div className="flex flex-wrap gap-2">
+                          <Button type="button" onClick={() => void save(row)}>
+                            {t("collections.save")}
+                          </Button>
+                          <Button type="button" variant="quiet" onClick={() => setEditing(null)}>
+                            {t("common.cancel")}
+                          </Button>
+                        </div>
+                      </div>
+                    </td>
+                  ) : (
+                    <>
+                      <td className="font-sans font-semibold text-[var(--ink)]">{row.name}</td>
+                      <td className="break-words text-[var(--muted)]">{row.description || t("common.notAvailable")}</td>
+                      <td>
+                        <LocalDate value={row.createdAt} />
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1">
+                          {canUpload(user?.role) ? (
+                            <Button type="button" variant="quiet" onClick={() => setEditing(row.id)}>
+                              {t("common.edit")}
+                            </Button>
+                          ) : null}
+                          {isAdmin(user?.role) ? (
+                            <Button type="button" variant="danger" onClick={() => void remove(row.id)}>
+                              {t("collections.delete")}
+                            </Button>
+                          ) : (
+                            <p className="text-xs text-[var(--muted)]">{t("collections.adminDelete")}</p>
+                          )}
+                        </div>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <p className="text-[var(--muted)]">{t("collections.empty")}</p>
       )}

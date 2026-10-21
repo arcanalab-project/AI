@@ -1,8 +1,27 @@
 {
   "meta": {
-    "documentTitle": "Defence Media Explorer",
-    "product": "Bastion",
-    "appName": "Defence Media Explorer"
+    "documentTitle": "BASTION — TACTICAL MEDIA EXPLOITATION (MEDEX)",
+    "product": "BASTION",
+    "appName": "MEDEX"
+  },
+  "medex": {
+    "brand": {
+      "title": "TACTICAL MEDIA EXPLOITATION (MEDEX)",
+      "subtitle": "Multimodal semantic search platform for ISR feeds, FLIR tracks, and mission assets."
+    },
+    "search": {
+      "placeholder": "Enter target, MGRS/Grid coordinates, audio transcript, or vehicle designation..."
+    },
+    "status": {
+      "ready": "PROCESSED",
+      "partial": "IN PROGRESS"
+    }
+  },
+  "security": {
+    "classification": {
+      "restricted": "RESTRICTED",
+      "unclassified": "UNCLASSIFIED"
+    }
   },
   "nav": {
     "skip": "Skip to content",
@@ -82,8 +101,8 @@
     "enriching": "Enriching",
     "embedding": "Embedding",
     "indexing": "Writing documents",
-    "ready": "Ready",
-    "partial": "Partial",
+    "ready": "PROCESSED",
+    "partial": "IN PROGRESS",
     "failed": "Failed",
     "retrying": "Retrying",
     "unreviewed": "Unreviewed",
@@ -108,11 +127,11 @@
     "de-DE": "Deutsch"
   },
   "search": {
-    "kicker": "Archive",
-    "title": "Find a moment in the archive",
-    "body": "Hybrid search is the default. An empty query browses matching segments instead of ranking them.",
+    "kicker": "MEDEX",
+    "title": "TACTICAL MEDIA EXPLOITATION (MEDEX)",
+    "body": "Multimodal semantic search platform for ISR feeds, FLIR tracks, and mission assets.",
     "queryLabel": "Search the archive",
-    "placeholder": "Describe a scene, an activity, or words spoken in a recording",
+    "placeholder": "Enter target, MGRS/Grid coordinates, audio transcript, or vehicle designation...",
     "submit": "Search",
     "modeLabel": "Retrieval mode",
     "mode": {
@@ -128,10 +147,12 @@
       "inspections": "Recordings that discuss equipment inspections."
     },
     "filters": "Filters",
+    "advanced": "Advanced",
+    "hideAdvanced": "Hide filters",
     "dateField": "Date field",
     "dateFrom": "From",
     "dateTo": "To",
-    "dateZone": "These dates use {zone}. The time zone does not follow the interface language.",
+    "dateZone": "Filter dates are read in {zone}. Displayed timestamps stay in Zulu time.",
     "unknownCapture": "Unknown capture date",
     "unknown": {
       "include": "Include unknown capture dates",
@@ -264,7 +285,7 @@
     "language": "Interface language",
     "languageHint": "Names are shown in each language. The archive text is not translated.",
     "timeZone": "Time zone",
-    "timeZoneHint": "Timestamps are stored in UTC and shown in this zone, whichever interface language you use.",
+    "timeZoneHint": "Displayed timestamps use Zulu time (YYYY-MM-DD HH:mmZ), whichever zone you select. The zone applies only when you enter a filter date.",
     "theme": "Theme",
     "profile": "Profile",
     "displayName": "Display name",
@@ -496,5 +517,21 @@
     },
     "LEGACY_OBJECT_STORAGE": "This file still points at the previous object store and was not migrated. It was not deleted.",
     "WORKER_NOT_RUNNING": "The ingestion worker is not running, so this upload cannot finish."
+  },
+  "shell": {
+    "restricted": "RESTRICTED",
+    "unclassified": "UNCLASSIFIED",
+    "utc": "UTC",
+    "operator": "Operator",
+    "syncLive": "Synced",
+    "syncDegraded": "Degraded",
+    "syncOffline": "No link",
+    "syncPending": "Checking",
+    "zulu": "Zulu time"
+  },
+  "columns": {
+    "attempts": "Attempts",
+    "progress": "Progress",
+    "stage": "Stage"
   }
 }

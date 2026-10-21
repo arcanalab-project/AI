@@ -8,6 +8,7 @@ import { usePrefs } from "@/lib/preferences";
 import { readFilters, toSearchFilters, writeFilters, type FilterState } from "@/lib/search-state";
 import { Button, TextInput } from "@/components/ui";
 import { ErrorNote, PageIntro } from "@/components/shell";
+import { message } from "@/i18n";
 import { FilterPanel } from "@/components/filters";
 import { CountLine, Pager, ResultGrid } from "@/components/results";
 
@@ -173,10 +174,10 @@ export function SearchView() {
   }
 
   return (
-    <div className="space-y-8">
-      <PageIntro kicker={t("search.kicker")} title={t("search.title")} body={t("search.body")} />
+    <div className="space-y-4">
+      <PageIntro kicker={t("meta.product")} title={t("medex.brand.title")} body={t("medex.brand.subtitle")} />
       <form
-        className="panel min-w-0 p-4 md:p-6"
+        className="panel min-w-0 p-3"
         onSubmit={(event) => {
           event.preventDefault();
           replace({ ...state, page: 1 });
@@ -188,8 +189,8 @@ export function SearchView() {
             name="q"
             value={state.q}
             onChange={(event) => replace({ ...state, q: event.target.value, page: 1 })}
-            placeholder={t("search.placeholder")}
-            className="w-full min-w-0 rounded-3xl border border-[var(--line)] bg-transparent px-5 py-4 text-xl leading-snug"
+            placeholder={t("medex.search.placeholder")}
+            className="field"
           />
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -209,7 +210,7 @@ export function SearchView() {
             <button
               key={key}
               type="button"
-              className="max-w-full whitespace-normal break-words rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] px-4 py-3 text-left text-sm leading-snug"
+              className="choice text-left"
               onClick={() => replace({ ...state, q: t(`search.examples.${key}`), mode: "hybrid", page: 1 })}
             >
               {t(`search.examples.${key}`)}
@@ -218,16 +219,15 @@ export function SearchView() {
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--muted)]">{t("search.languageNote")}</p>
       </div>
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <FilterPanel
-          state={state}
-          timeZone={payload?.timeZone || timeZone}
-          collections={collections}
-          facets={facets}
-          sortOptions={["relevance", "capturedAt_desc", "capturedAt_asc", "uploadedAt_desc", "uploadedAt_asc"]}
-          onChange={replace}
-        />
-        <div className="min-w-0 space-y-5">
+      <FilterPanel
+        state={state}
+        timeZone={payload?.timeZone || timeZone}
+        collections={collections}
+        facets={facets}
+        sortOptions={["relevance", "capturedAt_desc", "capturedAt_asc", "uploadedAt_desc", "uploadedAt_asc"]}
+        onChange={replace}
+      />
+      <div className="min-w-0 space-y-4">
           <ErrorNote error={error} />
           {!state.q ? <p className="text-sm leading-snug text-[var(--muted)]">{t("search.browseNote")}</p> : null}
           {loading ? <p className="text-[var(--muted)]">{t("common.loading")}</p> : null}
@@ -241,14 +241,10 @@ export function SearchView() {
                 elapsedMs={payload.elapsedMs}
               />
               {payload.rerankApplied ? <p className="text-sm leading-snug">{t("search.rerank")}</p> : null}
-              {payload.fusion && t.has(`search.fusion.${payload.fusion}`) ? <p className="text-sm leading-snug">{t(`search.fusion.${payload.fusion}`)}</p> : null}
+              {payload.fusion ? <FusionNote code={payload.fusion} /> : null}
               {(payload.warnings || []).map((warning) => (
                 <p key={warning.code} className="text-sm leading-snug text-[var(--warn)]">
-                  {warning.code === "SORT_WINDOW"
-                    ? t("search.warnings.SORT_WINDOW")
-                    : t.has(`errors.${warning.code}`)
-                      ? t(`errors.${warning.code}`)
-                      : t("errors.UNKNOWN")}
+                  {warning.code === "SORT_WINDOW" ? t("search.warnings.SORT_WINDOW") : message(t, `errors.${warning.code}`, t("errors.UNKNOWN"))}
                 </p>
               ))}
               <ResultGrid results={payload.results || []} />
@@ -261,8 +257,8 @@ export function SearchView() {
               />
             </>
           ) : null}
-          <section className="panel min-w-0 space-y-3 p-5">
-            <h2 className="font-serif text-2xl">{t("search.saved")}</h2>
+          <section className="panel min-w-0 space-y-2 p-3">
+            <h2 className="section-title">{t("search.saved")}</h2>
             <form
               className="flex min-w-0 flex-wrap gap-2"
               onSubmit={(event) => {
@@ -292,10 +288,17 @@ export function SearchView() {
               <p className="text-sm text-[var(--muted)]">{t("search.noSaved")}</p>
             )}
           </section>
-        </div>
       </div>
     </div>
   );
+}
+
+function FusionNote({ code }: { code?: string | null }) {
+  const t = useTranslations();
+  if (!code) return null;
+  const text = message(t, `search.fusion.${code}`, "");
+  if (!text) return null;
+  return <p className="text-sm leading-snug">{text}</p>;
 }
 
 function asList(value: unknown) {

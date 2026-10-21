@@ -1,80 +1,95 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight, Info, ScanSearch } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Badge, Button } from "@/components/ui";
 import { Clock, LocalDate } from "@/components/format";
+import { statusTone } from "@/components/shell";
+import { message, statusLabel } from "@/i18n";
 import type { SearchResult } from "@/lib/api";
 
 export function ResultGrid({ results }: { results: SearchResult[] }) {
   const t = useTranslations();
-  if (!results.length) return <p className="text-[var(--muted)]">{t("search.empty")}</p>;
+  if (!results.length) return <p className="text-sm text-[var(--muted)]">{t("search.empty")}</p>;
   return (
-    <div className="grid min-w-0 gap-5 md:grid-cols-2">
-      {results.map((result) => (
-        <article key={result.segmentId} className="panel flex min-w-0 flex-col">
-          <div className="aspect-video overflow-hidden rounded-t-[20px] bg-[#001E2B]">
-            {result.thumbnailUrl ? (
-              <img src={result.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="grid h-full place-items-center px-4 text-center text-sm font-semibold text-spring">
-                {t.has(`mediaType.${result.mediaType}`) ? t(`mediaType.${result.mediaType}`) : t("mediaType.unknown")}
-              </div>
-            )}
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-3 p-5">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{t.has(`mediaType.${result.mediaType}`) ? t(`mediaType.${result.mediaType}`) : t("mediaType.unknown")}</Badge>
-              <Badge tone="ok">{t("search.rank", { rank: result.rank })}</Badge>
-              {result.processingStatus ? (
-                <Badge tone={result.processingStatus === "failed" ? "danger" : result.processingStatus === "partial" ? "warn" : "neutral"}>
-                  {t.has(`status.${result.processingStatus}`) ? t(`status.${result.processingStatus}`) : t("status.unknown")}
-                </Badge>
-              ) : null}
-            </div>
-            <h3 className="break-words font-serif text-2xl leading-tight">{result.title || t("common.unknown")}</h3>
-            <p className="break-words text-sm leading-snug text-[var(--muted)]">
-              {result.source || t("common.notAvailable")}
-              {" · "}
-              {result.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={result.capturedAt} />}
-            </p>
-            {result.matchText ? (
-              <p className="break-words text-sm leading-relaxed">
-                <span className="font-semibold">{t("search.match")}: </span>
-                {result.matchText}
-              </p>
-            ) : null}
-            <p className="text-sm">
-              <Clock ms={result.startMs} />
-              {result.endMs != null ? (
-                <>
-                  {" – "}
-                  <Clock ms={result.endMs} />
-                </>
-              ) : null}
-            </p>
-            {result.nearbyCount > 0 ? <p className="text-sm leading-snug text-[var(--muted)]">{t("search.nearby", { count: result.nearbyCount })}</p> : null}
-            <div className="mt-auto flex flex-wrap gap-2 pt-2">
-              <Link href={assetHref(result)} className="inline-flex max-w-full whitespace-normal break-words rounded-full bg-spring px-4 py-2.5 text-sm font-semibold leading-snug text-[#001E2B]">
-                {t("common.open")}
-              </Link>
-              <Link
-                href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}&similar=1`}
-                className="inline-flex max-w-full whitespace-normal break-words rounded-full border border-[var(--line)] px-4 py-2.5 text-sm font-semibold leading-snug"
-              >
-                {t("search.findSimilar")}
-              </Link>
-              <Link
-                href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}#metadata`}
-                className="inline-flex max-w-full whitespace-normal break-words rounded-full px-4 py-2.5 text-sm font-semibold leading-snug"
-              >
-                {t("common.details")}
-              </Link>
-            </div>
-          </div>
-        </article>
-      ))}
+    <div className="data-table">
+      <table>
+        <thead>
+          <tr>
+            <th>{t("search.rank", { rank: "#" })}</th>
+            <th>{t("search.mediaType")}</th>
+            <th>{t("common.details")}</th>
+            <th>{t("search.source")}</th>
+            <th>{t("asset.captured")}</th>
+            <th>{t("search.processingStatus")}</th>
+            <th>{t("asset.timeline")}</th>
+            <th>{t("common.open")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {results.map((result) => (
+            <tr key={result.segmentId}>
+              <td className="num">{result.rank}</td>
+              <td>
+                <Badge>{message(t, `mediaType.${result.mediaType}`, t("mediaType.unknown"))}</Badge>
+              </td>
+              <td>
+                <div className="flex items-start gap-3">
+                  {result.thumbnailUrl ? <img src={result.thumbnailUrl} alt="" className="thumb" /> : <span className="thumb" />}
+                  <div className="min-w-0">
+                    <p className="break-words font-sans font-semibold text-[var(--ink)]">{result.title || t("common.unknown")}</p>
+                    {result.matchText ? <p className="match-text">{result.matchText}</p> : null}
+                    {result.nearbyCount > 0 ? <p className="text-[var(--muted)]">{t("search.nearby", { count: result.nearbyCount })}</p> : null}
+                  </div>
+                </div>
+              </td>
+              <td className="whitespace-nowrap">{result.source || t("common.notAvailable")}</td>
+              <td className="whitespace-nowrap">{result.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={result.capturedAt} />}</td>
+              <td>
+                {result.processingStatus ? (
+                  <Badge tone={statusTone(result.processingStatus)}>
+                    {statusLabel(t, result.processingStatus)}
+                  </Badge>
+                ) : (
+                  t("common.notAvailable")
+                )}
+              </td>
+              <td className="num whitespace-nowrap">
+                <Clock ms={result.startMs} />
+                {result.endMs != null ? (
+                  <>
+                    {" – "}
+                    <Clock ms={result.endMs} />
+                  </>
+                ) : null}
+              </td>
+              <td>
+                <div className="action-bar">
+                  <ActionLink href={assetHref(result)} label={t("common.open")}>
+                    <ArrowUpRight aria-hidden size={15} />
+                  </ActionLink>
+                  <ActionLink href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}&similar=1`} label={t("search.findSimilar")}>
+                    <ScanSearch aria-hidden size={15} />
+                  </ActionLink>
+                  <ActionLink href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}#metadata`} label={t("common.details")}>
+                    <Info aria-hidden size={15} />
+                  </ActionLink>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
+  );
+}
+
+export function ActionLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="icon-btn" aria-label={label} title={label}>
+      {children}
+    </Link>
   );
 }
 
@@ -103,7 +118,7 @@ export function CountLine({
   const t = useTranslations();
   const format = useFormatter();
   return (
-    <div className="space-y-1 text-sm leading-snug text-[var(--muted)]">
+    <div className="metric space-y-0.5 text-xs leading-snug text-[var(--muted)]">
       {countKind === "retrieved_candidates" ? (
         <>
           <p>{t("search.candidates", { count: retrievedCandidateCount || 0 })}</p>
@@ -140,11 +155,11 @@ export function Pager({
   const format = useFormatter();
   const pages = complete != null ? Math.max(1, Math.ceil(complete / pageSize)) : null;
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2">
       <Button type="button" variant="quiet" disabled={page <= 1} onClick={() => onPage(page - 1)}>
         {t("common.previous")}
       </Button>
-      <p className="text-sm">{pages != null ? t("common.pageKnown", { page: format.number(page), pages: format.number(pages) }) : t("common.pageOpen", { page: format.number(page) })}</p>
+      <p className="num text-xs">{pages != null ? t("common.pageKnown", { page: format.number(page), pages: format.number(pages) }) : t("common.pageOpen", { page: format.number(page) })}</p>
       <Button type="button" variant="quiet" disabled={pages != null ? page >= pages : returned < pageSize} onClick={() => onPage(page + 1)}>
         {t("common.next")}
       </Button>

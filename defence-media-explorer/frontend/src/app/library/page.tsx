@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ApiError, api, asApiError, type Asset } from "@/lib/api";
 import { usePrefs } from "@/lib/preferences";
 import { readFilters, writeFilters, type FilterState } from "@/lib/search-state";
 import { Badge } from "@/components/ui";
-import { ErrorNote, PageIntro } from "@/components/shell";
+import { ErrorNote, PageIntro, statusTone } from "@/components/shell";
 import { FilterPanel } from "@/components/filters";
 import { FileSize, LocalDate } from "@/components/format";
-import { Pager } from "@/components/results";
+import { message, statusLabel } from "@/i18n";
+import { ActionLink, Pager } from "@/components/results";
+import { ArrowUpRight } from "lucide-react";
 
 const PAGE_SIZE = 12;
 
@@ -82,54 +83,73 @@ export default function LibraryPage() {
   const visible = { ...state, sort: state.sort === "relevance" ? "uploadedAt_desc" : state.sort };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageIntro kicker={t("library.kicker")} title={t("library.title")} body={t("library.body")} />
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <FilterPanel
-          state={visible}
-          timeZone={zone}
-          collections={collections}
-          facets={facets}
-          sortOptions={["uploadedAt_desc", "uploadedAt_asc", "capturedAt_desc", "capturedAt_asc", "title_asc"]}
-          onChange={replace}
-        />
-        <div className="min-w-0 space-y-5">
+      <FilterPanel
+        state={visible}
+        timeZone={zone}
+        collections={collections}
+        facets={facets}
+        sortOptions={["uploadedAt_desc", "uploadedAt_asc", "capturedAt_desc", "capturedAt_asc", "title_asc"]}
+        onChange={replace}
+      />
+      <div className="min-w-0 space-y-4">
           <ErrorNote error={error} />
-          <p className="text-sm text-[var(--muted)]">{t("library.count", { count: total })}</p>
+          <p className="metric text-xs text-[var(--muted)]">{t("library.count", { count: total })}</p>
           {assets.length ? (
-            <div className="grid min-w-0 gap-5 md:grid-cols-2">
-              {assets.map((asset) => (
-                <article key={asset.id} className="panel flex min-w-0 flex-col">
-                  <div className="aspect-video overflow-hidden rounded-t-[20px] bg-[#001E2B]">
-                    {asset.thumbnailUrl ? <img src={asset.thumbnailUrl} alt="" className="h-full w-full object-cover" /> : null}
-                  </div>
-                  <div className="space-y-3 p-5">
-                    <div className="flex flex-wrap gap-2">
-                      <Badge>{t.has(`mediaType.${asset.mediaType}`) ? t(`mediaType.${asset.mediaType}`) : t("mediaType.unknown")}</Badge>
-                      <Badge tone={asset.processingStatus === "failed" ? "danger" : asset.processingStatus === "ready" ? "ok" : "warn"}>
-                        {asset.processingStatus && t.has(`status.${asset.processingStatus}`) ? t(`status.${asset.processingStatus}`) : t("status.unknown")}
-                      </Badge>
-                    </div>
-                    <h2 className="break-words font-serif text-2xl leading-tight">{asset.title}</h2>
-                    <p className="text-sm leading-snug text-[var(--muted)]">
-                      {asset.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={asset.capturedAt} />}
-                      {" · "}
-                      <LocalDate value={asset.uploadedAt} />
-                      {" · "}
-                      <FileSize bytes={asset.byteSize} />
-                    </p>
-                    <Link href={`/assets/${asset.id}`} className="inline-flex rounded-full bg-spring px-4 py-2 text-sm font-semibold text-[#001E2B]">
-                      {t("common.open")}
-                    </Link>
-                  </div>
-                </article>
-              ))}
+            <div className="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t("upload.titleField")}</th>
+                    <th>{t("search.mediaType")}</th>
+                    <th>{t("search.processingStatus")}</th>
+                    <th>{t("asset.captured")}</th>
+                    <th>{t("asset.uploaded")}</th>
+                    <th>{t("asset.size")}</th>
+                    <th>{t("common.open")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assets.map((asset) => (
+                    <tr key={asset.id}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          {asset.thumbnailUrl ? <img src={asset.thumbnailUrl} alt="" className="thumb" /> : <span className="thumb" />}
+                          <span className="break-words font-sans font-semibold text-[var(--ink)]">{asset.title}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <Badge>{message(t, `mediaType.${asset.mediaType}`, t("mediaType.unknown"))}</Badge>
+                      </td>
+                      <td>
+                        <Badge tone={statusTone(asset.processingStatus)}>
+                          {statusLabel(t, asset.processingStatus)}
+                        </Badge>
+                      </td>
+                      <td>{asset.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={asset.capturedAt} />}</td>
+                      <td>
+                        <LocalDate value={asset.uploadedAt} />
+                      </td>
+                      <td>
+                        <FileSize bytes={asset.byteSize} />
+                      </td>
+                      <td>
+                        <div className="action-bar">
+                          <ActionLink href={`/assets/${asset.id}`} label={t("common.open")}>
+                            <ArrowUpRight aria-hidden size={15} />
+                          </ActionLink>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <p className="text-[var(--muted)]">{t("library.empty")}</p>
+            <p className="text-sm text-[var(--muted)]">{t("library.empty")}</p>
           )}
           <Pager page={state.page} pageSize={PAGE_SIZE} complete={total} returned={assets.length} onPage={(page) => replace({ ...visible, page })} />
-        </div>
       </div>
     </div>
   );

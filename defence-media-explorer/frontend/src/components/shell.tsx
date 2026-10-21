@@ -2,19 +2,21 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { Activity, FolderClosed, Library, Search, Settings, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { formatZulu } from "@/components/format";
+import { message } from "@/i18n";
 import { ApiError } from "@/lib/api";
 import { usePrefs } from "@/lib/preferences";
-import { cn } from "@/lib/cn";
 
 const LINKS = [
-  ["/", "nav.search"],
-  ["/upload", "nav.upload"],
-  ["/library", "nav.library"],
-  ["/processing", "nav.processing"],
-  ["/collections", "nav.collections"],
-  ["/settings", "nav.settings"],
+  ["/", "nav.search", Search],
+  ["/upload", "nav.upload", Upload],
+  ["/library", "nav.library", Library],
+  ["/processing", "nav.processing", Activity],
+  ["/collections", "nav.collections", FolderClosed],
+  ["/settings", "nav.settings", Settings],
 ] as const;
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -23,9 +25,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { user, ready, setUser, locale } = usePrefs();
   const router = useRouter();
   const open = ["/login", "/settings"].includes(pathname) || !!user;
+  const sync = useSync();
 
   useEffect(() => {
-    document.title = t("meta.documentTitle");
+    document.title = `${t("meta.product")} — ${t("medex.brand.title")}`;
     document.documentElement.lang = locale;
   }, [t, locale]);
 
@@ -36,76 +39,137 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen">
-      <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-spring focus:px-4 focus:py-2">
+    <div className="app-frame">
+      <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-[var(--primary)] focus:px-3 focus:py-1 focus:text-white">
         {t("nav.skip")}
       </a>
-      <div className="h-1 bg-spring" />
-      <header className="border-b border-[var(--line)] bg-[var(--bg-elev)]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4">
-          <Link href="/" className="flex min-w-0 items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#001E2B] text-spring" aria-hidden>
-              <svg viewBox="0 0 32 32" width="24" height="24" className="h-6 w-6">
-                <path d="M7 23c4.5-10 13.5-10 18 0" fill="none" stroke="currentColor" strokeWidth="2.4" />
-                <circle cx="16" cy="13" r="2.2" fill="currentColor" />
-              </svg>
+      <aside className="sidebar">
+        <Link href="/" className="brand">
+          <span className="brand-mark" aria-hidden>
+            <svg viewBox="0 0 32 32" width="18" height="18">
+              <circle cx="16" cy="16" r="7.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              {[
+                ["16", "4"],
+                ["22", "5.61"],
+                ["26.39", "10"],
+                ["28", "16"],
+                ["26.39", "22"],
+                ["22", "26.39"],
+                ["16", "28"],
+                ["10", "26.39"],
+                ["5.61", "22"],
+                ["4", "16"],
+                ["5.61", "10"],
+                ["10", "5.61"],
+              ].map(([cx, cy]) => (
+                <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.15" fill="currentColor" />
+              ))}
+            </svg>
+          </span>
+          <span className="min-w-0">
+            <span className="brand-kicker">{t("meta.product")}</span>
+            <span className="brand-name">{t("meta.appName")}</span>
+          </span>
+        </Link>
+        <nav aria-label={t("nav.primary")} className="side-nav">
+          {LINKS.map(([href, key, Icon]) => (
+            <Link key={href} href={href} className="side-link" aria-current={pathname === href ? "page" : undefined}>
+              <Icon aria-hidden size={15} strokeWidth={2} />
+              <span>{t(key)}</span>
+            </Link>
+          ))}
+        </nav>
+      </aside>
+      <div className="workspace">
+        <header className="command-bar">
+          <div className="command-center">
+            <span className="mark mark-restricted">{t("security.classification.restricted")}</span>
+          </div>
+          <div className="command-meta">
+            <UtcClock label={t("shell.zulu")} />
+            <span className="text-xs text-[var(--muted)]">{user ? user.displayName : t("shell.operator")}</span>
+            <span className="sync" data-state={sync} aria-live="polite">
+              <i aria-hidden />
+              {sync === "pending" ? t("shell.syncPending") : t(sync === "live" ? "shell.syncLive" : sync === "degraded" ? "shell.syncDegraded" : "shell.syncOffline")}
             </span>
-            <span className="min-w-0">
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">{t("meta.product")}</span>
-              <span className="block font-serif text-lg leading-tight">{t("meta.appName")}</span>
-            </span>
-          </Link>
-          <nav aria-label={t("nav.primary")} className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-            {LINKS.map(([href, key]) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "max-w-full whitespace-normal break-words rounded-full px-3 py-2 text-sm leading-snug",
-                  pathname === href ? "bg-[#001E2B] text-white dark:bg-spring dark:text-[#001E2B]" : "hover:bg-[var(--bg)]",
-                )}
-                aria-current={pathname === href ? "page" : undefined}
-              >
-                {t(key)}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="mark mark-critical">{t("security.classification.restricted")}</span>
+            <span className="mark mark-unclassified">{t("security.classification.unclassified")}</span>
             {user ? (
-              <>
-                <span className="max-w-[16rem] leading-snug text-[var(--muted)]">{user.displayName}</span>
-                <button type="button" className="rounded-full px-3 py-2 leading-snug hover:bg-[var(--bg)]" onClick={() => void logout()}>
-                  {t("nav.logout")}
-                </button>
-              </>
+              <button type="button" className="btn btn-quiet" onClick={() => void logout()}>
+                {t("nav.logout")}
+              </button>
             ) : (
-              <Link href="/login" className="rounded-full bg-spring px-4 py-2 font-semibold text-[#001E2B]">
+              <Link href="/login" className="btn btn-primary">
                 {t("nav.login")}
               </Link>
             )}
           </div>
-        </div>
-      </header>
-      <main id="content" className="mx-auto max-w-6xl px-5 py-8">
-        {!ready && pathname !== "/login" && pathname !== "/settings" ? (
-          <p className="text-[var(--muted)]">{t("common.loading")}</p>
-        ) : ready && !open ? (
-          <Gate />
-        ) : (
-          <Suspense fallback={<p className="text-[var(--muted)]">{t("common.loading")}</p>}>{children}</Suspense>
-        )}
-      </main>
+        </header>
+        <main id="content" className="command-main">
+          {!ready && pathname !== "/login" && pathname !== "/settings" ? (
+            <p className="text-[var(--muted)]">{t("common.loading")}</p>
+          ) : ready && !open ? (
+            <Gate />
+          ) : (
+            <Suspense fallback={<p className="text-[var(--muted)]">{t("common.loading")}</p>}>{children}</Suspense>
+          )}
+        </main>
+      </div>
     </div>
   );
+}
+
+function UtcClock({ label }: { label: string }) {
+  const [stamp, setStamp] = useState("");
+  const [iso, setIso] = useState("");
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setStamp(formatZulu(now, true));
+      setIso(now.toISOString());
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return (
+    <time className="num text-xs text-[var(--ink)]" dateTime={iso || undefined} aria-label={label}>
+      {stamp || "0000-00-00 00:00:00Z"}
+    </time>
+  );
+}
+
+function useSync() {
+  const [status, setStatus] = useState<"pending" | "live" | "degraded" | "offline">("pending");
+  useEffect(() => {
+    let cancel = false;
+    async function tick() {
+      try {
+        const response = await fetch("/api/health", { credentials: "include" });
+        if (!response.ok) throw new Error("health");
+        const data = (await response.json()) as { status?: string };
+        if (!cancel) setStatus(data.status === "ok" ? "live" : "degraded");
+      } catch {
+        if (!cancel) setStatus("offline");
+      }
+    }
+    void tick();
+    const timer = window.setInterval(() => void tick(), 15000);
+    return () => {
+      cancel = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+  return status;
 }
 
 function Gate() {
   const t = useTranslations();
   return (
-    <section className="panel mx-auto max-w-xl p-8">
-      <h1 className="font-serif text-3xl">{t("auth.requiredTitle")}</h1>
-      <p className="mt-3 text-[var(--muted)]">{t("auth.requiredBody")}</p>
-      <Link href="/login" className="mt-6 inline-flex rounded-full bg-spring px-4 py-2.5 font-semibold text-[#001E2B]">
+    <section className="panel mx-auto max-w-xl space-y-3 p-3">
+      <h1 className="page-title">{t("auth.requiredTitle")}</h1>
+      <p className="text-sm text-[var(--muted)]">{t("auth.requiredBody")}</p>
+      <Link href="/login" className="btn btn-primary">
         {t("nav.login")}
       </Link>
     </section>
@@ -115,17 +179,16 @@ function Gate() {
 export function ErrorNote({ error }: { error: ApiError | null }) {
   const t = useTranslations();
   if (!error) return null;
-  const key = `errors.${error.code}`;
-  const message = t.has(key) ? t(key) : t("errors.UNKNOWN");
+  const text = message(t, `errors.${error.code}`, t("errors.UNKNOWN"));
   const details = Object.entries(error.params).flatMap(([name, value]) => {
-    const paramKey = `errors.params.${name}`;
-    if (value == null || value === "" || !t.has(paramKey)) return [];
-    const text = Array.isArray(value) ? value.join(", ") : String(value);
-    return [t(paramKey, { value: text })];
+    if (value == null || value === "") return [];
+    const shown = Array.isArray(value) ? value.join(", ") : String(value);
+    const line = message(t, `errors.params.${name}`, "", { value: shown });
+    return line ? [line] : [];
   });
   return (
-    <div role="alert" className="rounded-2xl border border-[var(--danger)] px-4 py-3 text-sm leading-snug text-[var(--danger)]">
-      <p>{message}</p>
+    <div role="alert" className="border border-[var(--danger)] bg-[var(--danger-fill)] px-3 py-2 text-sm leading-snug text-[#F8FAFC]">
+      <p>{text}</p>
       {details.map((detail) => (
         <p key={detail} className="mt-1">
           {detail}
@@ -137,10 +200,17 @@ export function ErrorNote({ error }: { error: ApiError | null }) {
 
 export function PageIntro({ kicker, title, body }: { kicker?: string; title: string; body?: string }) {
   return (
-    <header className="mb-8 max-w-3xl">
-      {kicker ? <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ok)]">{kicker}</p> : null}
-      <h1 className="mt-2 font-serif text-4xl leading-tight md:text-5xl">{title}</h1>
-      {body ? <p className="mt-4 text-lg leading-relaxed text-[var(--muted)]">{body}</p> : null}
+    <header className="mb-3 max-w-4xl">
+      {kicker ? <p className="page-kicker">{kicker}</p> : null}
+      <h1 className="page-title">{title}</h1>
+      {body ? <p className="mt-1 text-sm leading-snug text-[var(--muted)]">{body}</p> : null}
     </header>
   );
+}
+
+export function statusTone(status?: string | null): "neutral" | "ok" | "warn" | "danger" {
+  if (status === "ready") return "ok";
+  if (status === "failed") return "danger";
+  if (status === "partial") return "warn";
+  return "neutral";
 }

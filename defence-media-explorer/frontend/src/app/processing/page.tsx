@@ -6,8 +6,9 @@ import { useTranslations } from "next-intl";
 import { ApiError, api, asApiError, canUpload } from "@/lib/api";
 import { usePrefs } from "@/lib/preferences";
 import { Badge, Button } from "@/components/ui";
-import { ErrorNote, PageIntro } from "@/components/shell";
+import { ErrorNote, PageIntro, statusTone } from "@/components/shell";
 import { LocalDate } from "@/components/format";
+import { message, statusLabel } from "@/i18n";
 
 type Job = {
   id: string;
@@ -58,55 +59,70 @@ export default function ProcessingPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageIntro kicker={t("processing.kicker")} title={t("processing.title")} body={t("processing.body")} />
       <ErrorNote error={error} />
-      {workerAlive === false ? <p className="panel p-5 leading-relaxed">{t("processing.workerDown")}</p> : null}
+      {workerAlive === false ? <p className="panel p-3 text-sm leading-snug">{t("processing.workerDown")}</p> : null}
       {jobs.length ? (
-        <ul className="space-y-3">
-          {jobs.map((job) => (
-            <li key={job.id} className="panel min-w-0 space-y-3 p-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={job.status === "failed" ? "danger" : job.status === "ready" ? "ok" : job.status === "partial" ? "warn" : "neutral"}>
-                  {job.status && t.has(`status.${job.status}`) ? t(`status.${job.status}`) : t("status.unknown")}
-                </Badge>
-                <span className="text-sm text-[var(--muted)]">{t("processing.generation", { value: job.generation ?? 0 })}</span>
-                <span className="text-sm text-[var(--muted)]">{t("processing.attempt", { count: job.attempts || 1 })}</span>
-                {job.pipelineVersion ? <span className="text-sm text-[var(--muted)]">{t("processing.pipeline", { value: job.pipelineVersion })}</span> : null}
-              </div>
-              <p className="break-words text-sm">
-                {t("processing.asset")}:{" "}
-                <Link href={`/assets/${job.assetId}`} className="underline-offset-2 hover:underline">
-                  {job.assetId}
-                </Link>
-              </p>
-              {typeof job.progress === "number" ? (
-                <div className="space-y-1">
-                  <p className="text-sm text-[var(--muted)]">{t("processing.progress", { value: job.progress })}</p>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
-                    <div className="h-full bg-spring" style={{ width: `${Math.max(0, Math.min(100, job.progress))}%` }} />
-                  </div>
-                </div>
-              ) : null}
-              {job.stage ? (
-                <p className="text-sm text-[var(--muted)]">
-                  {t("processing.stage", { value: t.has(`status.${job.stage}`) ? t(`status.${job.stage}`) : job.stage })}
-                </p>
-              ) : null}
-              <p className="text-sm text-[var(--muted)]">
-                <LocalDate value={job.updatedAt || job.createdAt} />
-              </p>
-              {job.error?.code ? <ErrorNote error={new ApiError(job.error.code, job.error.params || {}, 400)} /> : null}
-              {job.status === "failed" && canUpload(user?.role) ? (
-                <Button type="button" variant="quiet" onClick={() => void retry(job.id)}>
-                  {t("processing.retry")}
-                </Button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <div className="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th>{t("search.processingStatus")}</th>
+                <th>{t("processing.asset")}</th>
+                <th>{t("asset.generation")}</th>
+                <th>{t("columns.attempts")}</th>
+                <th>{t("columns.progress")}</th>
+                <th>{t("columns.stage")}</th>
+                <th>{t("asset.uploaded")}</th>
+                <th>{t("processing.retry")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((job) => (
+                <tr key={job.id}>
+                  <td>
+                    <Badge tone={statusTone(job.status)}>
+                      {statusLabel(t, job.status)}
+                    </Badge>
+                  </td>
+                  <td className="num">
+                    <Link href={`/assets/${job.assetId}`}>{job.assetId}</Link>
+                    {job.pipelineVersion ? <div className="text-[var(--muted)]">{t("processing.pipeline", { value: job.pipelineVersion })}</div> : null}
+                    {job.error?.code ? <ErrorNote error={new ApiError(job.error.code, job.error.params || {}, 400)} /> : null}
+                  </td>
+                  <td className="num">{job.generation ?? 0}</td>
+                  <td className="num">{job.attempts || 1}</td>
+                  <td>
+                    {typeof job.progress === "number" ? (
+                      <div className="min-w-[6rem] space-y-1">
+                        <p className="num text-[var(--muted)]">{job.progress}</p>
+                        <div className="meter" aria-hidden>
+                          <span style={{ width: `${Math.max(0, Math.min(100, job.progress))}%` }} />
+                        </div>
+                      </div>
+                    ) : (
+                      t("common.notAvailable")
+                    )}
+                  </td>
+                  <td>{job.stage ? message(t, `status.${job.stage}`, job.stage) : t("common.notAvailable")}</td>
+                  <td>
+                    <LocalDate value={job.updatedAt || job.createdAt} />
+                  </td>
+                  <td>
+                    {job.status === "failed" && canUpload(user?.role) ? (
+                      <Button type="button" variant="quiet" onClick={() => void retry(job.id)}>
+                        {t("processing.retry")}
+                      </Button>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <p className="text-[var(--muted)]">{t("processing.empty")}</p>
+        <p className="text-sm text-[var(--muted)]">{t("processing.empty")}</p>
       )}
     </div>
   );

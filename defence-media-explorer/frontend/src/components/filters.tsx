@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge, Button, FieldLabel, Select, TextInput } from "@/components/ui";
+import { message, statusLabel, type Translator } from "@/i18n";
 import type { FilterState } from "@/lib/search-state";
 
 const MEDIA = ["video", "image", "audio", "text"] as const;
+const QUICK_STATUSES = ["ready", "partial", "failed"] as const;
 const STATUSES = ["ready", "partial", "failed", "uploaded", "validating", "extracting", "enriching", "embedding", "indexing"] as const;
 
 export function FilterPanel({
@@ -23,6 +27,7 @@ export function FilterPanel({
   sortOptions: string[];
 }) {
   const t = useTranslations();
+  const [advanced, setAdvanced] = useState(false);
   function patch(partial: Partial<FilterState>) {
     onChange({ ...state, ...partial, page: 1 });
   }
@@ -30,9 +35,65 @@ export function FilterPanel({
   const chips = chipsOf(state, t, collections);
 
   return (
-    <section className="panel min-w-0 space-y-5 p-5">
-      <h2 className="font-serif text-2xl">{t("search.filters")}</h2>
-      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+    <section className="panel filter-bar">
+      <div className="filter-quick">
+        <div className="filter-group" role="group" aria-label={t("search.mediaType")}>
+          <span className="filter-label">{t("search.mediaType")}</span>
+          {MEDIA.map((type) => (
+            <label key={type} className="choice">
+              <input type="checkbox" checked={state.mediaTypes.includes(type)} onChange={() => patch({ mediaTypes: toggle(state.mediaTypes, type) })} />
+              <span>{t(`mediaType.${type}`)}</span>
+            </label>
+          ))}
+        </div>
+        <div className="filter-group" role="group" aria-label={t("search.processingStatus")}>
+          <span className="filter-label">{t("search.processingStatus")}</span>
+          {QUICK_STATUSES.map((status) => (
+            <label key={status} className="choice">
+              <input
+                type="checkbox"
+                checked={state.processingStatuses.includes(status)}
+                onChange={() => patch({ processingStatuses: toggle(state.processingStatuses, status) })}
+              />
+              <span>{statusLabel(t, status)}</span>
+            </label>
+          ))}
+        </div>
+        <div className="filter-sort">
+        <FieldLabel label={t("search.sort")}>
+          <Select value={sortOptions.includes(state.sort) ? state.sort : sortOptions[0]} onChange={(event) => patch({ sort: event.target.value })}>
+            {sortOptions.map((option) => (
+              <option key={option} value={option}>
+                {message(t, `search.sortOption.${option}`, option)}
+              </option>
+            ))}
+          </Select>
+        </FieldLabel>
+        </div>
+        <button type="button" className="btn btn-quiet" aria-expanded={advanced} onClick={() => setAdvanced((open) => !open)}>
+          <SlidersHorizontal aria-hidden size={14} />
+          {advanced ? t("search.hideAdvanced") : t("search.advanced")}
+          {chips.length ? <span className="badge badge-neutral">{chips.length}</span> : null}
+          <ChevronDown aria-hidden size={14} style={{ transform: advanced ? "rotate(180deg)" : undefined }} />
+        </button>
+        <Button type="button" variant="ghost" onClick={() => onChange({ ...state, ...blankFilters(state.sort), page: 1, q: state.q, mode: state.mode })}>
+          {t("common.reset")}
+        </Button>
+      </div>
+      {chips.length ? (
+        <div className="filter-chips">
+          {chips.map((chip) => (
+            <button key={chip.id} type="button" className="max-w-full" onClick={() => onChange({ ...chip.clear(state), page: 1 })} aria-label={t("search.removeFilter", { label: chip.label })}>
+              <Badge>
+                <span className="break-words">{chip.label} ×</span>
+              </Badge>
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {advanced ? (
+        <div className="filter-advanced">
+          <div className="filter-fields">
         <FieldLabel label={t("search.dateField")}>
           <Select value={state.dateField} onChange={(event) => patch({ dateField: event.target.value === "uploadedAt" ? "uploadedAt" : "capturedAt" })}>
             <option value="capturedAt">{t("asset.captured")}</option>
@@ -52,34 +113,19 @@ export function FilterPanel({
         <FieldLabel label={t("search.dateTo")}>
           <TextInput type="date" value={state.dateTo} onChange={(event) => patch({ dateTo: event.target.value })} />
         </FieldLabel>
-      </div>
-      <p className="text-sm leading-snug text-[var(--muted)]">{t("search.dateZone", { zone: timeZone })}</p>
-      <fieldset className="min-w-0">
-        <legend className="mb-2 text-sm font-medium">{t("search.mediaType")}</legend>
-        <div className="flex flex-wrap gap-2">
-          {MEDIA.map((type) => (
-            <label key={type} className="flex max-w-full items-center gap-2 rounded-full border border-[var(--line)] px-3 py-2 text-sm leading-snug">
-              <input
-                type="checkbox"
-                checked={state.mediaTypes.includes(type)}
-                onChange={() => patch({ mediaTypes: toggle(state.mediaTypes, type) })}
-              />
-              <span className="break-words">{t(`mediaType.${type}`)}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+          </div>
+          <p className="text-sm leading-snug text-[var(--muted)]">{t("search.dateZone", { zone: timeZone })}</p>
       <fieldset className="min-w-0">
         <legend className="mb-2 text-sm font-medium">{t("search.processingStatus")}</legend>
         <div className="flex flex-wrap gap-2">
           {STATUSES.map((status) => (
-            <label key={status} className="flex max-w-full items-center gap-2 rounded-full border border-[var(--line)] px-3 py-2 text-sm leading-snug">
+            <label key={status} className="choice">
               <input
                 type="checkbox"
                 checked={state.processingStatuses.includes(status)}
                 onChange={() => patch({ processingStatuses: toggle(state.processingStatuses, status) })}
               />
-              <span className="break-words">{t(`status.${status}`)}</span>
+              <span className="break-words">{statusLabel(t, status)}</span>
             </label>
           ))}
         </div>
@@ -108,40 +154,8 @@ export function FilterPanel({
         suggestions={facets.sourceLanguages}
         onChange={(sourceLanguages) => patch({ sourceLanguages })}
       />
-      <FieldLabel label={t("search.sort")}>
-        <Select value={sortOptions.includes(state.sort) ? state.sort : sortOptions[0]} onChange={(event) => patch({ sort: event.target.value })}>
-          {sortOptions.map((option) => (
-            <option key={option} value={option}>
-              {t.has(`search.sortOption.${option}`) ? t(`search.sortOption.${option}`) : option}
-            </option>
-          ))}
-        </Select>
-      </FieldLabel>
-      {chips.length ? (
-        <div className="min-w-0">
-          <h3 className="mb-2 text-sm font-medium">{t("search.active")}</h3>
-          <div className="flex flex-wrap gap-2">
-            {chips.map((chip) => (
-              <button
-                key={chip.id}
-                type="button"
-                className="max-w-full"
-                onClick={() => onChange({ ...chip.clear(state), page: 1 })}
-                aria-label={t("search.removeFilter", { label: chip.label })}
-              >
-                <Badge>
-                  <span className="break-words">
-                    {chip.label} ×
-                  </span>
-                </Badge>
-              </button>
-            ))}
-          </div>
         </div>
       ) : null}
-      <Button type="button" variant="quiet" onClick={() => onChange({ ...state, ...blankFilters(state.sort), page: 1, q: state.q, mode: state.mode })}>
-        {t("common.reset")}
-      </Button>
     </section>
   );
 }
@@ -225,7 +239,7 @@ function blankFilters(sort: string): FilterState {
   };
 }
 
-function chipsOf(state: FilterState, t: ReturnType<typeof useTranslations>, collections: { id: string; name: string }[]) {
+function chipsOf(state: FilterState, t: Translator, collections: { id: string; name: string }[]) {
   const chips: { id: string; label: string; clear: (state: FilterState) => FilterState }[] = [];
   if (state.dateFrom || state.dateTo) {
     chips.push({
@@ -251,7 +265,7 @@ function chipsOf(state: FilterState, t: ReturnType<typeof useTranslations>, coll
   for (const type of state.mediaTypes) {
     chips.push({
       id: `media-${type}`,
-      label: t.has(`mediaType.${type}`) ? t(`mediaType.${type}`) : type,
+      label: message(t, `mediaType.${type}`, type),
       clear: (current) => ({ ...current, mediaTypes: current.mediaTypes.filter((item) => item !== type) }),
     });
   }
@@ -269,7 +283,7 @@ function chipsOf(state: FilterState, t: ReturnType<typeof useTranslations>, coll
   for (const status of state.processingStatuses) {
     chips.push({
       id: `status-${status}`,
-      label: t.has(`status.${status}`) ? t(`status.${status}`) : status,
+      label: statusLabel(t, status, status),
       clear: (current) => ({ ...current, processingStatuses: current.processingStatuses.filter((item) => item !== status) }),
     });
   }
