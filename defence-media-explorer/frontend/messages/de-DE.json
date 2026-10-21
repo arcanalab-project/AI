@@ -128,6 +128,8 @@
       "inspections": "Aufzeichnungen, in denen Ausrüstungsinspektionen besprochen werden."
     },
     "filters": "Filter",
+    "advanced": "Erweitert",
+    "hideAdvanced": "Filter ausblenden",
     "dateField": "Datumsfeld",
     "dateFrom": "Von",
     "dateTo": "Bis",

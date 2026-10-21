@@ -3,30 +3,27 @@
 @tailwind utilities;
 
 /*
-  Command-center theme. Canvas and inset are the specified slates.
-  Text and critical labels stay at or above WCAG 2.1 AAA (7:1).
-  #10B981 and #F59E0B are badge fills with #0F172A text (7.04:1 and 8.31:1).
-  #EF4444 is the critical edge. Filled critical badges use #991B1B so #F8FAFC text reaches 7.94:1;
-  #EF4444 on #0F172A is 4.74:1 and is not used for small text.
-  Muted copy is #E2E8F0 (8.40:1 on #334155). #94A3B8 fails that surface.
+  Intelligence dashboard. Canvas is ultra-dark, cards are slate-900
+  with a #2E384D micro-border. Primary copy is slate-100.
+  Secondary copy is slate-400. Status badges are desaturated and translucent.
 */
 
 :root,
 .dark {
-  --canvas: #0f172a;
-  --inset: #1e293b;
-  --surface: #334155;
-  --line: #475569;
-  --ink: #f8fafc;
-  --muted: #e2e8f0;
+  --canvas: #090d16;
+  --inset: #090d16;
+  --surface: #0f172a;
+  --line: #2e384d;
+  --ink: #f1f5f9;
+  --muted: #94a3b8;
   --primary: #004494;
   --primary-press: #00356f;
   --signal: #1d4ed8;
-  --ok: #10b981;
-  --warn: #f59e0b;
-  --danger: #ef4444;
-  --danger-fill: #991b1b;
-  --danger-text: #fecaca;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --danger-fill: rgba(69, 10, 10, 0.55);
+  --danger-text: #fca5a5;
   --link: #bfdbfe;
   --bg: var(--canvas);
   --bg-elev: var(--surface);
@@ -61,8 +58,6 @@ a { color: var(--link); }
 button, input, select, textarea { font: inherit; color: inherit; }
 
 .num,
-.data-table,
-.data-table td,
 .metric {
   font-family: "Roboto Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
@@ -101,7 +96,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   width: 28px;
   flex: none;
   place-items: center;
-  border: 1px solid var(--signal);
+  border: 1px solid #1d4ed8;
+  border-radius: 6px;
   background: var(--primary);
   color: var(--ink);
 }
@@ -138,9 +134,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
   gap: 6px;
   min-height: 32px;
   border: 1px solid transparent;
-  border-radius: 2px;
+  border-radius: 6px;
   padding: 4px 8px;
-  color: var(--ink);
+  color: var(--muted);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
@@ -148,14 +144,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
   white-space: nowrap;
 }
 
-.side-link:hover { background: var(--inset); }
+.side-link:hover { background: rgba(15, 23, 42, 0.85); color: var(--ink); }
 
-.side-link:active { background: var(--primary-press); }
+.side-link:active { background: #121a2b; }
 
 .side-link[aria-current="page"] {
-  border-color: var(--signal);
-  background: var(--primary);
-  color: #f8fafc;
+  border-color: transparent;
+  background: rgba(29, 78, 216, 0.16);
+  box-shadow: inset 2px 0 0 #1d4ed8;
+  color: var(--ink);
 }
 
 .workspace {
@@ -189,28 +186,31 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: inline-flex;
   align-items: center;
   min-height: 22px;
-  border-radius: 2px;
+  border: 1px solid transparent;
+  border-radius: 6px;
   padding: 1px 8px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 1.2;
 }
 
 .mark-restricted {
-  background: var(--warn);
-  color: #0f172a;
+  border-color: rgba(146, 64, 14, 0.45);
+  background: rgba(69, 26, 3, 0.55);
+  color: #fbbf24;
 }
 
 .mark-unclassified {
-  background: var(--ok);
-  color: #0f172a;
+  border-color: rgba(6, 95, 70, 0.45);
+  background: rgba(2, 44, 34, 0.55);
+  color: #34d399;
 }
 
 .mark-critical {
-  border: 1px solid var(--danger);
-  background: var(--danger-fill);
-  color: #f8fafc;
+  border-color: rgba(153, 27, 27, 0.45);
+  background: rgba(69, 10, 10, 0.55);
+  color: #fca5a5;
 }
 
 .sync {
@@ -263,7 +263,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 2px;
+  border-radius: 8px;
   box-shadow: none;
 }
 
@@ -272,8 +272,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   color: var(--ink);
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .page-kicker {
@@ -298,8 +298,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   min-width: 0;
   min-height: 32px;
   border: 1px solid var(--line);
-  border-radius: 2px;
-  background: var(--inset);
+  border-radius: 6px;
+  background: var(--canvas);
   padding: 4px 8px;
   color: var(--ink);
 }
@@ -322,7 +322,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   gap: 6px;
   min-height: 32px;
   border: 1px solid transparent;
-  border-radius: 2px;
+  border-radius: 6px;
   padding: 4px 10px;
   font-size: 13px;
   font-weight: 600;
@@ -358,7 +358,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   color: var(--ink);
 }
 
-.btn-quiet:hover { border-color: #f8fafc; background: #243246; color: var(--ink); }
+.btn-quiet:hover { border-color: #64748b; background: #121a2b; color: var(--ink); }
 
 .btn-quiet:active { background: var(--primary-press); color: #f8fafc; }
 
@@ -390,46 +390,53 @@ button, input, select, textarea { font: inherit; color: inherit; }
   max-width: 100%;
   align-items: center;
   border: 1px solid transparent;
-  border-radius: 2px;
-  padding: 1px 6px;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-family: Inter, "Segoe UI", sans-serif;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
 }
 
-.badge-neutral { border-color: var(--line); background: var(--inset); color: var(--ink); }
-.badge-ok { background: var(--ok); color: #0f172a; }
-.badge-warn { background: var(--warn); color: #0f172a; }
-.badge-danger { border-color: var(--danger); background: var(--danger-fill); color: #f8fafc; }
+.badge-neutral { border-color: var(--line); background: rgba(15, 23, 42, 0.65); color: var(--ink); }
+.badge-ok { border-color: rgba(6, 95, 70, 0.4); background: rgba(2, 44, 34, 0.5); color: #34d399; }
+.badge-warn { border-color: rgba(146, 64, 14, 0.4); background: rgba(69, 26, 3, 0.5); color: #fbbf24; }
+.badge-danger { border-color: rgba(153, 27, 27, 0.4); background: rgba(69, 10, 10, 0.5); color: #f87171; }
 
 .data-table {
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: 2px;
+  border-radius: 8px;
   background: var(--surface);
 }
 
 .data-table table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-family: Inter, "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
 .data-table th {
-  background: var(--inset);
+  background: #0c1220;
   color: var(--muted);
   font-family: Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
   text-align: left;
+  text-transform: none;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .data-table th,
 .data-table td {
   border-bottom: 1px solid var(--line);
-  padding: 5px 8px;
-  vertical-align: top;
-  overflow-wrap: anywhere;
+  padding: 8px 10px;
+  vertical-align: middle;
+  overflow-wrap: normal;
 }
 
 .data-table .btn,
@@ -438,7 +445,94 @@ button, input, select, textarea { font: inherit; color: inherit; }
   overflow-wrap: normal;
 }
 
-.data-table tbody tr:hover td { background: #243246; }
+.data-table tbody tr:hover td { background: #121a2b; }
+
+.thumb {
+  display: block;
+  width: 84px;
+  aspect-ratio: 16 / 9;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--canvas);
+  object-fit: cover;
+}
+
+.match-text {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-weight: 400;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.action-bar {
+  display: inline-flex;
+  gap: 4px;
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .action-bar { opacity: 0; }
+  .data-table tbody tr:hover .action-bar,
+  .data-table tbody tr:focus-within .action-bar { opacity: 1; }
+}
+
+.icon-btn {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(9, 13, 22, 0.65);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.icon-btn:hover { border-color: #64748b; background: #172033; color: #f8fafc; }
+
+.filter-bar { display: grid; gap: 10px; padding: 10px 12px; }
+
+.filter-quick,
+.filter-chips,
+.filter-group {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.filter-sort { display: grid; min-width: 11rem; gap: 4px; }
+
+.filter-advanced {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.filter-fields {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+@media (min-width: 900px) {
+  .filter-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 
 .data-table tbody tr:last-child td { border-bottom: 0; }
 
@@ -448,19 +542,25 @@ button, input, select, textarea { font: inherit; color: inherit; }
   align-items: center;
   gap: 6px;
   border: 1px solid var(--line);
-  border-radius: 2px;
-  background: var(--inset);
+  border-radius: 6px;
+  background: transparent;
   padding: 3px 8px;
   font-size: 12px;
   line-height: 1.3;
 }
 
-.choice:hover { border-color: #f8fafc; }
+.choice:hover { border-color: #64748b; }
+
+.choice:has(input:checked) {
+  border-color: rgba(29, 78, 216, 0.7);
+  background: rgba(29, 78, 216, 0.16);
+  color: var(--ink);
+}
 
 .seg-btn {
   border: 1px solid var(--line);
-  border-radius: 2px;
-  background: var(--inset);
+  border-radius: 6px;
+  background: var(--canvas);
   padding: 3px 8px;
   color: var(--ink);
   font-family: "Roboto Mono", ui-monospace, monospace;
@@ -479,8 +579,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .meter {
   overflow: hidden;
   height: 6px;
-  border-radius: 2px;
-  background: var(--inset);
+  border-radius: 6px;
+  background: #121a2b;
 }
 
 .meter > span {

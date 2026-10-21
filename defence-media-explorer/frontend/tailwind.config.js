@@ -10,10 +10,10 @@ module.exports = {
         serif: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
-        canvas: "#0F172A",
-        inset: "#1E293B",
-        surface: "#334155",
-        line: "#475569",
+        canvas: "#090D16",
+        inset: "#0F172A",
+        surface: "#0F172A",
+        line: "#2E384D",
         institutional: "#004494",
         signal: "#1D4ED8",
         pine: "#F8FAFC",
@@ -23,7 +23,7 @@ module.exports = {
         danger: "#EF4444",
       },
       borderRadius: {
-        tactical: "2px",
+        tactical: "8px",
       },
     },
   },

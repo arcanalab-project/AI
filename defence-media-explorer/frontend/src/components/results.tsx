@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight, Info, ScanSearch } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Badge, Button } from "@/components/ui";
 import { Clock, LocalDate } from "@/components/format";
@@ -33,17 +34,17 @@ export function ResultGrid({ results }: { results: SearchResult[] }) {
                 <Badge>{t.has(`mediaType.${result.mediaType}`) ? t(`mediaType.${result.mediaType}`) : t("mediaType.unknown")}</Badge>
               </td>
               <td>
-                <div className="flex items-start gap-2">
-                  {result.thumbnailUrl ? <img src={result.thumbnailUrl} alt="" className="h-8 w-12 object-cover" /> : null}
+                <div className="flex items-start gap-3">
+                  {result.thumbnailUrl ? <img src={result.thumbnailUrl} alt="" className="thumb" /> : <span className="thumb" />}
                   <div className="min-w-0">
                     <p className="break-words font-sans font-semibold text-[var(--ink)]">{result.title || t("common.unknown")}</p>
-                    {result.matchText ? <p className="break-words text-[var(--muted)]">{result.matchText}</p> : null}
+                    {result.matchText ? <p className="match-text">{result.matchText}</p> : null}
                     {result.nearbyCount > 0 ? <p className="text-[var(--muted)]">{t("search.nearby", { count: result.nearbyCount })}</p> : null}
                   </div>
                 </div>
               </td>
-              <td className="break-words">{result.source || t("common.notAvailable")}</td>
-              <td>{result.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={result.capturedAt} />}</td>
+              <td className="whitespace-nowrap">{result.source || t("common.notAvailable")}</td>
+              <td className="whitespace-nowrap">{result.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={result.capturedAt} />}</td>
               <td>
                 {result.processingStatus ? (
                   <Badge tone={statusTone(result.processingStatus)}>
@@ -63,16 +64,16 @@ export function ResultGrid({ results }: { results: SearchResult[] }) {
                 ) : null}
               </td>
               <td>
-                <div className="flex flex-col items-stretch gap-1">
-                  <Link href={assetHref(result)} className="btn btn-primary">
-                    {t("common.open")}
-                  </Link>
-                  <Link href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}&similar=1`} className="btn btn-quiet">
-                    {t("search.findSimilar")}
-                  </Link>
-                  <Link href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}#metadata`} className="btn btn-ghost">
-                    {t("common.details")}
-                  </Link>
+                <div className="action-bar">
+                  <ActionLink href={assetHref(result)} label={t("common.open")}>
+                    <ArrowUpRight aria-hidden size={15} />
+                  </ActionLink>
+                  <ActionLink href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}&similar=1`} label={t("search.findSimilar")}>
+                    <ScanSearch aria-hidden size={15} />
+                  </ActionLink>
+                  <ActionLink href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}#metadata`} label={t("common.details")}>
+                    <Info aria-hidden size={15} />
+                  </ActionLink>
                 </div>
               </td>
             </tr>
@@ -80,6 +81,14 @@ export function ResultGrid({ results }: { results: SearchResult[] }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+export function ActionLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="icon-btn" aria-label={label} title={label}>
+      {children}
+    </Link>
   );
 }
 

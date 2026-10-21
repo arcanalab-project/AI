@@ -218,16 +218,15 @@ export function SearchView() {
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--muted)]">{t("search.languageNote")}</p>
       </div>
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <FilterPanel
-          state={state}
-          timeZone={payload?.timeZone || timeZone}
-          collections={collections}
-          facets={facets}
-          sortOptions={["relevance", "capturedAt_desc", "capturedAt_asc", "uploadedAt_desc", "uploadedAt_asc"]}
-          onChange={replace}
-        />
-        <div className="min-w-0 space-y-5">
+      <FilterPanel
+        state={state}
+        timeZone={payload?.timeZone || timeZone}
+        collections={collections}
+        facets={facets}
+        sortOptions={["relevance", "capturedAt_desc", "capturedAt_asc", "uploadedAt_desc", "uploadedAt_asc"]}
+        onChange={replace}
+      />
+      <div className="min-w-0 space-y-4">
           <ErrorNote error={error} />
           {!state.q ? <p className="text-sm leading-snug text-[var(--muted)]">{t("search.browseNote")}</p> : null}
           {loading ? <p className="text-[var(--muted)]">{t("common.loading")}</p> : null}
@@ -292,7 +291,6 @@ export function SearchView() {
               <p className="text-sm text-[var(--muted)]">{t("search.noSaved")}</p>
             )}
           </section>
-        </div>
       </div>
     </div>
   );

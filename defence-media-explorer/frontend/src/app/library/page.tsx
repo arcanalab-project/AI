@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ApiError, api, asApiError, type Asset } from "@/lib/api";
@@ -11,7 +10,8 @@ import { Badge } from "@/components/ui";
 import { ErrorNote, PageIntro, statusTone } from "@/components/shell";
 import { FilterPanel } from "@/components/filters";
 import { FileSize, LocalDate } from "@/components/format";
-import { Pager } from "@/components/results";
+import { ActionLink, Pager } from "@/components/results";
+import { ArrowUpRight } from "lucide-react";
 
 const PAGE_SIZE = 12;
 
@@ -84,16 +84,15 @@ export default function LibraryPage() {
   return (
     <div className="space-y-4">
       <PageIntro kicker={t("library.kicker")} title={t("library.title")} body={t("library.body")} />
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-        <FilterPanel
-          state={visible}
-          timeZone={zone}
-          collections={collections}
-          facets={facets}
-          sortOptions={["uploadedAt_desc", "uploadedAt_asc", "capturedAt_desc", "capturedAt_asc", "title_asc"]}
-          onChange={replace}
-        />
-        <div className="min-w-0 space-y-5">
+      <FilterPanel
+        state={visible}
+        timeZone={zone}
+        collections={collections}
+        facets={facets}
+        sortOptions={["uploadedAt_desc", "uploadedAt_asc", "capturedAt_desc", "capturedAt_asc", "title_asc"]}
+        onChange={replace}
+      />
+      <div className="min-w-0 space-y-4">
           <ErrorNote error={error} />
           <p className="metric text-xs text-[var(--muted)]">{t("library.count", { count: total })}</p>
           {assets.length ? (
@@ -114,8 +113,8 @@ export default function LibraryPage() {
                   {assets.map((asset) => (
                     <tr key={asset.id}>
                       <td>
-                        <div className="flex items-center gap-2">
-                          {asset.thumbnailUrl ? <img src={asset.thumbnailUrl} alt="" className="h-8 w-12 object-cover" /> : null}
+                        <div className="flex items-center gap-3">
+                          {asset.thumbnailUrl ? <img src={asset.thumbnailUrl} alt="" className="thumb" /> : <span className="thumb" />}
                           <span className="break-words font-sans font-semibold text-[var(--ink)]">{asset.title}</span>
                         </div>
                       </td>
@@ -135,9 +134,11 @@ export default function LibraryPage() {
                         <FileSize bytes={asset.byteSize} />
                       </td>
                       <td>
-                        <Link href={`/assets/${asset.id}`} className="btn btn-primary">
-                          {t("common.open")}
-                        </Link>
+                        <div className="action-bar">
+                          <ActionLink href={`/assets/${asset.id}`} label={t("common.open")}>
+                            <ArrowUpRight aria-hidden size={15} />
+                          </ActionLink>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -148,7 +149,6 @@ export default function LibraryPage() {
             <p className="text-sm text-[var(--muted)]">{t("library.empty")}</p>
           )}
           <Pager page={state.page} pageSize={PAGE_SIZE} complete={total} returned={assets.length} onPage={(page) => replace({ ...visible, page })} />
-        </div>
       </div>
     </div>
   );

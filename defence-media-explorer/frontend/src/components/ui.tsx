@@ -31,7 +31,7 @@ export function FieldLabel({
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid min-w-0 gap-1 text-xs font-semibold uppercase tracking-[0.06em]">
+    <label className="grid min-w-0 gap-1 text-xs font-medium text-[var(--muted)]">
       <span className="min-w-0">{label}</span>
       {children}
       {hint ? <span className="font-normal normal-case tracking-normal text-[var(--muted)]">{hint}</span> : null}
