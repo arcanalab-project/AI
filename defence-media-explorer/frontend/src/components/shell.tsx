@@ -25,12 +25,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { user, ready, setUser, locale } = usePrefs();
   const router = useRouter();
   const open = ["/login", "/settings"].includes(pathname) || !!user;
+  const isHome = pathname === "/";
   const sync = useSync();
 
   useEffect(() => {
-    document.title = `${t("meta.product")} — ${t("medex.brand.title")}`;
     document.documentElement.lang = locale;
-  }, [t, locale]);
+  }, [locale]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include", headers: { "X-DME-Request": "1" } });
@@ -106,14 +106,19 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main id="content" className="command-main">
-          {!ready && pathname !== "/login" && pathname !== "/settings" ? (
+          {!isHome && !ready && pathname !== "/login" && pathname !== "/settings" ? (
             <p className="text-[var(--muted)]">{t("common.loading")}</p>
-          ) : ready && !open ? (
+          ) : !isHome && ready && !open ? (
             <Gate />
           ) : (
             <Suspense fallback={<p className="text-[var(--muted)]">{t("common.loading")}</p>}>{children}</Suspense>
           )}
         </main>
+        <footer className="border-t border-[var(--line)] px-3 py-3 text-sm text-[var(--muted)]">
+          <a href="https://marionoioso.com/" rel="author">
+            Built by Mario Noioso · marionoioso.com
+          </a>
+        </footer>
       </div>
     </div>
   );
