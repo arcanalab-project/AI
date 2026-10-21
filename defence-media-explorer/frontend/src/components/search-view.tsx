@@ -55,6 +55,7 @@ export function SearchView() {
   const [facets, setFacets] = useState({ tags: [] as string[], sources: [] as string[], sourceLanguages: [] as string[], categories: [] as string[] });
   const [saved, setSaved] = useState<Saved[]>([]);
   const [saveName, setSaveName] = useState("");
+  const [draft, setDraft] = useState(state.q);
 
   function replace(next: FilterState) {
     const query = writeFilters(next).toString();
@@ -85,11 +86,14 @@ export function SearchView() {
   }, [user]);
 
   useEffect(() => {
+    setDraft(state.q);
+  }, [state.q]);
+
+  useEffect(() => {
     if (!user) return;
     let cancel = false;
     setLoading(true);
     setError(null);
-    const handle = window.setTimeout(() => {
     api<SearchPayload>("/api/search", {
       method: "POST",
       body: JSON.stringify({
@@ -114,10 +118,8 @@ export function SearchView() {
       .finally(() => {
         if (!cancel) setLoading(false);
       });
-    }, 250);
     return () => {
       cancel = true;
-      window.clearTimeout(handle);
     };
   }, [user, state, timeZone, locale]);
 
@@ -180,15 +182,17 @@ export function SearchView() {
         className="panel min-w-0 p-3"
         onSubmit={(event) => {
           event.preventDefault();
-          replace({ ...state, page: 1 });
+          const phrase = draft.trim();
+          setDraft(phrase);
+          replace({ ...state, q: phrase, page: 1 });
         }}
       >
         <label className="grid min-w-0 gap-3">
           <span className="text-sm font-semibold">{t("search.queryLabel")}</span>
           <input
             name="q"
-            value={state.q}
-            onChange={(event) => replace({ ...state, q: event.target.value, page: 1 })}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
             placeholder={t("medex.search.placeholder")}
             className="field"
           />
