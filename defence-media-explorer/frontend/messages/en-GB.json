@@ -110,7 +110,7 @@
   "search": {
     "kicker": "Archive",
     "title": "Find a moment in the archive",
-    "body": "Hybrid search is the default. An empty query browses matching segments instead of ranking them.",
+    "body": "Hybrid search is the default. A phrase is searched when you submit it. An empty query browses matching segments instead of ranking them.",
     "queryLabel": "Search the archive",
     "placeholder": "Describe a scene, an activity, or words spoken in a recording",
     "submit": "Search",
@@ -183,7 +183,8 @@
     "rank": "Rank {rank}",
     "languageNote": "The interface language does not translate or re-embed source media. Full-text search does not translate the query.",
     "browseNote": "Empty query: browsing segments that match the filters, with a complete count.",
-    "captureUnknown": "Capture date unknown"
+    "captureUnknown": "Capture date unknown",
+    "submitName": "Submit this search"
   },
   "library": {
     "kicker": "Holdings",

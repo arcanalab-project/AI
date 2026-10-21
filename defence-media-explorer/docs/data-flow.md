@@ -20,7 +20,7 @@
 
 ## Search
 
-1. The page writes the query, mode, sort, and filters into the URL, including the active time zone.
+1. Filters, mode, sort, and page stay in the URL, including the active time zone. The query text stays in the field until Enter or the control inside the field submits it. An empty submit does not call search. Keystrokes do not.
 2. `POST /api/search` builds one metadata filter for browse, `$search`, and `$vectorSearch`.
 3. Empty query: count and page the matching segments. `countKind` is `matching_segments`, and `completeMatchCount` is that count.
 4. Semantic: embed the query with `voyage-multimodal-3.5` (`input_type` query) and run `$vectorSearch` on `embedding`. Missing Voyage returns `PROVIDER_NOT_CONFIGURED`. When the text channel is enabled, a `voyage-4-large` query vector searches `textEmbedding` and the ranks are fused. The raw scores are not compared.

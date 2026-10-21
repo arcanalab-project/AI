@@ -110,7 +110,7 @@
   "search": {
     "kicker": "Archivio",
     "title": "Trova un momento nell'archivio",
-    "body": "La ricerca ibrida è la modalità predefinita. Una domanda vuota sfoglia i segmenti corrispondenti invece di ordinarli.",
+    "body": "La ricerca ibrida è la modalità predefinita. Una frase viene cercata quando la invii. Una domanda vuota sfoglia i segmenti corrispondenti invece di ordinarli.",
     "queryLabel": "Cerca nell'archivio",
     "placeholder": "Descrivi una scena, un'attività o le parole pronunciate in una registrazione",
     "submit": "Cerca",
@@ -183,7 +183,8 @@
     "rank": "Posizione {rank}",
     "languageNote": "La lingua dell'interfaccia non traduce né ricalcola gli embedding dei media di origine. La ricerca a testo integrale non traduce la domanda.",
     "browseNote": "Domanda vuota: scorrimento dei segmenti che corrispondono ai filtri, con un conteggio completo.",
-    "captureUnknown": "Data di acquisizione sconosciuta"
+    "captureUnknown": "Data di acquisizione sconosciuta",
+    "submitName": "Avvia questa ricerca"
   },
   "library": {
     "kicker": "Patrimonio",

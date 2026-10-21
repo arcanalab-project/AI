@@ -110,7 +110,7 @@
   "search": {
     "kicker": "Archivo",
     "title": "Encontrar un momento en el archivo",
-    "body": "La búsqueda híbrida es el modo predeterminado. Una consulta vacía recorre los segmentos coincidentes en lugar de ordenarlos.",
+    "body": "La búsqueda híbrida es el modo predeterminado. Una frase se busca al enviarla. Una consulta vacía recorre los segmentos coincidentes en lugar de ordenarlos.",
     "queryLabel": "Buscar en el archivo",
     "placeholder": "Describa una escena, una actividad o palabras dichas en una grabación",
     "submit": "Buscar",
@@ -183,7 +183,8 @@
     "rank": "Puesto {rank}",
     "languageNote": "El idioma de la interfaz no traduce ni vuelve a incrustar los medios de origen. La búsqueda de texto completo no traduce la consulta.",
     "browseNote": "Consulta vacía: recorrido de los segmentos que coinciden con los filtros, con un recuento completo.",
-    "captureUnknown": "Fecha de captura desconocida"
+    "captureUnknown": "Fecha de captura desconocida",
+    "submitName": "Iniciar esta búsqueda"
   },
   "library": {
     "kicker": "Fondos",

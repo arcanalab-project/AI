@@ -110,7 +110,7 @@
   "search": {
     "kicker": "Archive",
     "title": "Trouver un moment dans l'archive",
-    "body": "La recherche hybride est le mode par défaut. Une requête vide parcourt les segments correspondants au lieu de les classer.",
+    "body": "La recherche hybride est le mode par défaut. Une phrase est recherchée lorsque vous la validez. Une requête vide parcourt les segments correspondants au lieu de les classer.",
     "queryLabel": "Rechercher dans l'archive",
     "placeholder": "Décrivez une scène, une activité ou des paroles dans un enregistrement",
     "submit": "Rechercher",
@@ -183,7 +183,8 @@
     "rank": "Rang {rank}",
     "languageNote": "La langue de l'interface ne traduit pas les médias sources et ne recalcule pas leurs vecteurs. La recherche en texte intégral ne traduit pas la requête.",
     "browseNote": "Requête vide : parcours des segments qui correspondent aux filtres, avec un décompte complet.",
-    "captureUnknown": "Date de prise de vue inconnue"
+    "captureUnknown": "Date de prise de vue inconnue",
+    "submitName": "Lancer cette recherche"
   },
   "library": {
     "kicker": "Fonds",

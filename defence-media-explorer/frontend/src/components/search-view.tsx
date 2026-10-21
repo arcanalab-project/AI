@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ApiError, api, asApiError } from "@/lib/api";
@@ -54,6 +54,11 @@ export function SearchView() {
   const [facets, setFacets] = useState({ tags: [] as string[], sources: [] as string[], sourceLanguages: [] as string[], categories: [] as string[] });
   const [saved, setSaved] = useState<Saved[]>([]);
   const [saveName, setSaveName] = useState("");
+  const [draft, setDraft] = useState(state.q);
+
+  useEffect(() => {
+    setDraft(state.q);
+  }, [state.q]);
 
   function replace(next: FilterState) {
     const query = writeFilters(next).toString();
@@ -88,7 +93,6 @@ export function SearchView() {
     let cancel = false;
     setLoading(true);
     setError(null);
-    const handle = window.setTimeout(() => {
     api<SearchPayload>("/api/search", {
       method: "POST",
       body: JSON.stringify({
@@ -113,12 +117,20 @@ export function SearchView() {
       .finally(() => {
         if (!cancel) setLoading(false);
       });
-    }, 250);
     return () => {
       cancel = true;
-      window.clearTimeout(handle);
     };
   }, [user, state, timeZone, locale]);
+
+  function submitQuery(event: FormEvent) {
+    event.preventDefault();
+    const phrase = draft.trim();
+    if (!phrase) {
+      setDraft(state.q);
+      return;
+    }
+    replace({ ...state, q: phrase, page: 1 });
+  }
 
   async function saveSearch() {
     if (!saveName.trim()) return;
@@ -175,22 +187,26 @@ export function SearchView() {
   return (
     <div className="space-y-8">
       <PageIntro kicker={t("search.kicker")} title={t("search.title")} body={t("search.body")} />
-      <form
-        className="panel min-w-0 p-4 md:p-6"
-        onSubmit={(event) => {
-          event.preventDefault();
-          replace({ ...state, page: 1 });
-        }}
-      >
+      <form className="panel min-w-0 p-4 md:p-6" onSubmit={submitQuery}>
         <label className="grid min-w-0 gap-3">
           <span className="text-sm font-semibold">{t("search.queryLabel")}</span>
-          <input
-            name="q"
-            value={state.q}
-            onChange={(event) => replace({ ...state, q: event.target.value, page: 1 })}
-            placeholder={t("search.placeholder")}
-            className="w-full min-w-0 rounded-3xl border border-[var(--line)] bg-transparent px-5 py-4 text-xl leading-snug"
-          />
+          <div className="flex min-w-0 items-center rounded-3xl border border-[var(--line)] bg-transparent">
+            <input
+              name="q"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder={t("search.placeholder")}
+              aria-label={t("search.queryLabel")}
+              className="min-w-0 flex-1 border-0 bg-transparent px-5 py-4 text-xl leading-snug outline-none"
+            />
+            <button
+              type="submit"
+              aria-label={t("search.submitName")}
+              className="m-2 max-w-[40%] shrink-0 whitespace-normal break-words rounded-full bg-spring px-4 py-2.5 text-sm font-semibold leading-snug text-[#001E2B]"
+            >
+              {t("search.submit")}
+            </button>
+          </div>
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">{t("search.modeLabel")}</span>
@@ -199,7 +215,6 @@ export function SearchView() {
               {t(`search.mode.${mode}`)}
             </Button>
           ))}
-          <Button type="submit">{t("search.submit")}</Button>
         </div>
       </form>
       <div>

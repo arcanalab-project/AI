@@ -110,7 +110,7 @@
   "search": {
     "kicker": "Archiv",
     "title": "Einen Moment im Archiv finden",
-    "body": "Die hybride Suche ist die Voreinstellung. Eine leere Abfrage durchsucht passende Segmente, statt sie zu reihen.",
+    "body": "Die hybride Suche ist die Voreinstellung. Eine Formulierung wird gesucht, wenn Sie sie absenden. Eine leere Abfrage durchsucht passende Segmente, statt sie zu reihen.",
     "queryLabel": "Das Archiv durchsuchen",
     "placeholder": "Beschreiben Sie eine Szene, eine Tätigkeit oder gesprochene Worte in einer Aufnahme",
     "submit": "Suchen",
@@ -183,7 +183,8 @@
     "rank": "Rang {rank}",
     "languageNote": "Die Oberflächensprache übersetzt die Quellmedien nicht und bettet sie nicht neu ein. Die Volltextsuche übersetzt die Abfrage nicht.",
     "browseNote": "Leere Abfrage: Segmente, die den Filtern entsprechen, mit einer vollständigen Anzahl.",
-    "captureUnknown": "Aufnahmedatum unbekannt"
+    "captureUnknown": "Aufnahmedatum unbekannt",
+    "submitName": "Diese Suche starten"
   },
   "library": {
     "kicker": "Bestand",
