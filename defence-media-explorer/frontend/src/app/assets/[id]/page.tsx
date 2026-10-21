@@ -9,6 +9,7 @@ import { usePrefs } from "@/lib/preferences";
 import { Badge, Button, FieldLabel, Select, TextArea, TextInput } from "@/components/ui";
 import { ErrorNote, PageIntro } from "@/components/shell";
 import { Clock, DurationText, FileSize, LocalDate, LocalNumber } from "@/components/format";
+import { message, statusLabel, type Translator } from "@/i18n";
 import { ResultGrid } from "@/components/results";
 
 type Technical = {
@@ -204,9 +205,9 @@ export default function AssetPage() {
       <ErrorNote error={error} />
       {stale ? <p className="rounded-2xl border border-[var(--warn)] px-4 py-3 text-sm leading-relaxed">{t("asset.embeddingStale")}</p> : null}
       <div className="flex flex-wrap gap-2">
-        <Badge>{t.has(`mediaType.${asset.mediaType}`) ? t(`mediaType.${asset.mediaType}`) : t("mediaType.unknown")}</Badge>
-        <Badge>{asset.processingStatus && t.has(`status.${asset.processingStatus}`) ? t(`status.${asset.processingStatus}`) : t("status.unknown")}</Badge>
-        {asset.indexingState ? <Badge>{t.has(`indexingState.${asset.indexingState}`) ? t(`indexingState.${asset.indexingState}`) : t("indexingState.unknown")}</Badge> : null}
+        <Badge>{message(t, `mediaType.${asset.mediaType}`, t("mediaType.unknown"))}</Badge>
+        <Badge>{statusLabel(t, asset.processingStatus)}</Badge>
+        {asset.indexingState ? <Badge>{message(t, `indexingState.${asset.indexingState}`, t("indexingState.unknown"))}</Badge> : null}
       </div>
       <section className="panel min-w-0 overflow-hidden">
         <h2 className="section-title px-3 pt-3">{t("asset.player")}</h2>
@@ -335,7 +336,7 @@ export default function AssetPage() {
             <Fact label={t("asset.source")} value={asset.source || t("common.notAvailable")} />
             <Fact label={t("asset.uploaded")} value={<LocalDate value={asset.uploadedAt} />} />
             <Fact label={t("asset.captured")} value={asset.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={asset.capturedAt} />} />
-            <Fact label={t("asset.captureMode")} value={t.has(`captureMode.${asset.captureDateMode}`) ? t(`captureMode.${asset.captureDateMode}`) : t("captureMode.unknown")} />
+            <Fact label={t("asset.captureMode")} value={message(t, `captureMode.${asset.captureDateMode}`, t("captureMode.unknown"))} />
             <Fact label={t("asset.language")} value={asset.sourceLanguage || t("common.notAvailable")} />
             <Fact label={t("asset.duration")} value={<DurationText ms={asset.durationMs} />} />
             <Fact label={t("asset.size")} value={<FileSize bytes={asset.byteSize} />} />
@@ -345,7 +346,7 @@ export default function AssetPage() {
             <Fact label={t("asset.sha")} value={asset.sha256 || t("common.notAvailable")} />
             <Fact label={t("asset.pipeline")} value={asset.pipelineVersion || t("common.notAvailable")} />
             <Fact label={t("asset.generation")} value={<LocalNumber value={asset.generation} />} />
-            <Fact label={t("asset.indexing")} value={asset.indexingState && t.has(`indexingState.${asset.indexingState}`) ? t(`indexingState.${asset.indexingState}`) : t("indexingState.unknown")} />
+            <Fact label={t("asset.indexing")} value={asset.indexingState ? message(t, `indexingState.${asset.indexingState}`, t("indexingState.unknown")) : t("indexingState.unknown")} />
             <Fact label={t("asset.model")} value={asset.embeddingModel || t("common.notAvailable")} />
             <Fact label={t("asset.dimensions")} value={<LocalNumber value={asset.embeddingDimensions} />} />
             <Fact label={t("asset.categories")} value={(segment?.categories || []).join(", ") || t("common.none")} />
@@ -361,7 +362,7 @@ export default function AssetPage() {
             <h3 className="font-semibold">{t("asset.warnings")}</h3>
             <ul className="mt-2 space-y-1 text-sm">
               {asset.warnings?.map((code) => (
-                <li key={code}>{t.has(`errors.${code}`) ? t(`errors.${code}`) : t("errors.UNKNOWN")}</li>
+                <li key={code}>{message(t, `errors.${code}`, t("errors.UNKNOWN"))}</li>
               ))}
             </ul>
           </div>
@@ -420,7 +421,7 @@ function TechnicalPanel({ technical }: { technical: Technical | null }) {
             {t("technical.database")}: {technical.database || t("common.notAvailable")} · {t("technical.collection")}: {technical.collection || t("common.notAvailable")}
           </p>
           <p>
-            {t("technical.indexingState")}: {technical.indexingState && t.has(`indexingState.${technical.indexingState}`) ? t(`indexingState.${technical.indexingState}`) : t("indexingState.unknown")}
+            {t("technical.indexingState")}: {technical.indexingState ? message(t, `indexingState.${technical.indexingState}`, t("indexingState.unknown")) : t("indexingState.unknown")}
           </p>
           <p>{t("technical.indexingExplainer")}</p>
           <h3 className="font-semibold">{t("technical.embedding")}</h3>
@@ -428,11 +429,11 @@ function TechnicalPanel({ technical }: { technical: Technical | null }) {
           {technical.embedding?.preview?.length ? (
             <>
               <p>
-                {t("technical.strategy")}: {t.has(`technical.strategyName.${technical.embedding.strategy}`) ? t(`technical.strategyName.${technical.embedding.strategy}`) : t("technical.strategyName.unknown")}
+                {t("technical.strategy")}: {message(t, `technical.strategyName.${technical.embedding.strategy}`, t("technical.strategyName.unknown"))}
                 {" · "}
                 {t("technical.inputType")}: {technical.embedding.inputType || t("common.notAvailable")}
                 {" · "}
-                {t("technical.modality")}: {t.has(`technical.modalityName.${technical.embedding.modality}`) ? t(`technical.modalityName.${technical.embedding.modality}`) : t("technical.modalityName.unknown")}
+                {t("technical.modality")}: {message(t, `technical.modalityName.${technical.embedding.modality}`, t("technical.modalityName.unknown"))}
                 {" · "}
                 {t("technical.pipeline")}: {technical.embedding.preprocessingVersion || technical.pipelineVersion || t("common.notAvailable")}
               </p>
@@ -479,7 +480,7 @@ function TechnicalPanel({ technical }: { technical: Technical | null }) {
           {(technical.warnings || []).length ? (
             <ul>
               {technical.warnings?.map((code) => (
-                <li key={code}>{t.has(`errors.${code}`) ? t(`errors.${code}`) : t("errors.UNKNOWN")}</li>
+                <li key={code}>{message(t, `errors.${code}`, t("errors.UNKNOWN"))}</li>
               ))}
             </ul>
           ) : null}
@@ -501,7 +502,7 @@ function Provenance({ value }: { value?: Record<string, unknown> | null }) {
   );
 }
 
-function present(value: unknown, t: ReturnType<typeof useTranslations>) {
+function present(value: unknown, t: Translator) {
   if (value == null || value === "") return t("common.notAvailable");
   if (typeof value === "boolean") return value ? t("common.yes") : t("common.no");
   if (typeof value === "number") return String(value);
@@ -510,7 +511,7 @@ function present(value: unknown, t: ReturnType<typeof useTranslations>) {
   return t("common.notAvailable");
 }
 
-function sourceLabel(key: string, t: ReturnType<typeof useTranslations>) {
+function sourceLabel(key: string, t: Translator) {
   if (key === "originalObject") return t("technical.original");
   if (key === "thumbnailObject") return t("technical.thumbnail");
   if (key === "previewObject") return t("technical.previewObject");

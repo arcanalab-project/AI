@@ -16,6 +16,7 @@ import {
 import { Badge, Button, FieldLabel, Select, TextArea, TextInput } from "@/components/ui";
 import { ErrorNote, PageIntro } from "@/components/shell";
 import { FileSize } from "@/components/format";
+import { statusLabel } from "@/i18n";
 
 const ACCEPT = ".mp4,.mov,.jpg,.jpeg,.png,.webp,.mp3,.wav,.m4a,.txt";
 
@@ -180,7 +181,7 @@ export default function UploadPage() {
               <Progress label={t("upload.progressUpload", { value: format.number(item.uploadRatio, { style: "percent" }) })} ratio={item.uploadRatio} />
               <p className="text-sm leading-snug">
                 {t("upload.progressProcessing", {
-                  status: item.processingStatus && t.has(`status.${item.processingStatus}`) ? t(`status.${item.processingStatus}`) : t("common.notAvailable"),
+                  status: item.processingStatus ? statusLabel(t, item.processingStatus) : t("common.notAvailable"),
                 })}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -191,9 +192,7 @@ export default function UploadPage() {
                       ? t("upload.queued")
                       : item.phase === "uploading"
                         ? t("status.uploading")
-                        : item.processingStatus && t.has(`status.${item.processingStatus}`)
-                          ? t(`status.${item.processingStatus}`)
-                          : t("status.unknown")}
+                        : statusLabel(t, item.processingStatus)}
                 </Badge>
               </div>
               {item.errorCode ? <ErrorNote error={new ApiError(item.errorCode, item.errorParams || {}, item.errorStatus || 400)} /> : null}

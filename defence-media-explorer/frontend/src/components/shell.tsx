@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { Activity, FolderClosed, Library, Search, Settings, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { formatZulu } from "@/components/format";
+import { message } from "@/i18n";
 import { ApiError } from "@/lib/api";
 import { usePrefs } from "@/lib/preferences";
 
@@ -26,7 +28,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const sync = useSync();
 
   useEffect(() => {
-    document.title = t("meta.documentTitle");
+    document.title = `${t("meta.product")} — ${t("medex.brand.title")}`;
     document.documentElement.lang = locale;
   }, [t, locale]);
 
@@ -81,17 +83,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <div className="workspace">
         <header className="command-bar">
           <div className="command-center">
-            <span className="mark mark-restricted">{t("shell.restricted")}</span>
+            <span className="mark mark-restricted">{t("security.classification.restricted")}</span>
           </div>
           <div className="command-meta">
-            <UtcClock label={t("shell.utc")} />
+            <UtcClock label={t("shell.zulu")} />
             <span className="text-xs text-[var(--muted)]">{user ? user.displayName : t("shell.operator")}</span>
             <span className="sync" data-state={sync} aria-live="polite">
               <i aria-hidden />
               {sync === "pending" ? t("shell.syncPending") : t(sync === "live" ? "shell.syncLive" : sync === "degraded" ? "shell.syncDegraded" : "shell.syncOffline")}
             </span>
-            <span className="mark mark-critical">{t("shell.restricted")}</span>
-            <span className="mark mark-unclassified">{t("shell.unclassified")}</span>
+            <span className="mark mark-critical">{t("security.classification.restricted")}</span>
+            <span className="mark mark-unclassified">{t("security.classification.unclassified")}</span>
             {user ? (
               <button type="button" className="btn btn-quiet" onClick={() => void logout()}>
                 {t("nav.logout")}
@@ -119,21 +121,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
 function UtcClock({ label }: { label: string }) {
   const [stamp, setStamp] = useState("");
+  const [iso, setIso] = useState("");
   useEffect(() => {
     const tick = () => {
       const now = new Date();
-      const pad = (value: number) => String(value).padStart(2, "0");
-      setStamp(`${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`);
+      setStamp(formatZulu(now, true));
+      setIso(now.toISOString());
     };
     tick();
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
   }, []);
   return (
-    <span className="num text-xs text-[var(--ink)]">
-      <span className="mr-1 text-[var(--muted)]">{label}</span>
-      {stamp || "--:--:--"}
-    </span>
+    <time className="num text-xs text-[var(--ink)]" dateTime={iso || undefined} aria-label={label}>
+      {stamp || "0000-00-00 00:00:00Z"}
+    </time>
   );
 }
 
@@ -177,17 +179,16 @@ function Gate() {
 export function ErrorNote({ error }: { error: ApiError | null }) {
   const t = useTranslations();
   if (!error) return null;
-  const key = `errors.${error.code}`;
-  const message = t.has(key) ? t(key) : t("errors.UNKNOWN");
+  const text = message(t, `errors.${error.code}`, t("errors.UNKNOWN"));
   const details = Object.entries(error.params).flatMap(([name, value]) => {
-    const paramKey = `errors.params.${name}`;
-    if (value == null || value === "" || !t.has(paramKey)) return [];
-    const text = Array.isArray(value) ? value.join(", ") : String(value);
-    return [t(paramKey, { value: text })];
+    if (value == null || value === "") return [];
+    const shown = Array.isArray(value) ? value.join(", ") : String(value);
+    const line = message(t, `errors.params.${name}`, "", { value: shown });
+    return line ? [line] : [];
   });
   return (
     <div role="alert" className="border border-[var(--danger)] bg-[var(--danger-fill)] px-3 py-2 text-sm leading-snug text-[#F8FAFC]">
-      <p>{message}</p>
+      <p>{text}</p>
       {details.map((detail) => (
         <p key={detail} className="mt-1">
           {detail}

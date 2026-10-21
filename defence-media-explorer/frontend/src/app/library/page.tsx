@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui";
 import { ErrorNote, PageIntro, statusTone } from "@/components/shell";
 import { FilterPanel } from "@/components/filters";
 import { FileSize, LocalDate } from "@/components/format";
+import { message, statusLabel } from "@/i18n";
 import { ActionLink, Pager } from "@/components/results";
 import { ArrowUpRight } from "lucide-react";
 
@@ -119,11 +120,11 @@ export default function LibraryPage() {
                         </div>
                       </td>
                       <td>
-                        <Badge>{t.has(`mediaType.${asset.mediaType}`) ? t(`mediaType.${asset.mediaType}`) : t("mediaType.unknown")}</Badge>
+                        <Badge>{message(t, `mediaType.${asset.mediaType}`, t("mediaType.unknown"))}</Badge>
                       </td>
                       <td>
                         <Badge tone={statusTone(asset.processingStatus)}>
-                          {asset.processingStatus && t.has(`status.${asset.processingStatus}`) ? t(`status.${asset.processingStatus}`) : t("status.unknown")}
+                          {statusLabel(t, asset.processingStatus)}
                         </Badge>
                       </td>
                       <td>{asset.captureDateUnknown ? t("search.captureUnknown") : <LocalDate value={asset.capturedAt} />}</td>

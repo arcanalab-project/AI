@@ -1,8 +1,27 @@
 {
   "meta": {
-    "documentTitle": "Explorador de medios de defensa",
-    "product": "Bastion",
-    "appName": "Explorador de medios de defensa"
+    "documentTitle": "BASTION — EXPLOTACIÓN TÁCTICA DE MEDIOS (MEDEX)",
+    "product": "BASTION",
+    "appName": "MEDEX"
+  },
+  "medex": {
+    "brand": {
+      "title": "EXPLOTACIÓN TÁCTICA DE MEDIOS (MEDEX)",
+      "subtitle": "Plataforma de búsqueda semántica multimodal para flujos ISR, trazas FLIR y activos de misión."
+    },
+    "search": {
+      "placeholder": "Introduzca objetivo, coordenadas MGRS, transcripción de audio o designación del vehículo..."
+    },
+    "status": {
+      "ready": "PROCESADO",
+      "partial": "EN CURSO"
+    }
+  },
+  "security": {
+    "classification": {
+      "restricted": "RESTRICTED",
+      "unclassified": "UNCLASSIFIED"
+    }
   },
   "nav": {
     "skip": "Saltar al contenido",
@@ -82,8 +101,8 @@
     "enriching": "Enriquecimiento",
     "embedding": "Incrustación",
     "indexing": "Escritura de documentos",
-    "ready": "Listo",
-    "partial": "Parcial",
+    "ready": "PROCESADO",
+    "partial": "EN CURSO",
     "failed": "Fallido",
     "retrying": "Reintentando",
     "unreviewed": "Sin revisar",
@@ -108,11 +127,11 @@
     "de-DE": "Deutsch"
   },
   "search": {
-    "kicker": "Archivo",
-    "title": "Encontrar un momento en el archivo",
-    "body": "La búsqueda híbrida es el modo predeterminado. Una consulta vacía recorre los segmentos coincidentes en lugar de ordenarlos.",
+    "kicker": "MEDEX",
+    "title": "EXPLOTACIÓN TÁCTICA DE MEDIOS (MEDEX)",
+    "body": "Plataforma de búsqueda semántica multimodal para flujos ISR, trazas FLIR y activos de misión.",
     "queryLabel": "Buscar en el archivo",
-    "placeholder": "Describa una escena, una actividad o palabras dichas en una grabación",
+    "placeholder": "Introduzca objetivo, coordenadas MGRS, transcripción de audio o designación del vehículo...",
     "submit": "Buscar",
     "modeLabel": "Modo de recuperación",
     "mode": {
@@ -133,7 +152,7 @@
     "dateField": "Campo de fecha",
     "dateFrom": "Desde",
     "dateTo": "Hasta",
-    "dateZone": "Estas fechas usan {zone}. La zona horaria no sigue el idioma de la interfaz.",
+    "dateZone": "Las fechas de filtro se leen en la zona {zone}. Las marcas de tiempo mostradas siguen en hora Zulú.",
     "unknownCapture": "Fecha de captura desconocida",
     "unknown": {
       "include": "Incluir fechas de captura desconocidas",
@@ -266,7 +285,7 @@
     "language": "Idioma de la interfaz",
     "languageHint": "Los nombres se muestran en cada idioma. El texto del archivo no se traduce.",
     "timeZone": "Zona horaria",
-    "timeZoneHint": "Las marcas de tiempo se guardan en UTC y se muestran en esta zona, sea cual sea el idioma de la interfaz.",
+    "timeZoneHint": "Las marcas de tiempo mostradas usan hora Zulú (AAAA-MM-DD HH:mmZ), sea cual sea la zona elegida. La zona solo se aplica al introducir una fecha de filtro.",
     "theme": "Tema",
     "profile": "Perfil",
     "displayName": "Nombre visible",
@@ -507,7 +526,8 @@
     "syncLive": "Sincronizado",
     "syncDegraded": "Degradado",
     "syncOffline": "Sin enlace",
-    "syncPending": "Comprobando"
+    "syncPending": "Comprobando",
+    "zulu": "Hora Zulú"
   },
   "columns": {
     "attempts": "Intentos",

@@ -58,6 +58,11 @@ for (const key of ["search.examples.tracked", "search.examples.drones", "search.
   }
 }
 
+function formatZulu(value) {
+  const pad = (part) => String(part).padStart(2, "0");
+  return `${value.getUTCFullYear()}-${pad(value.getUTCMonth() + 1)}-${pad(value.getUTCDate())} ${pad(value.getUTCHours())}:${pad(value.getUTCMinutes())}Z`;
+}
+
 function lookup(tree, path) {
   return path.split(".").reduce((node, key) => node[key], tree);
 }
@@ -109,6 +114,71 @@ for (const locale of locales) {
     console.error(locale, "plural messages", one, two, many);
     process.exit(1);
   }
+}
+
+const glossary = {
+  "en-GB": {
+    "medex.brand.title": "TACTICAL MEDIA EXPLOITATION (MEDEX)",
+    "medex.brand.subtitle": "Multimodal semantic search platform for ISR feeds, FLIR tracks, and mission assets.",
+    "medex.search.placeholder": "Enter target, MGRS/Grid coordinates, audio transcript, or vehicle designation...",
+    "medex.status.ready": "PROCESSED",
+    "medex.status.partial": "IN PROGRESS",
+  },
+  "it-IT": {
+    "medex.brand.title": "SFRUTTAMENTO OPERATIVO MEDIA (MEDEX)",
+    "medex.brand.subtitle": "Piattaforma di ricerca semantica multimodale su feed ISR, tracciati FLIR e asset di missione.",
+    "medex.search.placeholder": "Inserisci target, coordinate MGRS, trascrizione audio o identificativo mezzo...",
+    "medex.status.ready": "ELABORATO",
+    "medex.status.partial": "IN CORSO",
+  },
+  "fr-FR": {
+    "medex.brand.title": "EXPLOITATION MÉDIA TACTIQUE (MEDEX)",
+    "medex.brand.subtitle": "Plateforme de recherche sémantique multimodale pour flux ISR, traces FLIR et actifs de mission.",
+    "medex.search.placeholder": "Saisir cible, coordonnées MGRS, transcription audio ou désignation du véhicule...",
+    "medex.status.ready": "TRAITÉ",
+    "medex.status.partial": "EN COURS",
+  },
+  "de-DE": {
+    "medex.brand.title": "TAKTISCHE MEDIENAUSWERTUNG (MEDEX)",
+    "medex.brand.subtitle": "Multimodale semantische Suchplattform für ISR-Feeds, FLIR-Spuren und Einsatzmittel.",
+    "medex.search.placeholder": "Ziel, MGRS-Koordinaten, Audiotranskript oder Fahrzeugkennung eingeben...",
+    "medex.status.ready": "VERARBEITET",
+    "medex.status.partial": "IN BEARBEITUNG",
+  },
+  "es-ES": {
+    "medex.brand.title": "EXPLOTACIÓN TÁCTICA DE MEDIOS (MEDEX)",
+    "medex.brand.subtitle": "Plataforma de búsqueda semántica multimodal para flujos ISR, trazas FLIR y activos de misión.",
+    "medex.search.placeholder": "Introduzca objetivo, coordenadas MGRS, transcripción de audio o designación del vehículo...",
+    "medex.status.ready": "PROCESADO",
+    "medex.status.partial": "EN CURSO",
+  },
+};
+
+for (const [locale, entries] of Object.entries(glossary)) {
+  for (const [key, expected] of Object.entries(entries)) {
+    if (lookup(messages[locale], key) !== expected) {
+      console.error(locale, key, "glossary mismatch", lookup(messages[locale], key));
+      process.exit(1);
+    }
+  }
+  if (lookup(messages[locale], "status.ready") !== entries["medex.status.ready"] || lookup(messages[locale], "status.partial") !== entries["medex.status.partial"]) {
+    console.error(locale, "status.ready/partial drifted from the MEDEX glossary");
+    process.exit(1);
+  }
+  if (lookup(messages[locale], "security.classification.restricted") !== "RESTRICTED" || lookup(messages[locale], "security.classification.unclassified") !== "UNCLASSIFIED") {
+    console.error(locale, "classification markings must stay in English");
+    process.exit(1);
+  }
+  if (lookup(messages[locale], "health.index.ready") === entries["medex.status.ready"]) {
+    console.error(locale, "health.index.ready was overwritten with the MEDEX terminal state");
+    process.exit(1);
+  }
+}
+
+const zulu = formatZulu(new Date("2026-10-21T10:30:00Z"));
+if (zulu !== "2026-10-21 10:30Z") {
+  console.error("zulu format", zulu);
+  process.exit(1);
 }
 
 console.log("messages: key parity ok for " + locales.join(", "));

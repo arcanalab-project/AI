@@ -1,8 +1,27 @@
 {
   "meta": {
-    "documentTitle": "Esploratore di media della difesa",
-    "product": "Bastion",
-    "appName": "Esploratore di media della difesa"
+    "documentTitle": "BASTION — SFRUTTAMENTO OPERATIVO MEDIA (MEDEX)",
+    "product": "BASTION",
+    "appName": "MEDEX"
+  },
+  "medex": {
+    "brand": {
+      "title": "SFRUTTAMENTO OPERATIVO MEDIA (MEDEX)",
+      "subtitle": "Piattaforma di ricerca semantica multimodale su feed ISR, tracciati FLIR e asset di missione."
+    },
+    "search": {
+      "placeholder": "Inserisci target, coordinate MGRS, trascrizione audio o identificativo mezzo..."
+    },
+    "status": {
+      "ready": "ELABORATO",
+      "partial": "IN CORSO"
+    }
+  },
+  "security": {
+    "classification": {
+      "restricted": "RESTRICTED",
+      "unclassified": "UNCLASSIFIED"
+    }
   },
   "nav": {
     "skip": "Vai al contenuto",
@@ -82,8 +101,8 @@
     "enriching": "Arricchimento",
     "embedding": "Embedding",
     "indexing": "Scrittura dei documenti",
-    "ready": "Pronto",
-    "partial": "Parziale",
+    "ready": "ELABORATO",
+    "partial": "IN CORSO",
     "failed": "Non riuscito",
     "retrying": "Nuovo tentativo",
     "unreviewed": "Non revisionato",
@@ -108,11 +127,11 @@
     "de-DE": "Deutsch"
   },
   "search": {
-    "kicker": "Archivio",
-    "title": "Trova un momento nell'archivio",
-    "body": "La ricerca ibrida è la modalità predefinita. Una domanda vuota sfoglia i segmenti corrispondenti invece di ordinarli.",
+    "kicker": "MEDEX",
+    "title": "SFRUTTAMENTO OPERATIVO MEDIA (MEDEX)",
+    "body": "Piattaforma di ricerca semantica multimodale su feed ISR, tracciati FLIR e asset di missione.",
     "queryLabel": "Cerca nell'archivio",
-    "placeholder": "Descrivi una scena, un'attività o le parole pronunciate in una registrazione",
+    "placeholder": "Inserisci target, coordinate MGRS, trascrizione audio o identificativo mezzo...",
     "submit": "Cerca",
     "modeLabel": "Modalità di recupero",
     "mode": {
@@ -133,7 +152,7 @@
     "dateField": "Campo data",
     "dateFrom": "Dal",
     "dateTo": "Al",
-    "dateZone": "Queste date usano {zone}. Il fuso orario non segue la lingua dell'interfaccia.",
+    "dateZone": "Le date di filtro si leggono nel fuso {zone}. Gli orari visualizzati restano in ora Zulu.",
     "unknownCapture": "Data di acquisizione sconosciuta",
     "unknown": {
       "include": "Includi le date di acquisizione sconosciute",
@@ -266,7 +285,7 @@
     "language": "Lingua dell'interfaccia",
     "languageHint": "I nomi sono mostrati in ciascuna lingua. Il testo dell'archivio non viene tradotto.",
     "timeZone": "Fuso orario",
-    "timeZoneHint": "Gli istanti sono memorizzati in UTC e mostrati in questo fuso, qualunque sia la lingua dell'interfaccia.",
+    "timeZoneHint": "Gli orari visualizzati usano l'ora Zulu (AAAA-MM-GG HH:mmZ), qualunque fuso si scelga. Il fuso vale solo per l'inserimento di una data di filtro.",
     "theme": "Tema",
     "profile": "Profilo",
     "displayName": "Nome visualizzato",
@@ -507,7 +526,8 @@
     "syncLive": "Sincronizzato",
     "syncDegraded": "Degradato",
     "syncOffline": "Nessun collegamento",
-    "syncPending": "Verifica"
+    "syncPending": "Verifica",
+    "zulu": "Ora Zulu"
   },
   "columns": {
     "attempts": "Tentativi",

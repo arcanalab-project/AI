@@ -8,6 +8,7 @@ import { usePrefs } from "@/lib/preferences";
 import { Badge, Button } from "@/components/ui";
 import { ErrorNote, PageIntro, statusTone } from "@/components/shell";
 import { LocalDate } from "@/components/format";
+import { message, statusLabel } from "@/i18n";
 
 type Job = {
   id: string;
@@ -82,7 +83,7 @@ export default function ProcessingPage() {
                 <tr key={job.id}>
                   <td>
                     <Badge tone={statusTone(job.status)}>
-                      {job.status && t.has(`status.${job.status}`) ? t(`status.${job.status}`) : t("status.unknown")}
+                      {statusLabel(t, job.status)}
                     </Badge>
                   </td>
                   <td className="num">
@@ -104,7 +105,7 @@ export default function ProcessingPage() {
                       t("common.notAvailable")
                     )}
                   </td>
-                  <td>{job.stage ? (t.has(`status.${job.stage}`) ? t(`status.${job.stage}`) : job.stage) : t("common.notAvailable")}</td>
+                  <td>{job.stage ? message(t, `status.${job.stage}`, job.stage) : t("common.notAvailable")}</td>
                   <td>
                     <LocalDate value={job.updatedAt || job.createdAt} />
                   </td>

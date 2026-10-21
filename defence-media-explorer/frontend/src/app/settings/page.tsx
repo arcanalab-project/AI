@@ -7,6 +7,7 @@ import { usePrefs, type Theme } from "@/lib/preferences";
 import { Badge, Button, FieldLabel, Select, TextInput } from "@/components/ui";
 import { ErrorNote, PageIntro } from "@/components/shell";
 import { LocalNumber } from "@/components/format";
+import { message } from "@/i18n";
 
 type Health = {
   status?: string;
@@ -134,7 +135,7 @@ export default function SettingsPage() {
         {health ? (
           <div className="space-y-4">
             <p>
-              {t("settings.statusLabel")}: {t.has(`health.status.${health.status}`) ? t(`health.status.${health.status}`) : t("health.status.degraded")}
+              {t("settings.statusLabel")}: {message(t, `health.status.${health.status}`, t("health.status.degraded"))}
             </p>
             {health.environment ? (
               <p>
@@ -148,7 +149,7 @@ export default function SettingsPage() {
             ) : null}
             {health.unavailable?.length ? (
               <p className="break-words">
-                {t("settings.unavailable")}: {health.unavailable.map((name) => (t.has(`settings.capability.${name}`) ? t(`settings.capability.${name}`) : name)).join(", ")}
+                {t("settings.unavailable")}: {health.unavailable.map((name) => message(t, `settings.capability.${name}`, name)).join(", ")}
               </p>
             ) : (
               <p>{t("settings.allClear")}</p>
@@ -238,7 +239,7 @@ function Capability({ name, value }: { name: string; value: Record<string, unkno
   return (
     <tr>
       <th scope="row" className="font-sans normal-case tracking-normal text-[var(--ink)]">
-        {t(`settings.capability.${name}`)}
+        {message(t, `settings.capability.${name}`, name)}
       </th>
       <td>
         <Badge tone={unavailable ? "warn" : "ok"}>{unavailable ? t("settings.unavailable") : t("health.status.ok")}</Badge>
@@ -256,9 +257,7 @@ function Capability({ name, value }: { name: string; value: Record<string, unkno
           <Fact label={t("settings.bucket")} value={value.bucket} />
           <Fact label={t("settings.legacyObjects")} value={value.legacyObjectStorageCount} />
           <Fact label={t("settings.publicEndpoint")} value={value.publicEndpointConfigured} />
-          {typeof value.errorCode === "string" && t.has(`errors.${value.errorCode}`) ? (
-            <div className="text-[var(--danger-text)]">{t(`errors.${value.errorCode}`)}</div>
-          ) : null}
+          <CapabilityError code={typeof value.errorCode === "string" ? value.errorCode : ""} />
         </dl>
         {search?.vectorIndex ? <IndexLine title={t("settings.indexVector")} index={search.vectorIndex} /> : null}
         {search?.textIndex ? <IndexLine title={t("settings.indexText")} index={search.textIndex} /> : null}
@@ -268,13 +267,21 @@ function Capability({ name, value }: { name: string; value: Record<string, unkno
   );
 }
 
+function CapabilityError({ code }: { code: string }) {
+  const t = useTranslations();
+  if (!code) return null;
+  const text = message(t, `errors.${code}`, "");
+  if (!text) return null;
+  return <div className="text-[var(--danger-text)]">{text}</div>;
+}
+
 function IndexLine({ title, index }: { title: string; index: Record<string, unknown> }) {
   const t = useTranslations();
   const status = typeof index.status === "string" ? index.status : "unknown";
   return (
     <p className="mt-2 break-words text-sm leading-snug">
       {title}
-      {typeof index.name === "string" ? ` (${index.name})` : ""}: {t.has(`health.index.${status}`) ? t(`health.index.${status}`) : t("health.index.unknown")}
+      {typeof index.name === "string" ? ` (${index.name})` : ""}: {message(t, `health.index.${status}`, t("health.index.unknown"))}
       {typeof index.queryable === "boolean" ? ` · ${t("settings.queryable")}: ${index.queryable ? t("common.yes") : t("common.no")}` : ""}
     </p>
   );

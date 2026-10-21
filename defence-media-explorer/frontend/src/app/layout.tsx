@@ -11,7 +11,7 @@ import { Shell } from "@/components/shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bastion",
+  title: "BASTION — MEDEX",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

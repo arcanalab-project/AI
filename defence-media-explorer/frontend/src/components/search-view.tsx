@@ -8,6 +8,7 @@ import { usePrefs } from "@/lib/preferences";
 import { readFilters, toSearchFilters, writeFilters, type FilterState } from "@/lib/search-state";
 import { Button, TextInput } from "@/components/ui";
 import { ErrorNote, PageIntro } from "@/components/shell";
+import { message } from "@/i18n";
 import { FilterPanel } from "@/components/filters";
 import { CountLine, Pager, ResultGrid } from "@/components/results";
 
@@ -174,7 +175,7 @@ export function SearchView() {
 
   return (
     <div className="space-y-4">
-      <PageIntro kicker={t("search.kicker")} title={t("search.title")} body={t("search.body")} />
+      <PageIntro kicker={t("meta.product")} title={t("medex.brand.title")} body={t("medex.brand.subtitle")} />
       <form
         className="panel min-w-0 p-3"
         onSubmit={(event) => {
@@ -188,7 +189,7 @@ export function SearchView() {
             name="q"
             value={state.q}
             onChange={(event) => replace({ ...state, q: event.target.value, page: 1 })}
-            placeholder={t("search.placeholder")}
+            placeholder={t("medex.search.placeholder")}
             className="field"
           />
         </label>
@@ -240,14 +241,10 @@ export function SearchView() {
                 elapsedMs={payload.elapsedMs}
               />
               {payload.rerankApplied ? <p className="text-sm leading-snug">{t("search.rerank")}</p> : null}
-              {payload.fusion && t.has(`search.fusion.${payload.fusion}`) ? <p className="text-sm leading-snug">{t(`search.fusion.${payload.fusion}`)}</p> : null}
+              {payload.fusion ? <FusionNote code={payload.fusion} /> : null}
               {(payload.warnings || []).map((warning) => (
                 <p key={warning.code} className="text-sm leading-snug text-[var(--warn)]">
-                  {warning.code === "SORT_WINDOW"
-                    ? t("search.warnings.SORT_WINDOW")
-                    : t.has(`errors.${warning.code}`)
-                      ? t(`errors.${warning.code}`)
-                      : t("errors.UNKNOWN")}
+                  {warning.code === "SORT_WINDOW" ? t("search.warnings.SORT_WINDOW") : message(t, `errors.${warning.code}`, t("errors.UNKNOWN"))}
                 </p>
               ))}
               <ResultGrid results={payload.results || []} />
@@ -294,6 +291,14 @@ export function SearchView() {
       </div>
     </div>
   );
+}
+
+function FusionNote({ code }: { code?: string | null }) {
+  const t = useTranslations();
+  if (!code) return null;
+  const text = message(t, `search.fusion.${code}`, "");
+  if (!text) return null;
+  return <p className="text-sm leading-snug">{text}</p>;
 }
 
 function asList(value: unknown) {

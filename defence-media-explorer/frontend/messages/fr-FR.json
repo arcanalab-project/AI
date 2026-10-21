@@ -1,8 +1,27 @@
 {
   "meta": {
-    "documentTitle": "Explorateur de médias de défense",
-    "product": "Bastion",
-    "appName": "Explorateur de médias de défense"
+    "documentTitle": "BASTION — EXPLOITATION MÉDIA TACTIQUE (MEDEX)",
+    "product": "BASTION",
+    "appName": "MEDEX"
+  },
+  "medex": {
+    "brand": {
+      "title": "EXPLOITATION MÉDIA TACTIQUE (MEDEX)",
+      "subtitle": "Plateforme de recherche sémantique multimodale pour flux ISR, traces FLIR et actifs de mission."
+    },
+    "search": {
+      "placeholder": "Saisir cible, coordonnées MGRS, transcription audio ou désignation du véhicule..."
+    },
+    "status": {
+      "ready": "TRAITÉ",
+      "partial": "EN COURS"
+    }
+  },
+  "security": {
+    "classification": {
+      "restricted": "RESTRICTED",
+      "unclassified": "UNCLASSIFIED"
+    }
   },
   "nav": {
     "skip": "Aller au contenu",
@@ -82,8 +101,8 @@
     "enriching": "Enrichissement",
     "embedding": "Vectorisation",
     "indexing": "Écriture des documents",
-    "ready": "Prêt",
-    "partial": "Partiel",
+    "ready": "TRAITÉ",
+    "partial": "EN COURS",
     "failed": "Échec",
     "retrying": "Nouvel essai",
     "unreviewed": "Non revu",
@@ -108,11 +127,11 @@
     "de-DE": "Deutsch"
   },
   "search": {
-    "kicker": "Archive",
-    "title": "Trouver un moment dans l'archive",
-    "body": "La recherche hybride est le mode par défaut. Une requête vide parcourt les segments correspondants au lieu de les classer.",
+    "kicker": "MEDEX",
+    "title": "EXPLOITATION MÉDIA TACTIQUE (MEDEX)",
+    "body": "Plateforme de recherche sémantique multimodale pour flux ISR, traces FLIR et actifs de mission.",
     "queryLabel": "Rechercher dans l'archive",
-    "placeholder": "Décrivez une scène, une activité ou des paroles dans un enregistrement",
+    "placeholder": "Saisir cible, coordonnées MGRS, transcription audio ou désignation du véhicule...",
     "submit": "Rechercher",
     "modeLabel": "Mode de récupération",
     "mode": {
@@ -133,7 +152,7 @@
     "dateField": "Champ de date",
     "dateFrom": "Du",
     "dateTo": "Au",
-    "dateZone": "Ces dates utilisent {zone}. Le fuseau horaire ne suit pas la langue de l'interface.",
+    "dateZone": "Les dates de filtre se lisent dans le fuseau {zone}. Les horodatages affichés restent en heure Zoulou.",
     "unknownCapture": "Date de prise de vue inconnue",
     "unknown": {
       "include": "Inclure les dates de prise de vue inconnues",
@@ -266,7 +285,7 @@
     "language": "Langue de l'interface",
     "languageHint": "Les noms sont affichés dans chaque langue. Le texte de l'archive n'est pas traduit.",
     "timeZone": "Fuseau horaire",
-    "timeZoneHint": "Les instants sont stockés en UTC et affichés dans ce fuseau, quelle que soit la langue de l'interface.",
+    "timeZoneHint": "Les horodatages affichés utilisent l'heure Zoulou (AAAA-MM-JJ HH:mmZ), quel que soit le fuseau choisi. Le fuseau ne sert qu'à la saisie d'une date de filtre.",
     "theme": "Thème",
     "profile": "Profil",
     "displayName": "Nom affiché",
@@ -507,7 +526,8 @@
     "syncLive": "Synchronisé",
     "syncDegraded": "Dégradé",
     "syncOffline": "Aucune liaison",
-    "syncPending": "Vérification"
+    "syncPending": "Vérification",
+    "zulu": "Heure Zoulou"
   },
   "columns": {
     "attempts": "Tentatives",

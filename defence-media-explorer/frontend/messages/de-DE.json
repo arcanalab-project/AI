@@ -1,8 +1,27 @@
 {
   "meta": {
-    "documentTitle": "Medienexplorer für die Verteidigung",
-    "product": "Bastion",
-    "appName": "Medienexplorer für die Verteidigung"
+    "documentTitle": "BASTION — TAKTISCHE MEDIENAUSWERTUNG (MEDEX)",
+    "product": "BASTION",
+    "appName": "MEDEX"
+  },
+  "medex": {
+    "brand": {
+      "title": "TAKTISCHE MEDIENAUSWERTUNG (MEDEX)",
+      "subtitle": "Multimodale semantische Suchplattform für ISR-Feeds, FLIR-Spuren und Einsatzmittel."
+    },
+    "search": {
+      "placeholder": "Ziel, MGRS-Koordinaten, Audiotranskript oder Fahrzeugkennung eingeben..."
+    },
+    "status": {
+      "ready": "VERARBEITET",
+      "partial": "IN BEARBEITUNG"
+    }
+  },
+  "security": {
+    "classification": {
+      "restricted": "RESTRICTED",
+      "unclassified": "UNCLASSIFIED"
+    }
   },
   "nav": {
     "skip": "Zum Inhalt springen",
@@ -82,8 +101,8 @@
     "enriching": "Anreicherung",
     "embedding": "Einbettung",
     "indexing": "Dokumente werden geschrieben",
-    "ready": "Bereit",
-    "partial": "Unvollständig",
+    "ready": "VERARBEITET",
+    "partial": "IN BEARBEITUNG",
     "failed": "Fehlgeschlagen",
     "retrying": "Erneuter Versuch",
     "unreviewed": "Nicht geprüft",
@@ -108,11 +127,11 @@
     "de-DE": "Deutsch"
   },
   "search": {
-    "kicker": "Archiv",
-    "title": "Einen Moment im Archiv finden",
-    "body": "Die hybride Suche ist die Voreinstellung. Eine leere Abfrage durchsucht passende Segmente, statt sie zu reihen.",
+    "kicker": "MEDEX",
+    "title": "TAKTISCHE MEDIENAUSWERTUNG (MEDEX)",
+    "body": "Multimodale semantische Suchplattform für ISR-Feeds, FLIR-Spuren und Einsatzmittel.",
     "queryLabel": "Das Archiv durchsuchen",
-    "placeholder": "Beschreiben Sie eine Szene, eine Tätigkeit oder gesprochene Worte in einer Aufnahme",
+    "placeholder": "Ziel, MGRS-Koordinaten, Audiotranskript oder Fahrzeugkennung eingeben...",
     "submit": "Suchen",
     "modeLabel": "Abrufmodus",
     "mode": {
@@ -133,7 +152,7 @@
     "dateField": "Datumsfeld",
     "dateFrom": "Von",
     "dateTo": "Bis",
-    "dateZone": "Diese Daten verwenden {zone}. Die Zeitzone folgt nicht der Oberflächensprache.",
+    "dateZone": "Filterdaten werden in der Zone {zone} gelesen. Angezeigte Zeitstempel bleiben in Zulu-Zeit.",
     "unknownCapture": "Unbekanntes Aufnahmedatum",
     "unknown": {
       "include": "Unbekannte Aufnahmedaten einschließen",
@@ -266,7 +285,7 @@
     "language": "Sprache der Oberfläche",
     "languageHint": "Die Namen stehen in der jeweiligen Sprache. Der Archivtext wird nicht übersetzt.",
     "timeZone": "Zeitzone",
-    "timeZoneHint": "Zeitstempel werden in UTC gespeichert und in dieser Zone angezeigt, unabhängig von der Oberflächensprache.",
+    "timeZoneHint": "Angezeigte Zeitstempel verwenden Zulu-Zeit (JJJJ-MM-TT HH:mmZ), unabhängig von der gewählten Zone. Die Zone gilt nur bei der Eingabe eines Filterdatums.",
     "theme": "Thema",
     "profile": "Profil",
     "displayName": "Anzeigename",
@@ -507,7 +526,8 @@
     "syncLive": "Synchronisiert",
     "syncDegraded": "Beeinträchtigt",
     "syncOffline": "Keine Verbindung",
-    "syncPending": "Prüfung"
+    "syncPending": "Prüfung",
+    "zulu": "Zulu-Zeit"
   },
   "columns": {
     "attempts": "Versuche",

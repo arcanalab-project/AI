@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge, Button, FieldLabel, Select, TextInput } from "@/components/ui";
+import { message, statusLabel, type Translator } from "@/i18n";
 import type { FilterState } from "@/lib/search-state";
 
 const MEDIA = ["video", "image", "audio", "text"] as const;
@@ -54,7 +55,7 @@ export function FilterPanel({
                 checked={state.processingStatuses.includes(status)}
                 onChange={() => patch({ processingStatuses: toggle(state.processingStatuses, status) })}
               />
-              <span>{t(`status.${status}`)}</span>
+              <span>{statusLabel(t, status)}</span>
             </label>
           ))}
         </div>
@@ -63,7 +64,7 @@ export function FilterPanel({
           <Select value={sortOptions.includes(state.sort) ? state.sort : sortOptions[0]} onChange={(event) => patch({ sort: event.target.value })}>
             {sortOptions.map((option) => (
               <option key={option} value={option}>
-                {t.has(`search.sortOption.${option}`) ? t(`search.sortOption.${option}`) : option}
+                {message(t, `search.sortOption.${option}`, option)}
               </option>
             ))}
           </Select>
@@ -124,7 +125,7 @@ export function FilterPanel({
                 checked={state.processingStatuses.includes(status)}
                 onChange={() => patch({ processingStatuses: toggle(state.processingStatuses, status) })}
               />
-              <span className="break-words">{t(`status.${status}`)}</span>
+              <span className="break-words">{statusLabel(t, status)}</span>
             </label>
           ))}
         </div>
@@ -238,7 +239,7 @@ function blankFilters(sort: string): FilterState {
   };
 }
 
-function chipsOf(state: FilterState, t: ReturnType<typeof useTranslations>, collections: { id: string; name: string }[]) {
+function chipsOf(state: FilterState, t: Translator, collections: { id: string; name: string }[]) {
   const chips: { id: string; label: string; clear: (state: FilterState) => FilterState }[] = [];
   if (state.dateFrom || state.dateTo) {
     chips.push({
@@ -264,7 +265,7 @@ function chipsOf(state: FilterState, t: ReturnType<typeof useTranslations>, coll
   for (const type of state.mediaTypes) {
     chips.push({
       id: `media-${type}`,
-      label: t.has(`mediaType.${type}`) ? t(`mediaType.${type}`) : type,
+      label: message(t, `mediaType.${type}`, type),
       clear: (current) => ({ ...current, mediaTypes: current.mediaTypes.filter((item) => item !== type) }),
     });
   }
@@ -282,7 +283,7 @@ function chipsOf(state: FilterState, t: ReturnType<typeof useTranslations>, coll
   for (const status of state.processingStatuses) {
     chips.push({
       id: `status-${status}`,
-      label: t.has(`status.${status}`) ? t(`status.${status}`) : status,
+      label: statusLabel(t, status, status),
       clear: (current) => ({ ...current, processingStatuses: current.processingStatuses.filter((item) => item !== status) }),
     });
   }

@@ -1,16 +1,27 @@
 "use client";
 
 import { useFormatter, useLocale, useTranslations } from "next-intl";
-import { usePrefs } from "@/lib/preferences";
+
+/** Calendar timestamps are Zulu (YYYY-MM-DD HH:mmZ) in every locale. The live clock adds seconds. */
+export function formatZulu(value: Date, withSeconds = false): string {
+  const pad = (part: number) => String(part).padStart(2, "0");
+  const day = `${value.getUTCFullYear()}-${pad(value.getUTCMonth() + 1)}-${pad(value.getUTCDate())}`;
+  const clock = withSeconds
+    ? `${pad(value.getUTCHours())}:${pad(value.getUTCMinutes())}:${pad(value.getUTCSeconds())}`
+    : `${pad(value.getUTCHours())}:${pad(value.getUTCMinutes())}`;
+  return `${day} ${clock}Z`;
+}
 
 export function LocalDate({ value }: { value?: string | null }) {
   const t = useTranslations();
-  const format = useFormatter();
-  const { timeZone } = usePrefs();
   if (!value) return <>{t("common.unknownDate")}</>;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return <>{t("common.unknownDate")}</>;
-  return <span className="num">{format.dateTime(date, { dateStyle: "medium", timeStyle: "short", timeZone })}</span>;
+  return (
+    <time className="num" dateTime={date.toISOString()}>
+      {formatZulu(date)}
+    </time>
+  );
 }
 
 export function LocalNumber({ value }: { value?: number | null }) {

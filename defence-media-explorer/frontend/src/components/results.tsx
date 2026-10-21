@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Badge, Button } from "@/components/ui";
 import { Clock, LocalDate } from "@/components/format";
 import { statusTone } from "@/components/shell";
+import { message, statusLabel } from "@/i18n";
 import type { SearchResult } from "@/lib/api";
 
 export function ResultGrid({ results }: { results: SearchResult[] }) {
@@ -31,7 +32,7 @@ export function ResultGrid({ results }: { results: SearchResult[] }) {
             <tr key={result.segmentId}>
               <td className="num">{result.rank}</td>
               <td>
-                <Badge>{t.has(`mediaType.${result.mediaType}`) ? t(`mediaType.${result.mediaType}`) : t("mediaType.unknown")}</Badge>
+                <Badge>{message(t, `mediaType.${result.mediaType}`, t("mediaType.unknown"))}</Badge>
               </td>
               <td>
                 <div className="flex items-start gap-3">
@@ -48,7 +49,7 @@ export function ResultGrid({ results }: { results: SearchResult[] }) {
               <td>
                 {result.processingStatus ? (
                   <Badge tone={statusTone(result.processingStatus)}>
-                    {t.has(`status.${result.processingStatus}`) ? t(`status.${result.processingStatus}`) : t("status.unknown")}
+                    {statusLabel(t, result.processingStatus)}
                   </Badge>
                 ) : (
                   t("common.notAvailable")
