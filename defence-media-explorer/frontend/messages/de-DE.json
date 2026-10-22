@@ -205,7 +205,47 @@
     "rank": "Rang {rank}",
     "languageNote": "Die Oberflächensprache übersetzt die Quellmedien nicht und bettet sie nicht neu ein. Die Volltextsuche übersetzt die Abfrage nicht.",
     "browseNote": "Keine Ergebnisse, bis Sie eine Abfrage senden.",
-    "captureUnknown": "Aufnahmedatum unbekannt"
+    "captureUnknown": "Aufnahmedatum unbekannt",
+    "topResults": "Top-{count}-Ergebnisse",
+    "uploadedLabel": "Hochgeladen",
+    "relevanceColumn": "Relevanz",
+    "viewLabel": "Ergebnisansicht",
+    "viewGallery": "Galerie",
+    "viewList": "Liste",
+    "technicalDetails": "Technische Details",
+    "matchEvidence": "Trefferbelege",
+    "relevance": {
+      "semantic": "Semantischer Score",
+      "fulltext": "Volltext-Score",
+      "hybrid_rrf": "Hybrider Score (RRF)",
+      "hybrid_rank_fusion": "Hybrider Score",
+      "semantic_rrf": "Semantischer Score (RRF)",
+      "hybrid": "Hybrider Score",
+      "unknown": "Relevanzscore"
+    },
+    "evidence": {
+      "transcript": "Transkript",
+      "ocrText": "Extrahierter Text",
+      "sceneDescription": "Szenenbeschreibung",
+      "userDescription": "Beschreibung",
+      "tags": "Tags",
+      "embeddingStrategy": "Embedding-Route"
+    },
+    "components": {
+      "vectorSearchScore": "Vektorähnlichkeit",
+      "searchScore": "Volltext-Score",
+      "textVectorSearchScore": "Textvektor",
+      "rrfScore": "RRF-Score",
+      "fusionScore": "Fusions-Score",
+      "multimodalVector": "Multimodaler Vektor",
+      "fullText": "Volltextindex",
+      "textVector": "Textvektorindex"
+    },
+    "detail": {
+      "title": "Mediendetail",
+      "close": "Panel schließen",
+      "openFull": "Vollständigen Datensatz öffnen"
+    }
   },
   "library": {
     "kicker": "Bestand",

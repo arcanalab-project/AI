@@ -106,13 +106,28 @@ export type Segment = {
   textStale?: boolean;
 };
 
+export type SearchRelevance = {
+  score: number;
+  scoreType: string;
+  fusion?: string | null;
+  components?: Record<string, number>;
+};
+
+export type SearchMatchEvidence = {
+  transcript?: string;
+  ocrText?: string;
+  sceneDescription?: string;
+  userDescription?: string;
+  tags?: string[];
+  embeddingStrategy?: string;
+};
+
 export type SearchResult = {
   segmentId: string;
   assetId: string;
   mediaType: string;
   segmentType: string;
   title: string;
-  source?: string | null;
   capturedAt?: string | null;
   uploadedAt?: string;
   captureDateUnknown?: boolean;
@@ -128,6 +143,8 @@ export type SearchResult = {
   rank: number;
   nearbyCount: number;
   nearby: { segmentId: string; startMs?: number | null; endMs?: number | null; matchText?: string }[];
+  relevance?: SearchRelevance | null;
+  matchEvidence?: SearchMatchEvidence | null;
 };
 
 export const LOCALES = ["it-IT", "en-GB", "fr-FR", "es-ES", "de-DE"] as const;
