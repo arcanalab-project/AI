@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { api, asApiError, type ApiError } from "@/lib/api";
@@ -16,6 +16,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
+  const [adminConfigured, setAdminConfigured] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    api<{ capabilities?: { session?: { demoAdminConfigured?: boolean } } }>("/api/health")
+      .then((data) => setAdminConfigured(Boolean(data.capabilities?.session?.demoAdminConfigured)))
+      .catch(() => setAdminConfigured(null));
+  }, []);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -35,7 +42,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <PageIntro kicker={t("auth.loginKicker")} title={t("auth.loginTitle")} body={t("auth.loginBody")} />
-      <p className="text-sm leading-relaxed text-[var(--muted)]">{t("auth.missingAdmin")}</p>
+      {adminConfigured === false ? <p className="text-sm leading-relaxed text-[var(--muted)]">{t("auth.missingAdmin")}</p> : null}
       <form className="panel min-w-0 space-y-4 p-6" onSubmit={(event) => void submit(event)}>
         <ErrorNote error={error} />
         <FieldLabel label={t("auth.email")}>

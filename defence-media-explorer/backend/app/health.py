@@ -81,7 +81,10 @@ def diagnose(settings: Settings, client=None) -> dict[str, Any]:
             "model": settings.voyage_rerank_model,
         },
         "queue": queue_state,
-        "session": {"configured": settings.session_configured},
+        "session": {
+            "configured": settings.session_configured,
+            "demoAdminConfigured": bool(settings.demo_admin_email.strip() and settings.demo_admin_password.strip()),
+        },
     }
     unavailable = [
         name
