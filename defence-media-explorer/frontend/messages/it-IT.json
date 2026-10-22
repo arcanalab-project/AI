@@ -33,7 +33,8 @@
     "collections": "Raccolte",
     "settings": "Impostazioni",
     "login": "Accedi",
-    "logout": "Esci"
+    "logout": "Esci",
+    "portal": "Portale"
   },
   "auth": {
     "requiredTitle": "Accedi per aprire l'archivio",
@@ -203,7 +204,7 @@
     "findSimilar": "Trova simili",
     "rank": "Posizione {rank}",
     "languageNote": "La lingua dell'interfaccia non traduce né ricalcola gli embedding dei media di origine. La ricerca a testo integrale non traduce la domanda.",
-    "browseNote": "Domanda vuota: scorrimento dei segmenti che corrispondono ai filtri, con un conteggio completo.",
+    "browseNote": "Nessun risultato finché non invii una query.",
     "captureUnknown": "Data di acquisizione sconosciuta"
   },
   "library": {
@@ -533,5 +534,28 @@
     "attempts": "Tentativi",
     "progress": "Avanzamento",
     "stage": "Fase"
+  },
+  "portal": {
+    "kicker": "MEDEX",
+    "title": "Portale tattico",
+    "lede": "BASTION è il portale di sfruttamento operativo dei media. Riunisce video, immagini e audio in un unico quadro, prima della ricerca.",
+    "body": "Ogni fonte resta un documento d'archivio. La ricerca semantica parte solo quando invii una richiesta. Un campo vuoto non restituisce risultati.",
+    "coverAlt": "Sala di sfruttamento in penombra, con schermi di radar, carte e video.",
+    "openSearch": "Apri la ricerca",
+    "signIn": "Accedi per interrogare l'archivio",
+    "points": {
+      "archive": {
+        "title": "Archivio",
+        "body": "Mediateca, elaborazione e raccolte restano nel quadro operativo."
+      },
+      "search": {
+        "title": "Ricerca",
+        "body": "Il tab Ricerca interroga l'archivio. Ibrida, semantica o testo integrale, solo dopo l'invio."
+      },
+      "marking": {
+        "title": "Marcatura",
+        "body": "RESTRICTED e UNCLASSIFIED restano in inglese. Gli orari mostrati sono Zulu."
+      }
+    }
   }
 }

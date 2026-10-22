@@ -293,6 +293,82 @@ button, input, select, textarea { font: inherit; color: inherit; }
   line-height: 1.2;
 }
 
+.portal {
+  display: grid;
+  gap: 16px;
+  max-width: 1100px;
+}
+
+.portal-cover {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #05070d;
+}
+
+.portal-cover img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: cover;
+  object-position: center 40%;
+}
+
+.portal-intro {
+  max-width: 46rem;
+}
+
+.portal-title {
+  margin: 4px 0 0;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.portal-lede,
+.portal-body,
+.portal-point p {
+  margin: 8px 0 0;
+  max-width: 46rem;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.portal-body {
+  margin: 0;
+}
+
+.portal-points {
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 800px) {
+  .portal-points {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.portal-point {
+  padding: 12px;
+}
+
+.portal-point h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.portal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .field {
   width: 100%;
   min-width: 0;

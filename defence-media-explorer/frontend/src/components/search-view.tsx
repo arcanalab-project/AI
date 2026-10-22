@@ -91,6 +91,12 @@ export function SearchView() {
 
   useEffect(() => {
     if (!user) return;
+    if (!state.q.trim()) {
+      setPayload(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     let cancel = false;
     setLoading(true);
     setError(null);
@@ -234,8 +240,8 @@ export function SearchView() {
       <div className="min-w-0 space-y-4">
           <ErrorNote error={error} />
           {!state.q ? <p className="text-sm leading-snug text-[var(--muted)]">{t("search.browseNote")}</p> : null}
-          {loading ? <p className="text-[var(--muted)]">{t("common.loading")}</p> : null}
-          {payload ? (
+          {state.q && loading ? <p className="text-[var(--muted)]">{t("common.loading")}</p> : null}
+          {state.q && payload ? (
             <>
               <CountLine
                 countKind={payload.countKind}

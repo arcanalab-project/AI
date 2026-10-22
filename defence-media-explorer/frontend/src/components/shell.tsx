@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Activity, FolderClosed, Library, Search, Settings, Upload } from "lucide-react";
+import { Activity, FolderClosed, Library, Radar, Search, Settings, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { formatZulu } from "@/components/format";
 import { message } from "@/i18n";
@@ -11,7 +11,8 @@ import { ApiError } from "@/lib/api";
 import { usePrefs } from "@/lib/preferences";
 
 const LINKS = [
-  ["/", "nav.search", Search],
+  ["/", "nav.portal", Radar],
+  ["/search", "nav.search", Search],
   ["/upload", "nav.upload", Upload],
   ["/library", "nav.library", Library],
   ["/processing", "nav.processing", Activity],

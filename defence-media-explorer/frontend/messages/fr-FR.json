@@ -33,7 +33,8 @@
     "collections": "Collections",
     "settings": "Réglages et état du système",
     "login": "Se connecter",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "portal": "Portail"
   },
   "auth": {
     "requiredTitle": "Connectez-vous pour ouvrir l'archive",
@@ -203,7 +204,7 @@
     "findSimilar": "Trouver des segments semblables",
     "rank": "Rang {rank}",
     "languageNote": "La langue de l'interface ne traduit pas les médias sources et ne recalcule pas leurs vecteurs. La recherche en texte intégral ne traduit pas la requête.",
-    "browseNote": "Requête vide : parcours des segments qui correspondent aux filtres, avec un décompte complet.",
+    "browseNote": "Aucun résultat tant que vous n'envoyez pas une requête.",
     "captureUnknown": "Date de prise de vue inconnue"
   },
   "library": {
@@ -533,5 +534,28 @@
     "attempts": "Tentatives",
     "progress": "Avancement",
     "stage": "Étape"
+  },
+  "portal": {
+    "kicker": "MEDEX",
+    "title": "Portail tactique",
+    "lede": "BASTION est le portail d'exploitation média tactique. Il rassemble la vidéo, les images et l'audio dans un seul tableau, avant la recherche.",
+    "body": "Chaque source reste un document d'archive. La recherche sémantique ne démarre qu'après l'envoi d'une requête. Un champ vide ne renvoie aucun résultat.",
+    "coverAlt": "Salle d'exploitation sombre, avec des écrans radar, carte et vidéo.",
+    "openSearch": "Ouvrir la recherche",
+    "signIn": "Se connecter pour interroger l'archive",
+    "points": {
+      "archive": {
+        "title": "Archive",
+        "body": "Médiathèque, traitement et collections restent dans le cadre opérationnel."
+      },
+      "search": {
+        "title": "Recherche",
+        "body": "L'onglet Recherche interroge l'archive. Hybride, sémantique ou texte intégral, uniquement après l'envoi."
+      },
+      "marking": {
+        "title": "Marquage",
+        "body": "RESTRICTED et UNCLASSIFIED restent en anglais. Les heures affichées sont en Zulu."
+      }
+    }
   }
 }
