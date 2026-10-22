@@ -33,7 +33,8 @@
     "collections": "Collections",
     "settings": "Settings",
     "login": "Sign in",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "portal": "Portal"
   },
   "auth": {
     "requiredTitle": "Sign in to open the archive",
@@ -203,7 +204,7 @@
     "findSimilar": "Find similar",
     "rank": "Rank {rank}",
     "languageNote": "The interface language does not translate or re-embed source media. Full-text search does not translate the query.",
-    "browseNote": "Empty query: browsing segments that match the filters, with a complete count.",
+    "browseNote": "No results until you submit a query.",
     "captureUnknown": "Capture date unknown"
   },
   "library": {
@@ -533,5 +534,28 @@
     "attempts": "Attempts",
     "progress": "Progress",
     "stage": "Stage"
+  },
+  "portal": {
+    "kicker": "MEDEX",
+    "title": "Tactical portal",
+    "lede": "BASTION is the tactical media exploitation portal. It brings video, stills, and audio into one picture before anyone searches.",
+    "body": "Each source stays a document in the archive. Semantic search starts only when you submit a request. An empty field returns nothing.",
+    "coverAlt": "Dark exploitation room with radar, map, and video screens.",
+    "openSearch": "Open search",
+    "signIn": "Sign in to query the archive",
+    "points": {
+      "archive": {
+        "title": "Archive",
+        "body": "The media library, processing, and collections stay inside the operational frame."
+      },
+      "search": {
+        "title": "Search",
+        "body": "The Search tab queries the archive. Hybrid, semantic, or full text, only after you submit."
+      },
+      "marking": {
+        "title": "Marking",
+        "body": "RESTRICTED and UNCLASSIFIED stay in English. Displayed times are Zulu."
+      }
+    }
   }
 }

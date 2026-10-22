@@ -346,6 +346,13 @@ def _ensure_regular_indexes(collection: Collection, specs: list[tuple[list[tuple
             logger.warning("index create failed name=%s code=%s", options.get("name"), getattr(exc, "code", type(exc).__name__))
 
 
+def _vector_dimensions(definition: dict[str, Any]) -> int | None:
+    for field in definition.get("fields") or []:
+        if field.get("type") == "vector" and field.get("numDimensions") is not None:
+            return int(field["numDimensions"])
+    return None
+
+
 def _ensure_search_index(collection: Collection, *, name: str, definition: dict[str, Any], index_type: str) -> dict[str, Any]:
     try:
         existing = {item["name"]: item for item in collection.list_search_indexes()}
@@ -360,6 +367,21 @@ def _ensure_search_index(collection: Collection, *, name: str, definition: dict[
         return {"name": name, "status": "building", "action": "created"}
 
     latest = current.get("latestDefinition") or current.get("definition") or {}
+    if index_type == "vectorSearch":
+        previous = _vector_dimensions(latest)
+        wanted = _vector_dimensions(definition)
+        if previous is not None and wanted is not None and previous != wanted:
+            # Atlas does not change numDimensions in place. Drop and build the new width.
+            collection.drop_search_index(name)
+            model = SearchIndexModel(definition=definition, name=name, type=index_type)
+            collection.create_search_index(model)
+            return {
+                "name": name,
+                "status": "building",
+                "action": "recreated",
+                "previousDimensions": previous,
+                "dimensions": wanted,
+            }
     if _same_definition(latest, definition):
         return _public_status(current, name) | {"action": "unchanged"}
 

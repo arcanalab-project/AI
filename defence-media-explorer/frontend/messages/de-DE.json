@@ -33,7 +33,8 @@
     "collections": "Sammlungen",
     "settings": "Einstellungen und Systemzustand",
     "login": "Anmelden",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "portal": "Portal"
   },
   "auth": {
     "requiredTitle": "Melden Sie sich an, um das Archiv zu öffnen",
@@ -203,7 +204,7 @@
     "findSimilar": "Ähnliche Segmente suchen",
     "rank": "Rang {rank}",
     "languageNote": "Die Oberflächensprache übersetzt die Quellmedien nicht und bettet sie nicht neu ein. Die Volltextsuche übersetzt die Abfrage nicht.",
-    "browseNote": "Leere Abfrage: Segmente, die den Filtern entsprechen, mit einer vollständigen Anzahl.",
+    "browseNote": "Keine Ergebnisse, bis Sie eine Abfrage senden.",
     "captureUnknown": "Aufnahmedatum unbekannt"
   },
   "library": {
@@ -533,5 +534,28 @@
     "attempts": "Versuche",
     "progress": "Fortschritt",
     "stage": "Phase"
+  },
+  "portal": {
+    "kicker": "MEDEX",
+    "title": "Taktisches Portal",
+    "lede": "BASTION ist das Portal für taktische Medienauswertung. Es führt Video, Standbilder und Audio zu einem Lagebild zusammen, bevor gesucht wird.",
+    "body": "Jede Quelle bleibt ein Archivdokument. Die semantische Suche startet erst mit einer gesendeten Abfrage. Ein leeres Feld liefert keine Treffer.",
+    "coverAlt": "Dunkler Auswertungsraum mit Radar-, Karten- und Videobildschirmen.",
+    "openSearch": "Suche öffnen",
+    "signIn": "Anmelden, um das Archiv abzufragen",
+    "points": {
+      "archive": {
+        "title": "Archiv",
+        "body": "Medienbibliothek, Verarbeitung und Sammlungen bleiben im operativen Rahmen."
+      },
+      "search": {
+        "title": "Suche",
+        "body": "Der Tab Suche befragt das Archiv. Hybrid, semantisch oder Volltext, erst nach dem Absenden."
+      },
+      "marking": {
+        "title": "Kennzeichnung",
+        "body": "RESTRICTED und UNCLASSIFIED bleiben auf Englisch. Angezeigte Zeiten sind Zulu."
+      }
+    }
   }
 }

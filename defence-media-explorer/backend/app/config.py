@@ -35,7 +35,8 @@ class Settings(BaseSettings):
 
     voyage_api_key: str = ""
     voyage_multimodal_model: str = "voyage-multimodal-3.5"
-    embedding_dimensions: int = 1024
+    # voyage-multimodal-3.5 accepts 256, 512, 1024, or 2048. 2048 is the highest.
+    embedding_dimensions: int = 2048
     voyage_rerank_model: str = "rerank-3"
     enable_rerank: bool = False
     # Optional second text space. Off by default. Never stored in `embedding`.

@@ -46,9 +46,18 @@ class SearchService:
         warnings: list[dict[str, Any]] = []
 
         if not query:
-            payload = self._browse(workspace_id, filters, sort, page, page_size)
-            payload["fusion"] = None
-            payload["rerankApplied"] = False
+            # An empty field is not a browse of the archive. Results require a submitted phrase.
+            payload = {
+                "results": [],
+                "mode": mode,
+                "fusion": None,
+                "retrievedCandidateCount": 0,
+                "returnedCount": 0,
+                "completeMatchCount": 0,
+                "assetCount": 0,
+                "countKind": "retrieved_candidates",
+                "rerankApplied": False,
+            }
         else:
             window = max(self.settings.search_top_k, page * page_size)
             if mode == "semantic":

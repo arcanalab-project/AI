@@ -28,7 +28,7 @@ def test_env_example_lists_required_keys_without_secrets():
         "MONGODB_URI=",
         "MONGODB_DATABASE=defence_media_explorer",
         "VOYAGE_MULTIMODAL_MODEL=voyage-multimodal-3.5",
-        "EMBEDDING_DIMENSIONS=1024",
+        "EMBEDDING_DIMENSIONS=2048",
         "ENABLE_RERANK=false",
         "ENABLE_TEXT_EMBEDDINGS=false",
         "VOYAGE_TEXT_MODEL=voyage-4-large",

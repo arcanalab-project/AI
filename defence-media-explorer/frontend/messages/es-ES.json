@@ -33,7 +33,8 @@
     "collections": "Colecciones",
     "settings": "Ajustes y estado del sistema",
     "login": "Entrar",
-    "logout": "Salir"
+    "logout": "Salir",
+    "portal": "Portal"
   },
   "auth": {
     "requiredTitle": "Entre para abrir el archivo",
@@ -203,7 +204,7 @@
     "findSimilar": "Buscar similares",
     "rank": "Puesto {rank}",
     "languageNote": "El idioma de la interfaz no traduce ni vuelve a incrustar los medios de origen. La búsqueda de texto completo no traduce la consulta.",
-    "browseNote": "Consulta vacía: recorrido de los segmentos que coinciden con los filtros, con un recuento completo.",
+    "browseNote": "Ningún resultado hasta que envíe una consulta.",
     "captureUnknown": "Fecha de captura desconocida"
   },
   "library": {
@@ -533,5 +534,28 @@
     "attempts": "Intentos",
     "progress": "Avance",
     "stage": "Fase"
+  },
+  "portal": {
+    "kicker": "MEDEX",
+    "title": "Portal táctico",
+    "lede": "BASTION es el portal de explotación táctica de medios. Reúne vídeo, imágenes y audio en un solo cuadro, antes de la búsqueda.",
+    "body": "Cada fuente sigue siendo un documento del archivo. La búsqueda semántica empieza solo cuando se envía una consulta. Un campo vacío no devuelve resultados.",
+    "coverAlt": "Sala de explotación en penumbra, con pantallas de radar, mapas y vídeo.",
+    "openSearch": "Abrir la búsqueda",
+    "signIn": "Acceder para consultar el archivo",
+    "points": {
+      "archive": {
+        "title": "Archivo",
+        "body": "Mediateca, procesamiento y colecciones permanecen en el marco operativo."
+      },
+      "search": {
+        "title": "Búsqueda",
+        "body": "La pestaña Búsqueda interroga el archivo. Híbrida, semántica o texto íntegro, solo después del envío."
+      },
+      "marking": {
+        "title": "Marcado",
+        "body": "RESTRICTED y UNCLASSIFIED permanecen en inglés. Las horas mostradas son Zulú."
+      }
+    }
   }
 }
