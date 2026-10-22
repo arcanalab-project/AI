@@ -205,7 +205,47 @@
     "rank": "Rang {rank}",
     "languageNote": "La langue de l'interface ne traduit pas les médias sources et ne recalcule pas leurs vecteurs. La recherche en texte intégral ne traduit pas la requête.",
     "browseNote": "Aucun résultat tant que vous n'envoyez pas une requête.",
-    "captureUnknown": "Date de prise de vue inconnue"
+    "captureUnknown": "Date de prise de vue inconnue",
+    "topResults": "{count} premiers résultats",
+    "uploadedLabel": "Téléversé",
+    "relevanceColumn": "Pertinence",
+    "viewLabel": "Affichage des résultats",
+    "viewGallery": "Galerie",
+    "viewList": "Liste",
+    "technicalDetails": "Détails techniques",
+    "matchEvidence": "Indices de correspondance",
+    "relevance": {
+      "semantic": "Score sémantique",
+      "fulltext": "Score texte intégral",
+      "hybrid_rrf": "Score hybride (RRF)",
+      "hybrid_rank_fusion": "Score hybride",
+      "semantic_rrf": "Score sémantique (RRF)",
+      "hybrid": "Score hybride",
+      "unknown": "Score de pertinence"
+    },
+    "evidence": {
+      "transcript": "Transcription",
+      "ocrText": "Texte extrait",
+      "sceneDescription": "Description de scène",
+      "userDescription": "Description",
+      "tags": "Balises",
+      "embeddingStrategy": "Route d'embedding"
+    },
+    "components": {
+      "vectorSearchScore": "Similarité vectorielle",
+      "searchScore": "Score texte",
+      "textVectorSearchScore": "Vecteur texte",
+      "rrfScore": "Score RRF",
+      "fusionScore": "Score de fusion",
+      "multimodalVector": "Vecteur multimodal",
+      "fullText": "Index texte",
+      "textVector": "Index vectoriel texte"
+    },
+    "detail": {
+      "title": "Détail du média",
+      "close": "Fermer le panneau",
+      "openFull": "Ouvrir la fiche complète"
+    }
   },
   "library": {
     "kicker": "Fonds",

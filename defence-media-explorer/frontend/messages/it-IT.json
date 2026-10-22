@@ -205,7 +205,47 @@
     "rank": "Posizione {rank}",
     "languageNote": "La lingua dell'interfaccia non traduce né ricalcola gli embedding dei media di origine. La ricerca a testo integrale non traduce la domanda.",
     "browseNote": "Nessun risultato finché non invii una query.",
-    "captureUnknown": "Data di acquisizione sconosciuta"
+    "captureUnknown": "Data di acquisizione sconosciuta",
+    "topResults": "Primi {count} risultati",
+    "uploadedLabel": "Caricato",
+    "relevanceColumn": "Rilevanza",
+    "viewLabel": "Vista risultati",
+    "viewGallery": "Galleria",
+    "viewList": "Elenco",
+    "technicalDetails": "Dettagli tecnici",
+    "matchEvidence": "Evidenze di corrispondenza",
+    "relevance": {
+      "semantic": "Punteggio semantico",
+      "fulltext": "Punteggio full-text",
+      "hybrid_rrf": "Punteggio ibrido (RRF)",
+      "hybrid_rank_fusion": "Punteggio ibrido",
+      "semantic_rrf": "Punteggio semantico (RRF)",
+      "hybrid": "Punteggio ibrido",
+      "unknown": "Punteggio di rilevanza"
+    },
+    "evidence": {
+      "transcript": "Trascrizione",
+      "ocrText": "Testo estratto",
+      "sceneDescription": "Descrizione scena",
+      "userDescription": "Descrizione",
+      "tags": "Tag",
+      "embeddingStrategy": "Percorso embedding"
+    },
+    "components": {
+      "vectorSearchScore": "Similarità vettoriale",
+      "searchScore": "Punteggio full-text",
+      "textVectorSearchScore": "Vettore testo",
+      "rrfScore": "Punteggio RRF",
+      "fusionScore": "Punteggio fusione",
+      "multimodalVector": "Vettore multimodale",
+      "fullText": "Indice full-text",
+      "textVector": "Indice vettoriale testo"
+    },
+    "detail": {
+      "title": "Dettaglio media",
+      "close": "Chiudi pannello",
+      "openFull": "Apri scheda completa"
+    }
   },
   "library": {
     "kicker": "Patrimonio",

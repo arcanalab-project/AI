@@ -24,7 +24,7 @@ export const EMPTY_FILTERS: FilterState = {
   q: "",
   mode: "hybrid",
   sort: "relevance",
-  dateField: "capturedAt",
+  dateField: "uploadedAt",
   dateFrom: "",
   dateTo: "",
   unknownCapture: "include",
@@ -53,7 +53,7 @@ export function readFilters(params: URLSearchParams): FilterState {
     q: params.get("q") || "",
     mode: mode === "semantic" || mode === "fulltext" || mode === "hybrid" ? mode : "hybrid",
     sort: params.get("sort") || "relevance",
-    dateField: params.get("dateField") === "uploadedAt" ? "uploadedAt" : "capturedAt",
+    dateField: params.get("dateField") === "capturedAt" ? "capturedAt" : "uploadedAt",
     dateFrom: params.get("dateFrom") || "",
     dateTo: params.get("dateTo") || "",
     unknownCapture: unknown === "exclude" || unknown === "only" || unknown === "include" ? unknown : "include",
@@ -74,7 +74,7 @@ export function writeFilters(state: FilterState, defaults: Partial<FilterState> 
   if (state.q) params.set("q", state.q);
   if (state.mode !== "hybrid") params.set("mode", state.mode);
   if (state.sort && state.sort !== sortDefault) params.set("sort", state.sort);
-  if (state.dateField !== "capturedAt") params.set("dateField", state.dateField);
+  if (state.dateField !== "uploadedAt") params.set("dateField", state.dateField);
   if (state.dateFrom) params.set("dateFrom", state.dateFrom);
   if (state.dateTo) params.set("dateTo", state.dateTo);
   if (state.unknownCapture !== "include") params.set("unknownCapture", state.unknownCapture);

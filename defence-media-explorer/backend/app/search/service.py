@@ -21,7 +21,14 @@ from app.pipeline.text import excerpt
 from app.search.clauses import text_should_clauses, to_search_filter_clauses
 from app.search.filters import build_metadata_filter
 from app.search.grouping import group_nearby_hits
-from app.search.rrf import reciprocal_rank_fusion
+from app.search.scoring import (
+    add_fusion_score_stage,
+    add_text_search_score_stage,
+    add_vector_search_score_stage,
+    match_evidence,
+    merge_fused_hits,
+    relevance_for_hit,
+)
 
 
 class SearchService:
@@ -66,6 +73,7 @@ class SearchService:
                 hits, fusion = self._fulltext(workspace_id, query, filters, window, body.get("queryLanguage")), None
             else:
                 hits, fusion = self._hybrid(workspace_id, query, filters, window, body.get("queryLanguage"))
+            fusion_method = fusion
             hits, rerank_applied, rerank_warning = self._maybe_rerank(query, hits)
             if rerank_warning:
                 warnings.append(rerank_warning)
@@ -79,9 +87,12 @@ class SearchService:
             start = (page - 1) * page_size
             page_items = grouped[start : start + page_size]
             payload = {
-                "results": [self._card(item, rank=start + index + 1) for index, item in enumerate(page_items)],
+                "results": [
+                    self._card(item, rank=start + index + 1, mode=mode, fusion=fusion_method)
+                    for index, item in enumerate(page_items)
+                ],
                 "mode": mode,
-                "fusion": fusion,
+                "fusion": fusion_method,
                 "retrievedCandidateCount": len(hits),
                 "returnedCount": len(page_items),
                 "completeMatchCount": None,
@@ -117,7 +128,7 @@ class SearchService:
         hits = [hit for hit in hits if hit["_id"] != segment["_id"]][:limit]
         grouped = group_nearby_hits(hits, gap_ms=self.settings.nearby_gap_ms)
         return {
-            "results": [self._card(item, rank=index + 1) for index, item in enumerate(grouped)],
+            "results": [self._card(item, rank=index + 1, mode="semantic", fusion=None) for index, item in enumerate(grouped)],
             "mode": "semantic",
             "fusion": None,
             "retrievedCandidateCount": len(hits),
@@ -140,7 +151,15 @@ class SearchService:
         skip = (page - 1) * page_size
         rows, total = self.repo.find_segments(query, mongo_sort, skip, page_size)
         asset_count = self.repo.count_assets_for_segments(query)
-        cards = [self._card({**row, "segmentId": str(row["_id"]), "assetId": str(row["assetId"])}, rank=skip + index + 1) for index, row in enumerate(rows)]
+        cards = [
+            self._card(
+                {**row, "segmentId": str(row["_id"]), "assetId": str(row["assetId"])},
+                rank=skip + index + 1,
+                mode="browse",
+                fusion=None,
+            )
+            for index, row in enumerate(rows)
+        ]
         return {
             "results": cards,
             "mode": "browse",
@@ -165,7 +184,7 @@ class SearchService:
                     raise _search_error(exc) from exc
         visual = self._vector_query(vector, filt, limit)
         textual = self._text_vector_query(text_vector, filt, limit)
-        return _fuse_hits([visual, textual], self.settings.rrf_k), "backend_rrf"
+        return merge_fused_hits([visual, textual], ["multimodalVector", "textVector"], k=self.settings.rrf_k), "backend_rrf"
 
     def _fulltext(self, workspace_id: str, query: str, filters: dict, limit: int, query_language: str | None) -> list[dict]:
         filt = build_metadata_filter(workspace_id, filters)
@@ -181,12 +200,17 @@ class SearchService:
                 }
             },
             {"$limit": limit},
+            add_text_search_score_stage(),
             {"$project": {"embedding": 0, "textEmbedding": 0}},
         ]
         try:
             rows = self.repo.aggregate_segments(pipeline)
         except OperationFailure as exc:
             raise _search_error(exc) from exc
+        for row in rows:
+            row.setdefault("_scoreComponents", {})
+            if isinstance(row.get("searchScore"), (int, float)):
+                row["_scoreComponents"]["searchScore"] = float(row["searchScore"])
         return rows
 
     def _hybrid(self, workspace_id: str, query: str, filters: dict, limit: int, query_language: str | None) -> tuple[list[dict], str]:
@@ -200,9 +224,11 @@ class SearchService:
                 if not _rank_fusion_rejected(exc):
                     raise _search_error(exc) from exc
         groups = [self._vector_query(vector, filt, limit), self._fulltext(workspace_id, query, filters, limit, query_language)]
+        keys = ["multimodalVector", "fullText"]
         if text_vector is not None:
             groups.append(self._text_vector_query(text_vector, filt, limit))
-        return _fuse_hits(groups, self.settings.rrf_k), "backend_rrf"
+            keys.append("textVector")
+        return merge_fused_hits(groups, keys, k=self.settings.rrf_k), "backend_rrf"
 
     def _rank_fusion(
         self,
@@ -267,6 +293,11 @@ class SearchService:
                     }
                 }
             ]
+        for name, stages in pipelines.items():
+            if name == "text":
+                stages.append(add_text_search_score_stage())
+            else:
+                stages.append(add_vector_search_score_stage())
         pipeline = [
             {
                 "$rankFusion": {
@@ -274,10 +305,15 @@ class SearchService:
                     "combination": {"weights": {name: 1 for name in pipelines}},
                 }
             },
+            add_fusion_score_stage(),
             {"$project": {"embedding": 0, "textEmbedding": 0}},
             {"$limit": limit},
         ]
-        return self.repo.aggregate_segments(pipeline)
+        rows = self.repo.aggregate_segments(pipeline)
+        for row in rows:
+            if isinstance(row.get("fusionScore"), (int, float)):
+                row["_scoreComponents"] = {"fusionScore": float(row["fusionScore"])}
+        return rows
 
     def _vector_query(self, vector: list[float], filt: dict, limit: int) -> list[dict]:
         if len(vector) != self.settings.embedding_dimensions:
@@ -297,12 +333,17 @@ class SearchService:
                     "filter": filt,
                 }
             },
+            add_vector_search_score_stage(),
             {"$project": {"embedding": 0, "textEmbedding": 0}},
         ]
         try:
-            return self.repo.aggregate_segments(pipeline)
+            rows = self.repo.aggregate_segments(pipeline)
         except OperationFailure as exc:
             raise _search_error(exc) from exc
+        for row in rows:
+            if isinstance(row.get("vectorSearchScore"), (int, float)):
+                row["_scoreComponents"] = {"vectorSearchScore": float(row["vectorSearchScore"])}
+        return rows
 
     def _text_vector_query(self, vector: list[float], filt: dict, limit: int) -> list[dict]:
         if len(vector) != self.settings.text_embedding_dimensions:
@@ -322,12 +363,17 @@ class SearchService:
                     "filter": filt,
                 }
             },
+            {"$addFields": {"textVectorSearchScore": {"$meta": "vectorSearchScore"}}},
             {"$project": {"embedding": 0, "textEmbedding": 0}},
         ]
         try:
-            return self.repo.aggregate_segments(pipeline)
+            rows = self.repo.aggregate_segments(pipeline)
         except OperationFailure as exc:
             raise _search_error(exc) from exc
+        for row in rows:
+            if isinstance(row.get("textVectorSearchScore"), (int, float)):
+                row["_scoreComponents"] = {"textVectorSearchScore": float(row["textVectorSearchScore"])}
+        return rows
 
     def _query_vector(self, query: str) -> list[float]:
         if not self.settings.embeddings_configured:
@@ -382,23 +428,26 @@ class SearchService:
                 cleaned[key] = None
         return cleaned
 
-    def _card(self, hit: dict, *, rank: int) -> dict:
+    def _card(self, hit: dict, *, rank: int, mode: str, fusion: str | None) -> dict:
         segment_id = str(hit["_id"]) if hit.get("_id") is not None else str(hit.get("segmentId"))
         asset_id = str(hit.get("assetId"))
         thumb = hit.get("thumbnailObject") or {}
         description = hit.get("modelDescription") or hit.get("description") or ""
+        relevance = relevance_for_hit(hit, mode, fusion) if mode != "browse" else None
+        evidence = match_evidence(hit) if mode != "browse" else {}
         return {
             "segmentId": segment_id,
             "assetId": asset_id,
             "mediaType": hit.get("mediaType"),
             "segmentType": hit.get("segmentType"),
             "title": hit.get("title") or "",
-            "source": hit.get("source"),
             "capturedAt": hit.get("capturedAt"),
             "uploadedAt": hit.get("uploadedAt"),
             "captureDateUnknown": bool(hit.get("captureDateUnknown")),
             "description": description,
             "matchText": excerpt(hit.get("transcript"), hit.get("ocrText"), description, hit.get("userDescription")),
+            "relevance": relevance,
+            "matchEvidence": evidence or None,
             "startMs": hit.get("startMs"),
             "endMs": hit.get("endMs"),
             "thumbnailUrl": playback_url(thumb) if thumb else None,
@@ -438,15 +487,6 @@ def _sort_window(hits: list[dict], sort: str) -> list[dict]:
     missing = [item for item in hits if not isinstance(item.get(field), datetime)]
     dated.sort(key=lambda item: item[field], reverse=direction != "asc")
     return dated + missing
-
-
-def _fuse_hits(groups: list[list[dict]], k: int) -> list[dict]:
-    fused = reciprocal_rank_fusion([[str(item["_id"]) for item in group] for group in groups], k=k)
-    by_id: dict[str, dict] = {}
-    for group in groups:
-        for item in group:
-            by_id[str(item["_id"])] = item
-    return [by_id[doc_id] for doc_id, _score in fused if doc_id in by_id]
 
 
 def _rank_fusion_rejected(exc: OperationFailure) -> bool:

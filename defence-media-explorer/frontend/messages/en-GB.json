@@ -205,7 +205,47 @@
     "rank": "Rank {rank}",
     "languageNote": "The interface language does not translate or re-embed source media. Full-text search does not translate the query.",
     "browseNote": "No results until you submit a query.",
-    "captureUnknown": "Capture date unknown"
+    "captureUnknown": "Capture date unknown",
+    "topResults": "Top {count} results",
+    "uploadedLabel": "Uploaded",
+    "relevanceColumn": "Relevance",
+    "viewLabel": "Results view",
+    "viewGallery": "Gallery",
+    "viewList": "List",
+    "technicalDetails": "Technical details",
+    "matchEvidence": "Matching evidence",
+    "relevance": {
+      "semantic": "Semantic score",
+      "fulltext": "Full-text score",
+      "hybrid_rrf": "Hybrid score (RRF)",
+      "hybrid_rank_fusion": "Hybrid score",
+      "semantic_rrf": "Semantic score (RRF)",
+      "hybrid": "Hybrid score",
+      "unknown": "Relevance score"
+    },
+    "evidence": {
+      "transcript": "Transcript",
+      "ocrText": "Extracted text",
+      "sceneDescription": "Scene description",
+      "userDescription": "Description",
+      "tags": "Tags",
+      "embeddingStrategy": "Embedding route"
+    },
+    "components": {
+      "vectorSearchScore": "Vector similarity",
+      "searchScore": "Full-text score",
+      "textVectorSearchScore": "Text vector score",
+      "rrfScore": "RRF score",
+      "fusionScore": "Fusion score",
+      "multimodalVector": "Multimodal vector",
+      "fullText": "Full-text index",
+      "textVector": "Text vector index"
+    },
+    "detail": {
+      "title": "Media detail",
+      "close": "Close detail panel",
+      "openFull": "Open full record"
+    }
   },
   "library": {
     "kicker": "Holdings",

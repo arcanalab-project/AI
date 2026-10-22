@@ -224,7 +224,7 @@ function blankFilters(sort: string): FilterState {
     q: "",
     mode: "hybrid",
     sort,
-    dateField: "capturedAt",
+    dateField: "uploadedAt",
     dateFrom: "",
     dateTo: "",
     unknownCapture: "include",
@@ -248,11 +248,11 @@ function chipsOf(state: FilterState, t: Translator, collections: { id: string; n
       clear: (current) => ({ ...current, dateFrom: "", dateTo: "" }),
     });
   }
-  if (state.dateField !== "capturedAt") {
+  if (state.dateField !== "uploadedAt") {
     chips.push({
       id: "dateField",
-      label: t("asset.uploaded"),
-      clear: (current) => ({ ...current, dateField: "capturedAt" }),
+      label: t("asset.captured"),
+      clear: (current) => ({ ...current, dateField: "uploadedAt" }),
     });
   }
   if (state.unknownCapture !== "include") {

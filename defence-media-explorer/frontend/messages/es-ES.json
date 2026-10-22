@@ -205,7 +205,47 @@
     "rank": "Puesto {rank}",
     "languageNote": "El idioma de la interfaz no traduce ni vuelve a incrustar los medios de origen. La búsqueda de texto completo no traduce la consulta.",
     "browseNote": "Ningún resultado hasta que envíe una consulta.",
-    "captureUnknown": "Fecha de captura desconocida"
+    "captureUnknown": "Fecha de captura desconocida",
+    "topResults": "Primeros {count} resultados",
+    "uploadedLabel": "Subido",
+    "relevanceColumn": "Relevancia",
+    "viewLabel": "Vista de resultados",
+    "viewGallery": "Galería",
+    "viewList": "Lista",
+    "technicalDetails": "Detalles técnicos",
+    "matchEvidence": "Evidencia de coincidencia",
+    "relevance": {
+      "semantic": "Puntuación semántica",
+      "fulltext": "Puntuación de texto completo",
+      "hybrid_rrf": "Puntuación híbrida (RRF)",
+      "hybrid_rank_fusion": "Puntuación híbrida",
+      "semantic_rrf": "Puntuación semántica (RRF)",
+      "hybrid": "Puntuación híbrida",
+      "unknown": "Puntuación de relevancia"
+    },
+    "evidence": {
+      "transcript": "Transcripción",
+      "ocrText": "Texto extraído",
+      "sceneDescription": "Descripción de escena",
+      "userDescription": "Descripción",
+      "tags": "Etiquetas",
+      "embeddingStrategy": "Ruta de embedding"
+    },
+    "components": {
+      "vectorSearchScore": "Similitud vectorial",
+      "searchScore": "Puntuación de texto",
+      "textVectorSearchScore": "Vector de texto",
+      "rrfScore": "Puntuación RRF",
+      "fusionScore": "Puntuación de fusión",
+      "multimodalVector": "Vector multimodal",
+      "fullText": "Índice de texto",
+      "textVector": "Índice vectorial de texto"
+    },
+    "detail": {
+      "title": "Detalle del medio",
+      "close": "Cerrar panel",
+      "openFull": "Abrir registro completo"
+    }
   },
   "library": {
     "kicker": "Fondos",

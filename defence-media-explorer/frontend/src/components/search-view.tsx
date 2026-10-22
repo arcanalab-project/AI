@@ -8,15 +8,14 @@ import { usePrefs } from "@/lib/preferences";
 import { readFilters, toSearchFilters, writeFilters, type FilterState } from "@/lib/search-state";
 import { Button, TextInput } from "@/components/ui";
 import { ErrorNote, PageIntro } from "@/components/shell";
-import { message } from "@/i18n";
 import { FilterPanel } from "@/components/filters";
-import { CountLine, Pager, ResultGrid } from "@/components/results";
+import { CountLine, Pager, SearchResults, TechnicalDetails, type ResultsView } from "@/components/results";
 
 const EXAMPLES = ["tracked", "drones", "maintenance", "inspections"] as const;
 const PAGE_SIZE = 12;
 
 type SearchPayload = {
-  results: Parameters<typeof ResultGrid>[0]["results"];
+  results: import("@/lib/api").SearchResult[];
   mode?: string;
   fusion?: string | null;
   retrievedCandidateCount?: number | null;
@@ -56,6 +55,8 @@ export function SearchView() {
   const [saved, setSaved] = useState<Saved[]>([]);
   const [saveName, setSaveName] = useState("");
   const [draft, setDraft] = useState(state.q);
+  const [view, setView] = useState<ResultsView>("gallery");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   function replace(next: FilterState) {
     const query = writeFilters(next).toString();
@@ -88,6 +89,10 @@ export function SearchView() {
   useEffect(() => {
     setDraft(state.q);
   }, [state.q]);
+
+  useEffect(() => {
+    setSelectedId(null);
+  }, [state.q, state.mode, state.page]);
 
   useEffect(() => {
     if (!user) return;
@@ -166,7 +171,7 @@ export function SearchView() {
       q: item.query || "",
       mode: item.mode === "semantic" || item.mode === "fulltext" || item.mode === "hybrid" ? item.mode : "hybrid",
       sort: item.sort || "relevance",
-      dateField: filters.dateField === "uploadedAt" ? "uploadedAt" : "capturedAt",
+      dateField: filters.dateField === "capturedAt" ? "capturedAt" : "uploadedAt",
       dateFrom: typeof filters.dateFrom === "string" ? filters.dateFrom.slice(0, 10) : "",
       dateTo: typeof filters.dateTo === "string" ? filters.dateTo.slice(0, 10) : "",
       unknownCapture: filters.unknownCapture === "exclude" || filters.unknownCapture === "only" ? filters.unknownCapture : "include",
@@ -182,10 +187,10 @@ export function SearchView() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="search-page space-y-6">
       <PageIntro kicker={t("meta.product")} title={t("medex.brand.title")} body={t("medex.brand.subtitle")} />
       <form
-        className="panel min-w-0 p-3"
+        className="search-hero panel"
         onSubmit={(event) => {
           event.preventDefault();
           const phrase = draft.trim();
@@ -193,28 +198,34 @@ export function SearchView() {
           replace({ ...state, q: phrase, page: 1 });
         }}
       >
-        <label className="grid min-w-0 gap-3">
-          <span className="text-sm font-semibold">{t("search.queryLabel")}</span>
+        <label className="search-hero-field">
+          <span className="search-hero-label">{t("search.queryLabel")}</span>
           <input
             name="q"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={t("medex.search.placeholder")}
-            className="field"
+            className="search-hero-input"
           />
         </label>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium">{t("search.modeLabel")}</span>
-          {(["hybrid", "semantic", "fulltext"] as const).map((mode) => (
-            <Button key={mode} type="button" variant={state.mode === mode ? "primary" : "quiet"} onClick={() => replace({ ...state, mode, page: 1 })}>
-              {t(`search.mode.${mode}`)}
-            </Button>
-          ))}
-          <Button type="submit">{t("search.submit")}</Button>
+        <div className="search-hero-toolbar">
+          <div className="segmented" role="group" aria-label={t("search.modeLabel")}>
+            {(["hybrid", "semantic", "fulltext"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                className={state.mode === mode ? "segmented-active" : undefined}
+                onClick={() => replace({ ...state, mode, page: 1 })}
+              >
+                {t(`search.mode.${mode}`)}
+              </button>
+            ))}
+          </div>
+          <Button type="submit" className="search-hero-submit">{t("search.submit")}</Button>
         </div>
       </form>
-      <div>
-        <h2 className="mb-3 text-sm font-semibold">{t("search.examplesLabel")}</h2>
+      <div className="search-examples">
+        <h2 className="search-examples-title">{t("search.examplesLabel")}</h2>
         <div className="flex flex-wrap gap-2">
           {EXAMPLES.map((key) => (
             <button
@@ -227,88 +238,95 @@ export function SearchView() {
             </button>
           ))}
         </div>
-        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--muted)]">{t("search.languageNote")}</p>
+        <p className="search-examples-note">{t("search.languageNote")}</p>
       </div>
       <FilterPanel
         state={state}
         timeZone={payload?.timeZone || timeZone}
         collections={collections}
         facets={facets}
-        sortOptions={["relevance", "capturedAt_desc", "capturedAt_asc", "uploadedAt_desc", "uploadedAt_asc"]}
+        sortOptions={["relevance", "uploadedAt_desc", "uploadedAt_asc", "capturedAt_desc", "capturedAt_asc"]}
         onChange={replace}
       />
-      <div className="min-w-0 space-y-4">
-          <ErrorNote error={error} />
-          {!state.q ? <p className="text-sm leading-snug text-[var(--muted)]">{t("search.browseNote")}</p> : null}
-          {state.q && loading ? <p className="text-[var(--muted)]">{t("common.loading")}</p> : null}
-          {state.q && payload ? (
-            <>
+      <div className="min-w-0 space-y-5">
+        <ErrorNote error={error} />
+        {!state.q ? <p className="text-base leading-relaxed text-[var(--muted)]">{t("search.browseNote")}</p> : null}
+        {state.q && loading ? <p className="text-base text-[var(--muted)]">{t("common.loading")}</p> : null}
+        {state.q && payload ? (
+          <>
+            <div className="results-toolbar">
               <CountLine
                 countKind={payload.countKind}
                 retrievedCandidateCount={payload.retrievedCandidateCount}
                 completeMatchCount={payload.completeMatchCount}
                 assetCount={payload.assetCount}
+                returnedCount={payload.returnedCount}
                 elapsedMs={payload.elapsedMs}
               />
-              {payload.rerankApplied ? <p className="text-sm leading-snug">{t("search.rerank")}</p> : null}
-              {payload.fusion ? <FusionNote code={payload.fusion} /> : null}
-              {(payload.warnings || []).map((warning) => (
-                <p key={warning.code} className="text-sm leading-snug text-[var(--warn)]">
-                  {warning.code === "SORT_WINDOW" ? t("search.warnings.SORT_WINDOW") : message(t, `errors.${warning.code}`, t("errors.UNKNOWN"))}
-                </p>
+              <div className="segmented" role="group" aria-label={t("search.viewLabel")}>
+                <button type="button" className={view === "gallery" ? "segmented-active" : undefined} onClick={() => setView("gallery")}>
+                  {t("search.viewGallery")}
+                </button>
+                <button type="button" className={view === "list" ? "segmented-active" : undefined} onClick={() => setView("list")}>
+                  {t("search.viewList")}
+                </button>
+              </div>
+            </div>
+            <SearchResults
+              results={payload.results || []}
+              view={view}
+              selectedId={selectedId}
+              onSelect={(result) => setSelectedId(result?.segmentId || null)}
+            />
+            <Pager
+              page={state.page}
+              pageSize={PAGE_SIZE}
+              complete={payload.completeMatchCount ?? null}
+              returned={payload.returnedCount || payload.results?.length || 0}
+              onPage={(page) => replace({ ...state, page })}
+            />
+            <TechnicalDetails
+              elapsedMs={payload.elapsedMs}
+              fusion={payload.fusion}
+              rerankApplied={payload.rerankApplied}
+              warnings={payload.warnings}
+            />
+          </>
+        ) : null}
+        <section className="panel min-w-0 space-y-3 p-4">
+          <h2 className="section-title">{t("search.saved")}</h2>
+          <form
+            className="flex min-w-0 flex-wrap gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveSearch();
+            }}
+          >
+            <TextInput value={saveName} onChange={(event) => setSaveName(event.target.value)} placeholder={t("search.saveName")} className="min-w-[12rem] flex-1" aria-label={t("search.saveName")} />
+            <Button type="submit" variant="quiet">
+              {t("search.save")}
+            </Button>
+          </form>
+          {saved.length ? (
+            <ul className="space-y-2">
+              {saved.map((item) => (
+                <li key={item.id} className="flex min-w-0 flex-wrap items-center gap-2">
+                  <button type="button" className="max-w-full break-words text-left text-base font-medium underline-offset-2 hover:underline" onClick={() => applySaved(item)}>
+                    {item.name}
+                  </button>
+                  <Button type="button" variant="ghost" onClick={() => void deleteSaved(item.id)} aria-label={t("search.deleteSaved", { name: item.name })}>
+                    {t("common.delete")}
+                  </Button>
+                </li>
               ))}
-              <ResultGrid results={payload.results || []} />
-              <Pager
-                page={state.page}
-                pageSize={PAGE_SIZE}
-                complete={payload.completeMatchCount ?? null}
-                returned={payload.returnedCount || payload.results?.length || 0}
-                onPage={(page) => replace({ ...state, page })}
-              />
-            </>
-          ) : null}
-          <section className="panel min-w-0 space-y-2 p-3">
-            <h2 className="section-title">{t("search.saved")}</h2>
-            <form
-              className="flex min-w-0 flex-wrap gap-2"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void saveSearch();
-              }}
-            >
-              <TextInput value={saveName} onChange={(event) => setSaveName(event.target.value)} placeholder={t("search.saveName")} className="min-w-[12rem] flex-1" aria-label={t("search.saveName")} />
-              <Button type="submit" variant="quiet">
-                {t("search.save")}
-              </Button>
-            </form>
-            {saved.length ? (
-              <ul className="space-y-2">
-                {saved.map((item) => (
-                  <li key={item.id} className="flex min-w-0 flex-wrap items-center gap-2">
-                    <button type="button" className="max-w-full break-words text-left font-medium underline-offset-2 hover:underline" onClick={() => applySaved(item)}>
-                      {item.name}
-                    </button>
-                    <Button type="button" variant="ghost" onClick={() => void deleteSaved(item.id)} aria-label={t("search.deleteSaved", { name: item.name })}>
-                      {t("common.delete")}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-[var(--muted)]">{t("search.noSaved")}</p>
-            )}
-          </section>
+            </ul>
+          ) : (
+            <p className="text-base text-[var(--muted)]">{t("search.noSaved")}</p>
+          )}
+        </section>
       </div>
     </div>
   );
-}
-
-function FusionNote({ code }: { code?: string | null }) {
-  const t = useTranslations();
-  if (!code) return null;
-  const text = message(t, `search.fusion.${code}`, "");
-  if (!text) return null;
-  return <p className="text-sm leading-snug">{text}</p>;
 }
 
 function asList(value: unknown) {
