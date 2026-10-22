@@ -87,6 +87,32 @@ echo "Starting frontend on http://localhost:3000"
 (cd frontend && exec npm run dev -- --hostname 127.0.0.1 --port 3000) &
 pids="$pids $!"
 
+# Reuse the saved Cloudflare tunnel. Never opens a browser.
+cf=""
+if command -v cloudflared >/dev/null 2>&1; then
+  cf="cloudflared"
+elif [ -x "$HOME/.local/bin/cloudflared" ]; then
+  cf="$HOME/.local/bin/cloudflared"
+fi
+token=""
+if [ -f .env ]; then
+  token="$(grep -E '^CLOUDFLARE_TUNNEL_TOKEN=' .env | head -1 | cut -d= -f2- | tr -d '"' || true)"
+fi
+store="/cursor/stores/user/cloudflared"
+if [ -d "$store" ]; then
+  mkdir -p "$HOME/.cloudflared"
+  cp -n "$store"/* "$HOME/.cloudflared/" 2>/dev/null || true
+fi
+if [ -n "$cf" ] && [ -n "$token" ]; then
+  echo "Attaching https://bastion-app.com"
+  "$cf" tunnel --no-autoupdate run --token "$token" --url http://127.0.0.1:3000 &
+  pids="$pids $!"
+elif [ -n "$cf" ] && ls "$HOME/.cloudflared"/*.json >/dev/null 2>&1; then
+  echo "Attaching https://bastion-app.com"
+  "$cf" tunnel --no-autoupdate run --url http://127.0.0.1:3000 bastion &
+  pids="$pids $!"
+fi
+
 echo "Bastion: http://localhost:3000"
 echo "Logs from the API, worker, and frontend follow. Ctrl+C stops all three."
 echo "A worker on this Mac means ingestion runs only while this command is running."
