@@ -1,0 +1,200 @@
+{
+  "vectorIndex": {
+    "name": "segments_vector_v1",
+    "type": "vectorSearch",
+    "definition": {
+      "fields": [
+        {
+          "type": "vector",
+          "path": "embedding",
+          "numDimensions": 1024,
+          "similarity": "cosine"
+        },
+        {
+          "type": "filter",
+          "path": "workspaceId"
+        },
+        {
+          "type": "filter",
+          "path": "mediaType"
+        },
+        {
+          "type": "filter",
+          "path": "segmentType"
+        },
+        {
+          "type": "filter",
+          "path": "collectionId"
+        },
+        {
+          "type": "filter",
+          "path": "source"
+        },
+        {
+          "type": "filter",
+          "path": "sourceLanguage"
+        },
+        {
+          "type": "filter",
+          "path": "processingStatus"
+        },
+        {
+          "type": "filter",
+          "path": "reviewState"
+        },
+        {
+          "type": "filter",
+          "path": "pipelineVersion"
+        },
+        {
+          "type": "filter",
+          "path": "embeddingModel"
+        },
+        {
+          "type": "filter",
+          "path": "captureDateUnknown"
+        },
+        {
+          "type": "filter",
+          "path": "capturedAt"
+        },
+        {
+          "type": "filter",
+          "path": "uploadedAt"
+        },
+        {
+          "type": "filter",
+          "path": "tags"
+        },
+        {
+          "type": "filter",
+          "path": "categories"
+        }
+      ]
+    }
+  },
+  "searchIndex": {
+    "name": "segments_text_v1",
+    "type": "search",
+    "definition": {
+      "mappings": {
+        "dynamic": false,
+        "fields": {
+          "workspaceId": {
+            "type": "token"
+          },
+          "mediaType": {
+            "type": "token"
+          },
+          "segmentType": {
+            "type": "token"
+          },
+          "collectionId": {
+            "type": "token"
+          },
+          "source": [
+            {
+              "type": "token"
+            },
+            {
+              "type": "string",
+              "analyzer": "lucene.keyword"
+            }
+          ],
+          "sourceLanguage": {
+            "type": "token"
+          },
+          "processingStatus": {
+            "type": "token"
+          },
+          "reviewState": {
+            "type": "token"
+          },
+          "pipelineVersion": {
+            "type": "token"
+          },
+          "embeddingModel": {
+            "type": "token"
+          },
+          "captureDateUnknown": {
+            "type": "boolean"
+          },
+          "capturedAt": {
+            "type": "date"
+          },
+          "uploadedAt": {
+            "type": "date"
+          },
+          "tags": [
+            {
+              "type": "token"
+            },
+            {
+              "type": "string",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "categories": [
+            {
+              "type": "token"
+            },
+            {
+              "type": "string",
+              "analyzer": "lucene.standard"
+            }
+          ],
+          "title": {
+            "type": "string",
+            "analyzer": "lucene.standard"
+          },
+          "description": {
+            "type": "string",
+            "analyzer": "lucene.standard"
+          },
+          "userDescription": {
+            "type": "string",
+            "analyzer": "lucene.standard"
+          },
+          "modelDescription": {
+            "type": "string",
+            "analyzer": "lucene.standard"
+          },
+          "transcript": {
+            "type": "string",
+            "analyzer": "lucene.standard"
+          },
+          "ocrText": {
+            "type": "string",
+            "analyzer": "lucene.standard"
+          },
+          "searchText": {
+            "type": "string",
+            "analyzer": "lucene.standard",
+            "multi": {
+              "english": {
+                "type": "string",
+                "analyzer": "lucene.english"
+              },
+              "french": {
+                "type": "string",
+                "analyzer": "lucene.french"
+              },
+              "german": {
+                "type": "string",
+                "analyzer": "lucene.german"
+              },
+              "spanish": {
+                "type": "string",
+                "analyzer": "lucene.spanish"
+              },
+              "italian": {
+                "type": "string",
+                "analyzer": "lucene.italian"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
