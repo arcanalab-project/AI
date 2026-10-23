@@ -24,7 +24,7 @@ export default function LoginPage() {
     try {
       await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
       await refreshUser();
-      router.push("/");
+      router.push("/search");
     } catch (reason) {
       setError(asApiError(reason));
     } finally {

@@ -576,26 +576,14 @@
     "stage": "Fase"
   },
   "portal": {
-    "kicker": "MEDEX",
-    "title": "Portale tattico",
-    "lede": "BASTION è il portale di sfruttamento operativo dei media. Riunisce video, immagini e audio in un unico quadro, prima della ricerca.",
-    "body": "Ogni fonte resta un documento d'archivio. La ricerca semantica parte solo quando invii una richiesta. Un campo vuoto non restituisce risultati.",
-    "coverAlt": "Sala di sfruttamento in penombra, con schermi di radar, carte e video.",
-    "openSearch": "Apri la ricerca",
-    "signIn": "Accedi per interrogare l'archivio",
-    "points": {
-      "archive": {
-        "title": "Archivio",
-        "body": "Mediateca, elaborazione e raccolte restano nel quadro operativo."
-      },
-      "search": {
-        "title": "Ricerca",
-        "body": "Il tab Ricerca interroga l'archivio. Ibrida, semantica o testo integrale, solo dopo l'invio."
-      },
-      "marking": {
-        "title": "Marcatura",
-        "body": "RESTRICTED e UNCLASSIFIED restano in inglese. Gli orari mostrati sono Zulu."
-      }
-    }
+    "product": "BASTION MEDEX",
+    "subtitle": "Intelligence multimediale per la Difesa",
+    "lead": "Trasforma video, immagini e audio operativi in informazioni ricercabili.",
+    "detail": "BASTION MEDEX consente di acquisire, analizzare ed esplorare archivi multimediali attraverso interrogazioni in linguaggio naturale, ricerca semantica e ibrida.",
+    "outcome": "Individua rapidamente i contenuti rilevanti e approfondisci le evidenze disponibili.",
+    "coverAlt": "Sala operativa con radar, carte e monitor video.",
+    "accessTitle": "Accesso sicuro",
+    "signIn": "Accedi alla piattaforma",
+    "enter": "Entra nella piattaforma"
   }
 }

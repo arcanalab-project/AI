@@ -39,9 +39,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }
 
+  if (isHome) {
+    return (
+      <>
+        <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-[var(--signal)] focus:px-3 focus:py-1 focus:text-[#10243a]">
+          {t("nav.skip")}
+        </a>
+        <Suspense fallback={<p className="landing-status">{t("common.loading")}</p>}>{children}</Suspense>
+      </>
+    );
+  }
+
   return (
     <div className="app-frame">
-      <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-[var(--primary)] focus:px-3 focus:py-1 focus:text-white">
+        <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-[var(--signal)] focus:px-3 focus:py-1 focus:text-[#10243a]">
         {t("nav.skip")}
       </a>
       <aside className="sidebar">
@@ -102,9 +113,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main id="content" className="command-main">
-          {!isHome && !ready && pathname !== "/login" && pathname !== "/settings" ? (
+          {!ready && pathname !== "/login" && pathname !== "/settings" ? (
             <p className="text-[var(--muted)]">{t("common.loading")}</p>
-          ) : !isHome && ready && !open ? (
+          ) : ready && !open ? (
             <Gate />
           ) : (
             <Suspense fallback={<p className="text-[var(--muted)]">{t("common.loading")}</p>}>{children}</Suspense>
