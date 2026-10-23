@@ -30,27 +30,9 @@ if [ "$missing" -ne 0 ]; then
   exit 1
 fi
 
-# .env is gitignored, so a new machine does not have the file you already saved.
-# The user store survives across cloud agents, same place as the tunnel certificate.
-ENV_STORE="/cursor/stores/user/bastion.env"
-if [ -d /cursor/stores/user ]; then
-  if [ -f "$ENV_STORE" ] && [ ! -f .env ]; then
-    cp "$ENV_STORE" .env
-    chmod 600 .env
-    echo "Restored .env from the user store."
-  elif [ -f .env ] && [ -f "$ENV_STORE" ] && [ "$ENV_STORE" -nt .env ]; then
-    cp "$ENV_STORE" .env
-    chmod 600 .env
-    echo "Updated .env from the user store."
-  elif [ -f .env ] && { [ ! -f "$ENV_STORE" ] || [ .env -nt "$ENV_STORE" ]; }; then
-    cp .env "$ENV_STORE"
-    chmod 600 "$ENV_STORE" || true
-  fi
-fi
-
+# .env is tracked. Edit that file. The process reads it from this directory.
 if [ ! -f .env ]; then
-  echo "Missing .env. Copy .env.example to .env and set MONGODB_URI, SESSION_SECRET, and VOYAGE_API_KEY."
-  echo "Do not commit .env."
+  echo "Missing .env. It lives in this directory and is committed with the project."
   exit 1
 fi
 

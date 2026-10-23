@@ -12,11 +12,11 @@ Install these on the machine that will run the demo:
 - Node.js 20 or newer (npm comes with it)
 - FFmpeg, including ffprobe. On macOS: `brew install ffmpeg`
 
-Copy `.env.example` to `.env` in this directory and fill it in. Do not commit `.env`.
+Edit `.env` in this directory. It is tracked. Fill the empty credential lines there.
 
 | Name | What to put |
 | --- | --- |
-| `MONGODB_URI` | Connection string for the federazionecup cluster. Never paste it into source, docs, or tickets. |
+| `MONGODB_URI` | Connection string for the federazionecup cluster. Put it in `.env`. |
 | `MONGODB_DATABASE` | `defence_media_explorer` |
 | `SESSION_SECRET` | At least 16 characters. Signs the session cookie. |
 | `DEMO_ADMIN_EMAIL` | Empty by default. The API seeds an admin only when this and the password are both set on the API process. |
