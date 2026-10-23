@@ -347,7 +347,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 @media (min-width: 800px) {
   .portal-points {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

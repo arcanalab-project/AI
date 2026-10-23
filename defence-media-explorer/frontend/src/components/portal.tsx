@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { usePrefs } from "@/lib/preferences";
 
-const POINTS = ["archive", "search", "marking"] as const;
+const POINTS = ["archive", "search"] as const;
 
 export function PortalHome() {
   const t = useTranslations();
