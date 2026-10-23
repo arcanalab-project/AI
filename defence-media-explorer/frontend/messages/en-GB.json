@@ -576,26 +576,14 @@
     "stage": "Stage"
   },
   "portal": {
-    "kicker": "MEDEX",
-    "title": "Tactical portal",
-    "lede": "BASTION is the tactical media exploitation portal. It brings video, stills, and audio into one picture before anyone searches.",
-    "body": "Each source stays a document in the archive. Semantic search starts only when you submit a request. An empty field returns nothing.",
-    "coverAlt": "Dark exploitation room with radar, map, and video screens.",
-    "openSearch": "Open search",
-    "signIn": "Sign in to query the archive",
-    "points": {
-      "archive": {
-        "title": "Archive",
-        "body": "The media library, processing, and collections stay inside the operational frame."
-      },
-      "search": {
-        "title": "Search",
-        "body": "The Search tab queries the archive. Hybrid, semantic, or full text, only after you submit."
-      },
-      "marking": {
-        "title": "Marking",
-        "body": "RESTRICTED and UNCLASSIFIED stay in English. Displayed times are Zulu."
-      }
-    }
+    "product": "BASTION MEDEX",
+    "subtitle": "Tactical Media Intelligence",
+    "lead": "Transform operational video, imagery and audio into searchable intelligence.",
+    "detail": "BASTION MEDEX enables defence organisations to ingest, analyse and explore multimedia archives using natural-language queries, semantic search and hybrid retrieval.",
+    "outcome": "Find relevant footage and examine the evidence that matters.",
+    "coverAlt": "Command room with radar, maps and video monitors.",
+    "accessTitle": "Secure access",
+    "signIn": "Sign in",
+    "enter": "Enter workspace"
   }
 }
