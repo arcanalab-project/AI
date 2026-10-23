@@ -31,21 +31,13 @@ if [ "$missing" -ne 0 ]; then
 fi
 
 # .env is gitignored, so a new machine does not have the file you already saved.
-# The user store survives across cloud agents, same place as the tunnel certificate.
+# The user store is the one file. A filled value there is never replaced by an empty one.
 ENV_STORE="/cursor/stores/user/bastion.env"
 if [ -d /cursor/stores/user ]; then
-  if [ -f "$ENV_STORE" ] && [ ! -f .env ]; then
-    cp "$ENV_STORE" .env
-    chmod 600 .env
-    echo "Restored .env from the user store."
-  elif [ -f .env ] && [ -f "$ENV_STORE" ] && [ "$ENV_STORE" -nt .env ]; then
-    cp "$ENV_STORE" .env
-    chmod 600 .env
-    echo "Updated .env from the user store."
-  elif [ -f .env ] && { [ ! -f "$ENV_STORE" ] || [ .env -nt "$ENV_STORE" ]; }; then
-    cp .env "$ENV_STORE"
-    chmod 600 "$ENV_STORE" || true
-  fi
+  python3 "$ROOT/scripts/sync_env.py" "$ENV_STORE" "$ROOT/.env"
+  chmod 600 .env 2>/dev/null || true
+  chmod 600 "$ENV_STORE" 2>/dev/null || true
+  echo "Using the saved Bastion env."
 fi
 
 if [ ! -f .env ]; then
