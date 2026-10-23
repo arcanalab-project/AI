@@ -30,19 +30,9 @@ if [ "$missing" -ne 0 ]; then
   exit 1
 fi
 
-# .env is gitignored, so a new machine does not have the file you already saved.
-# The user store is the one file. A filled value there is never replaced by an empty one.
-ENV_STORE="/cursor/stores/user/bastion.env"
-if [ -d /cursor/stores/user ]; then
-  python3 "$ROOT/scripts/sync_env.py" "$ENV_STORE" "$ROOT/.env"
-  chmod 600 .env 2>/dev/null || true
-  chmod 600 "$ENV_STORE" 2>/dev/null || true
-  echo "Using the saved Bastion env."
-fi
-
+# .env is tracked. Edit that file. The process reads it from this directory.
 if [ ! -f .env ]; then
-  echo "Missing .env. Copy .env.example to .env and set MONGODB_URI, SESSION_SECRET, and VOYAGE_API_KEY."
-  echo "Do not commit .env."
+  echo "Missing .env. It lives in this directory and is committed with the project."
   exit 1
 fi
 
