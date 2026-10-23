@@ -83,18 +83,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="workspace">
         <header className="command-bar">
-          <div className="command-center">
-            <span className="mark mark-restricted">{t("security.classification.restricted")}</span>
-          </div>
           <div className="command-meta">
             <UtcClock label={t("shell.zulu")} />
-            <span className="text-xs text-[var(--muted)]">{user ? user.displayName : t("shell.operator")}</span>
+            {user ? <span className="text-xs text-[var(--muted)]">{user.displayName}</span> : null}
             <span className="sync" data-state={sync} aria-live="polite">
               <i aria-hidden />
               {sync === "pending" ? t("shell.syncPending") : t(sync === "live" ? "shell.syncLive" : sync === "degraded" ? "shell.syncDegraded" : "shell.syncOffline")}
             </span>
-            <span className="mark mark-critical">{t("security.classification.restricted")}</span>
-            <span className="mark mark-unclassified">{t("security.classification.unclassified")}</span>
             {user ? (
               <button type="button" className="btn btn-quiet" onClick={() => void logout()}>
                 {t("nav.logout")}
