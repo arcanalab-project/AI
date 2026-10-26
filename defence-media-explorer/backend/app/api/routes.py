@@ -682,8 +682,8 @@ def _finalise_file(request, user, temp: Path, *, filename, size, title, descript
     settings = settings_of(request)
     if size > settings.max_upload_bytes:
         raise AppError("UPLOAD_TOO_LARGE", 413, {"maxMb": settings.max_upload_mb})
-    header = temp.read_bytes()[:64]
-    mime = detect_mime(header, filename)
+    header = temp.read_bytes()[:1024]
+    mime = detect_mime(header, filename, source=temp)
     media_type = media_type_for_mime(mime)
     digest = sha256_file(temp)
     duplicate = repo_of(request).find_duplicate(user["workspaceId"], digest, exclude_id=None if existing is None else existing["_id"])

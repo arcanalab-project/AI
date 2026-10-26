@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from app.errors import AppError
+from app.media.documents import DOCX_MIME, PDF_MIME, docx_has_document, looks_like_pdf
 
 ALLOWED: dict[str, dict[str, set[str]]] = {
     "image/jpeg": {"media_type": "image", "extensions": {"jpg", "jpeg"}},
@@ -14,6 +17,8 @@ ALLOWED: dict[str, dict[str, set[str]]] = {
     "audio/wav": {"media_type": "audio", "extensions": {"wav"}},
     "audio/mp4": {"media_type": "audio", "extensions": {"m4a"}},
     "text/plain": {"media_type": "text", "extensions": {"txt"}},
+    PDF_MIME: {"media_type": "text", "extensions": {"pdf"}},
+    DOCX_MIME: {"media_type": "text", "extensions": {"docx"}},
 }
 
 
@@ -23,12 +28,22 @@ def extension_of(filename: str) -> str:
     return filename.rsplit(".", 1)[-1].lower()
 
 
-def detect_mime(header: bytes, filename: str) -> str:
+def detect_mime(header: bytes, filename: str, source: Path | None = None) -> str:
     ext = extension_of(filename)
     if ext == "txt":
         if _looks_like_text(header):
             return "text/plain"
         raise AppError("FILE_TYPE_MISMATCH", 415, {"expected": "text/plain", "detected": "binary"})
+    if ext == "pdf":
+        if looks_like_pdf(header):
+            return PDF_MIME
+        raise AppError("FILE_TYPE_MISMATCH", 415, {"expected": PDF_MIME, "extension": ext})
+    if ext == "docx":
+        if not header.startswith(b"PK"):
+            raise AppError("FILE_TYPE_MISMATCH", 415, {"expected": DOCX_MIME, "extension": ext})
+        if source is not None and not docx_has_document(source):
+            raise AppError("FILE_TYPE_MISMATCH", 415, {"expected": DOCX_MIME, "extension": ext})
+        return DOCX_MIME
 
     detected = _magic(header)
     if detected is None:

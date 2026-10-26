@@ -260,7 +260,7 @@
     "body": "Il browser invia il file all'API. L'elaborazione parte solo dopo che il file e il lavoro sono stati salvati. Questa pagina mostra l'avanzamento e si ferma con un errore se il worker non è in esecuzione.",
     "drop": "Rilascia i file qui, oppure sfoglia.",
     "browse": "Sfoglia i file",
-    "types": "Tipi accettati: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A e TXT.",
+    "types": "Tipi accettati: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A, TXT, PDF e DOCX.",
     "limit": "L'API accetta file fino a {size}.",
     "metadata": "Metadati di questo gruppo",
     "titleField": "Titolo",

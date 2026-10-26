@@ -14,6 +14,7 @@ from PIL import Image, UnidentifiedImageError
 
 from app.config import PIPELINE_VERSION, Settings
 from app.errors import AppError, ProviderError
+from app.media.documents import read_text_content
 from app.media.ffmpeg import detect_scene_cuts, extract_clip, extract_frame, extract_wav, probe, split_wav, transcode_playback
 from app.media.images import inspect_image, write_thumbnail
 from app.media.hashing import sha256_file
@@ -299,12 +300,7 @@ def _validate(local: Path, asset: dict, settings: Settings) -> tuple[dict, dict]
         _apply_capture(asset, patch, technical["exif"].get("capturedAtUtc"))
         return {"image": technical}, patch
     if media_type == "text":
-        try:
-            text = local.read_text(encoding="utf-8")
-        except UnicodeDecodeError as exc:
-            raise AppError("TEXT_ENCODING_UNSUPPORTED", 422, {}) from exc
-        if "\x00" in text:
-            raise AppError("CORRUPT_MEDIA", 422, {"reason": "binary"})
+        text = read_text_content(local, asset.get("mimeType") or "text/plain")
         return {"text": {"characters": len(text)}}, patch
     try:
         probed = probe(local)
@@ -380,7 +376,7 @@ def _extract_image(local: Path, asset: dict, generation: int, work: Path, deps: 
 
 
 def _extract_text_with_settings(local: Path, asset: dict, generation: int, settings: Settings) -> list[dict]:
-    text = local.read_text(encoding="utf-8")
+    text = read_text_content(local, asset.get("mimeType") or "text/plain")
     drafts = []
     for start, end, chunk in segment_text(text, settings.text_chunk_chars, settings.text_chunk_overlap_chars):
         draft = _base_draft(asset, generation, "text_chunk", None, None)
