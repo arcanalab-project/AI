@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start --hostname 0.0.0.0 --port 3000",
     "typecheck": "tsc --noEmit",
-    "test:messages": "node scripts/check-messages.mjs"
+    "test:messages": "node scripts/check-messages.mjs",
+    "postinstall": "node scripts/copy-pdf-worker.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
@@ -16,6 +17,7 @@
     "lucide-react": "^0.487.0",
     "next": "^15.5.4",
     "next-intl": "^3.26.5",
+    "pdfjs-dist": "4.10.38",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tailwind-merge": "^2.6.0"

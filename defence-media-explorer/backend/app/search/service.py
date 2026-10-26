@@ -450,6 +450,11 @@ class SearchService:
             "matchEvidence": evidence or None,
             "startMs": hit.get("startMs"),
             "endMs": hit.get("endMs"),
+            "pageStart": hit.get("pageStart"),
+            "pageEnd": hit.get("pageEnd"),
+            "mimeType": (hit.get("originalObject") or {}).get("mimeType") if isinstance(hit.get("originalObject"), dict) else hit.get("mimeType"),
+            "playbackUrl": _pdf_playback(hit),
+            "transcript": hit.get("transcript") if _is_pdf(hit) else None,
             "thumbnailUrl": playback_url(thumb) if thumb else None,
             "tags": hit.get("tags") or [],
             "categories": hit.get("categories") or [],
@@ -467,6 +472,21 @@ class SearchService:
                 for item in hit.get("nearby") or []
             ],
         }
+
+
+def _is_pdf(hit: dict) -> bool:
+    original = hit.get("originalObject")
+    mime = original.get("mimeType") if isinstance(original, dict) else hit.get("mimeType")
+    return mime == "application/pdf"
+
+
+def _pdf_playback(hit: dict) -> str | None:
+    if not _is_pdf(hit):
+        return None
+    original = hit.get("originalObject")
+    if not isinstance(original, dict):
+        return None
+    return playback_url(original)
 
 
 def _mongo_sort(sort: str) -> list[tuple[str, int]]:

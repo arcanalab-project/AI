@@ -260,7 +260,7 @@
     "body": "El navegador envía el archivo a la API. El procesamiento empieza solo cuando el archivo y el trabajo ya están guardados. Esta página muestra el avance y se detiene con un error si el worker no está en ejecución.",
     "drop": "Suelte los archivos aquí, o explore.",
     "browse": "Explorar archivos",
-    "types": "Tipos aceptados: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A y TXT.",
+    "types": "Tipos aceptados: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A, TXT, PDF y DOCX.",
     "limit": "La API acepta archivos de hasta {size}.",
     "metadata": "Metadatos de este lote",
     "titleField": "Título",
@@ -393,6 +393,8 @@
   "asset": {
     "kicker": "Asset",
     "player": "Reproducción",
+    "page": "Página {page}",
+    "pdfMissing": "Este pasaje no aparece como un bloque visible en el PDF.",
     "noPlayback": "La reproducción aún no está disponible para este asset.",
     "timeline": "Línea de segmentos",
     "transcript": "Transcripción",

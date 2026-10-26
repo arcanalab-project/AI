@@ -10,3 +10,4 @@ tmp/
 .DS_Store
 backend/.coverage
 frontend/tsconfig.tsbuildinfo
+frontend/public/pdf.worker.min.mjs

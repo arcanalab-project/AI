@@ -260,7 +260,7 @@
     "body": "The browser sends the file to the API. Processing starts only after the file and the job are stored. This page shows progress and stops with an error if the worker is not running.",
     "drop": "Drop files here, or browse.",
     "browse": "Browse files",
-    "types": "Accepted types: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A, and TXT.",
+    "types": "Accepted types: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A, TXT, PDF, and DOCX.",
     "limit": "The API accepts files up to {size}.",
     "metadata": "Metadata for this batch",
     "titleField": "Title",
@@ -393,6 +393,8 @@
   "asset": {
     "kicker": "Asset",
     "player": "Playback",
+    "page": "Page {page}",
+    "pdfMissing": "This passage was not found as a visible block in the PDF.",
     "noPlayback": "Playback is not available for this asset yet.",
     "timeline": "Segment timeline",
     "transcript": "Transcript",

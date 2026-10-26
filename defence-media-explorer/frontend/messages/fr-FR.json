@@ -260,7 +260,7 @@
     "body": "Le navigateur envoie le fichier à l'API. Le traitement ne commence qu'une fois le fichier et le travail enregistrés. Cette page affiche la progression et s'arrête avec une erreur si le worker n'est pas lancé.",
     "drop": "Déposez les fichiers ici, ou parcourez.",
     "browse": "Parcourir les fichiers",
-    "types": "Types acceptés : MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A et TXT.",
+    "types": "Types acceptés : MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A, TXT, PDF et DOCX.",
     "limit": "L'API accepte les fichiers jusqu'à {size}.",
     "metadata": "Métadonnées de ce lot",
     "titleField": "Titre",
@@ -393,6 +393,8 @@
   "asset": {
     "kicker": "Asset",
     "player": "Lecture",
+    "page": "Page {page}",
+    "pdfMissing": "Ce passage n'apparaît pas comme un bloc visible dans le PDF.",
     "noPlayback": "La lecture n'est pas encore disponible pour cet asset.",
     "timeline": "Frise des segments",
     "transcript": "Transcription",

@@ -1,0 +1,110 @@
+"""Text extraction for PDF and Word (.docx). Both become the same text chunks as a TXT upload."""
+
+from __future__ import annotations
+
+import zipfile
+from pathlib import Path
+from xml.etree import ElementTree
+
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
+
+from app.errors import AppError
+
+PDF_MIME = "application/pdf"
+DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+_WORD_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+
+def looks_like_pdf(header: bytes) -> bool:
+    window = header[:1024].lstrip(b"\xef\xbb\xbf \t\r\n")
+    return window.startswith(b"%PDF")
+
+
+def docx_has_document(path: Path) -> bool:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            return "word/document.xml" in archive.namelist()
+    except (zipfile.BadZipFile, OSError):
+        return False
+
+
+def read_text_content(path: Path, mime: str) -> str:
+    kind = (mime or "text/plain").split(";", 1)[0].strip().lower()
+    if kind == PDF_MIME:
+        text, _spans = read_pdf_pages(path)
+        return text
+    if kind == DOCX_MIME:
+        return _docx_text(path)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise AppError("TEXT_ENCODING_UNSUPPORTED", 422, {}) from exc
+    if "\x00" in text:
+        raise AppError("CORRUPT_MEDIA", 422, {"reason": "binary"})
+    return text
+
+
+def read_pdf_pages(path: Path) -> tuple[str, list[tuple[int, int, int]]]:
+    """Return the joined text and each page's character span inside that text.
+
+    Spans are (page number, start, end). Page numbers are 1-based. Empty pages
+    are omitted, matching the text that gets chunked.
+    """
+
+    try:
+        reader = PdfReader(str(path))
+    except (PdfReadError, OSError, ValueError) as exc:
+        raise AppError("CORRUPT_MEDIA", 422, {"reason": "unreadable_pdf"}) from exc
+    if reader.is_encrypted:
+        raise AppError("CORRUPT_MEDIA", 422, {"reason": "encrypted_pdf"})
+    parts: list[str] = []
+    spans: list[tuple[int, int, int]] = []
+    cursor = 0
+    for index, page in enumerate(reader.pages, start=1):
+        try:
+            extracted = page.extract_text() or ""
+        except (PdfReadError, ValueError, KeyError):
+            extracted = ""
+        cleaned = extracted.strip()
+        if not cleaned:
+            continue
+        if parts:
+            cursor += 2
+        start = cursor
+        parts.append(cleaned)
+        cursor += len(cleaned)
+        spans.append((index, start, cursor))
+    return "\n\n".join(parts), spans
+
+
+def pages_for_range(spans: list[tuple[int, int, int]], start: int, end: int) -> tuple[int | None, int | None]:
+    """Pages touched by a character range in the joined PDF text."""
+
+    if not spans or end < start:
+        return None, None
+    overlapping = [page for page, span_start, span_end in spans if start < span_end and end > span_start]
+    if overlapping:
+        return overlapping[0], overlapping[-1]
+    for page, span_start, _span_end in spans:
+        if start < span_start:
+            return page, page
+    return spans[-1][0], spans[-1][0]
+
+
+def _docx_text(path: Path) -> str:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            payload = archive.read("word/document.xml")
+    except (KeyError, zipfile.BadZipFile, OSError) as exc:
+        raise AppError("CORRUPT_MEDIA", 422, {"reason": "unreadable_docx"}) from exc
+    try:
+        root = ElementTree.fromstring(payload)
+    except ElementTree.ParseError as exc:
+        raise AppError("CORRUPT_MEDIA", 422, {"reason": "unreadable_docx"}) from exc
+    lines: list[str] = []
+    for paragraph in root.iter(f"{_WORD_NS}p"):
+        line = "".join(node.text or "" for node in paragraph.iter(f"{_WORD_NS}t")).strip()
+        if line:
+            lines.append(line)
+    return "\n".join(lines)

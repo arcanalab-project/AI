@@ -18,7 +18,7 @@ import { ErrorNote, PageIntro } from "@/components/shell";
 import { FileSize } from "@/components/format";
 import { statusLabel } from "@/i18n";
 
-const ACCEPT = ".mp4,.mov,.jpg,.jpeg,.png,.webp,.mp3,.wav,.m4a,.txt";
+const ACCEPT = ".mp4,.mov,.jpg,.jpeg,.png,.webp,.mp3,.wav,.m4a,.txt,.pdf,.docx";
 
 export default function UploadPage() {
   const t = useTranslations();

@@ -260,7 +260,7 @@
     "body": "Der Browser sendet die Datei an die API. Die Verarbeitung startet erst, wenn Datei und Auftrag gespeichert sind. Diese Seite zeigt den Fortschritt und stoppt mit einem Fehler, wenn der Worker nicht läuft.",
     "drop": "Dateien hier ablegen oder durchsuchen.",
     "browse": "Dateien durchsuchen",
-    "types": "Zulässige Typen: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A und TXT.",
+    "types": "Zulässige Typen: MP4, MOV, JPEG, PNG, WEBP, MP3, WAV, M4A, TXT, PDF und DOCX.",
     "limit": "Die API nimmt Dateien bis {size} an.",
     "metadata": "Metadaten für diesen Stapel",
     "titleField": "Titel",
@@ -393,6 +393,8 @@
   "asset": {
     "kicker": "Asset",
     "player": "Wiedergabe",
+    "page": "Seite {page}",
+    "pdfMissing": "Diese Stelle ist im PDF nicht als sichtbarer Block zu finden.",
     "noPlayback": "Die Wiedergabe ist für dieses Asset noch nicht verfügbar.",
     "timeline": "Segmentzeitleiste",
     "transcript": "Transkript",

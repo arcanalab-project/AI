@@ -4,6 +4,7 @@ const internal = process.env.API_INTERNAL_URL || "http://localhost:8000";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  transpilePackages: ["pdfjs-dist"],
   allowedDevOrigins: ["127.0.0.1", "localhost", "bastion-app.com", "www.bastion-app.com"],
   experimental: {
     // Rewrites clone the request body and stop at 10MB unless this is raised.
