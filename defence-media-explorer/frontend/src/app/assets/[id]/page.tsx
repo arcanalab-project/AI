@@ -10,6 +10,7 @@ import { Badge, Button, FieldLabel, Select, TextArea, TextInput } from "@/compon
 import { ErrorNote, PageIntro } from "@/components/shell";
 import { Clock, DurationText, FileSize, LocalDate, LocalNumber } from "@/components/format";
 import { message, statusLabel, type Translator } from "@/i18n";
+import { PdfBlock } from "@/components/pdf-block";
 import { ResultGrid } from "@/components/results";
 
 type Technical = {
@@ -219,7 +220,12 @@ export default function AssetPage() {
             <video ref={videoRef} src={asset.playbackUrl} controls preload="auto" className="max-h-[36rem] w-full bg-[var(--canvas)]" />
           ) : null}
           {asset.mediaType === "audio" && asset.playbackUrl ? <audio ref={audioRef} src={asset.playbackUrl} controls className="w-full" /> : null}
-          {asset.mediaType === "text" ? <pre className="whitespace-pre-wrap break-words font-sans text-base leading-relaxed">{segment?.transcript || asset.description}</pre> : null}
+          {asset.mimeType === "application/pdf" && asset.playbackUrl ? (
+            <PdfBlock url={asset.playbackUrl} text={segment?.transcript || ""} page={segment?.pageStart} query={search.get("q") || ""} />
+          ) : null}
+          {asset.mediaType === "text" && asset.mimeType !== "application/pdf" ? (
+            <pre className="whitespace-pre-wrap break-words font-sans text-base leading-relaxed">{segment?.transcript || asset.description}</pre>
+          ) : null}
           {!asset.playbackUrl && asset.mediaType !== "text" && asset.mediaType !== "image" ? <p>{t("asset.noPlayback")}</p> : null}
         </div>
       </section>
@@ -234,7 +240,13 @@ export default function AssetPage() {
               className="seg-btn"
               aria-current={item.id === segment?.id ? "true" : undefined}
             >
-              <Clock ms={item.startMs} /> – <Clock ms={item.endMs} />
+              {asset.mimeType === "application/pdf" ? (
+                item.pageStart ? t("asset.page", { page: item.pageStart }) : (item.transcript || "").replace(/\s+/g, " ").slice(0, 48)
+              ) : (
+                <>
+                  <Clock ms={item.startMs} /> – <Clock ms={item.endMs} />
+                </>
+              )}
             </button>
           ))}
         </div>
@@ -247,9 +259,15 @@ export default function AssetPage() {
               {segments.map((item) => (
                 <li key={item.id}>
                   <button type="button" className="max-w-full break-words text-left leading-relaxed" onClick={() => seek(item.id, item.startMs)}>
-                    <span className="mr-2 text-sm text-[var(--muted)]">
-                      <Clock ms={item.startMs} />
-                    </span>
+                    {asset.mimeType === "application/pdf" ? (
+                      item.pageStart ? (
+                        <span className="mr-2 text-sm text-[var(--muted)]">{t("asset.page", { page: item.pageStart })}</span>
+                      ) : null
+                    ) : (
+                      <span className="mr-2 text-sm text-[var(--muted)]">
+                        <Clock ms={item.startMs} />
+                      </span>
+                    )}
                     {item.transcript || t("asset.noTranscript")}
                   </button>
                 </li>

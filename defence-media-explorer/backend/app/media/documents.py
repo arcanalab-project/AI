@@ -32,7 +32,8 @@ def docx_has_document(path: Path) -> bool:
 def read_text_content(path: Path, mime: str) -> str:
     kind = (mime or "text/plain").split(";", 1)[0].strip().lower()
     if kind == PDF_MIME:
-        return _pdf_text(path)
+        text, _spans = read_pdf_pages(path)
+        return text
     if kind == DOCX_MIME:
         return _docx_text(path)
     try:
@@ -44,7 +45,13 @@ def read_text_content(path: Path, mime: str) -> str:
     return text
 
 
-def _pdf_text(path: Path) -> str:
+def read_pdf_pages(path: Path) -> tuple[str, list[tuple[int, int, int]]]:
+    """Return the joined text and each page's character span inside that text.
+
+    Spans are (page number, start, end). Page numbers are 1-based. Empty pages
+    are omitted, matching the text that gets chunked.
+    """
+
     try:
         reader = PdfReader(str(path))
     except (PdfReadError, OSError, ValueError) as exc:
@@ -52,15 +59,37 @@ def _pdf_text(path: Path) -> str:
     if reader.is_encrypted:
         raise AppError("CORRUPT_MEDIA", 422, {"reason": "encrypted_pdf"})
     parts: list[str] = []
-    for page in reader.pages:
+    spans: list[tuple[int, int, int]] = []
+    cursor = 0
+    for index, page in enumerate(reader.pages, start=1):
         try:
             extracted = page.extract_text() or ""
         except (PdfReadError, ValueError, KeyError):
             extracted = ""
         cleaned = extracted.strip()
-        if cleaned:
-            parts.append(cleaned)
-    return "\n\n".join(parts)
+        if not cleaned:
+            continue
+        if parts:
+            cursor += 2
+        start = cursor
+        parts.append(cleaned)
+        cursor += len(cleaned)
+        spans.append((index, start, cursor))
+    return "\n\n".join(parts), spans
+
+
+def pages_for_range(spans: list[tuple[int, int, int]], start: int, end: int) -> tuple[int | None, int | None]:
+    """Pages touched by a character range in the joined PDF text."""
+
+    if not spans or end < start:
+        return None, None
+    overlapping = [page for page, span_start, span_end in spans if start < span_end and end > span_start]
+    if overlapping:
+        return overlapping[0], overlapping[-1]
+    for page, span_start, _span_end in spans:
+        if start < span_start:
+            return page, page
+    return spans[-1][0], spans[-1][0]
 
 
 def _docx_text(path: Path) -> str:

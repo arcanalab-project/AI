@@ -393,6 +393,8 @@
   "asset": {
     "kicker": "Asset",
     "player": "Wiedergabe",
+    "page": "Seite {page}",
+    "pdfMissing": "Diese Stelle ist im PDF nicht als sichtbarer Block zu finden.",
     "noPlayback": "Die Wiedergabe ist für dieses Asset noch nicht verfügbar.",
     "timeline": "Segmentzeitleiste",
     "transcript": "Transkript",

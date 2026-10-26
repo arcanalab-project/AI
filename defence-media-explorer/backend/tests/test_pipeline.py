@@ -304,6 +304,8 @@ def test_pdf_and_docx_are_chunked_like_text(tmp_path: Path):
     assert "Harbour patrol note NOVEMBER-2204" in combined
     assert repo.assets["asset-1"]["processingStatus"] in {"ready", "partial"}
     assert all(item["modality"] == "text" for item in repo.segments)
+    assert repo.segments[0]["pageStart"] == 1
+    assert repo.segments[0]["pageEnd"] == 1
 
     docx = tmp_path / "order.docx"
     _write_docx(docx, "Convoy order KILO-4418")

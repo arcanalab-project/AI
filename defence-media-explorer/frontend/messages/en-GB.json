@@ -393,6 +393,8 @@
   "asset": {
     "kicker": "Asset",
     "player": "Playback",
+    "page": "Page {page}",
+    "pdfMissing": "This passage was not found as a visible block in the PDF.",
     "noPlayback": "Playback is not available for this asset yet.",
     "timeline": "Segment timeline",
     "transcript": "Transcript",

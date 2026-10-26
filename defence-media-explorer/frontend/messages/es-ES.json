@@ -393,6 +393,8 @@
   "asset": {
     "kicker": "Asset",
     "player": "Reproducción",
+    "page": "Página {page}",
+    "pdfMissing": "Este pasaje no aparece como un bloque visible en el PDF.",
     "noPlayback": "La reproducción aún no está disponible para este asset.",
     "timeline": "Línea de segmentos",
     "transcript": "Transcripción",

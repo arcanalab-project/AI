@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { ArrowUpRight, Info, ScanSearch, X } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Badge, Button } from "@/components/ui";
 import { Clock, LocalDate } from "@/components/format";
 import { statusTone } from "@/components/shell";
 import { message, statusLabel } from "@/i18n";
+import { PdfBlock } from "@/components/pdf-block";
 import type { SearchResult } from "@/lib/api";
 import { formatRelevanceScore, relevanceLabelKey } from "@/lib/relevance";
 
@@ -26,8 +29,9 @@ export function SearchResults({
   const t = useTranslations();
   if (!results.length) return <p className="text-base text-[var(--muted)]">{t("search.empty")}</p>;
   const selected = results.find((item) => item.segmentId === selectedId) || null;
+  const pdfOpen = selected?.mimeType === "application/pdf" && Boolean(selected.playbackUrl);
   return (
-    <div className="search-results-layout">
+    <div className={pdfOpen ? "search-results-layout search-results-layout-pdf" : "search-results-layout"}>
       <div className="min-w-0 flex-1">
         {view === "gallery" ? (
           <ResultGallery results={results} selectedId={selectedId} onSelect={onSelect} />
@@ -50,6 +54,7 @@ function ResultGallery({
   onSelect: (result: SearchResult | null) => void;
 }) {
   const t = useTranslations();
+  const query = useResultQuery();
   return (
     <div className="media-grid">
       {results.map((result) => (
@@ -75,7 +80,12 @@ function ResultGallery({
               <p className="media-card-meta">
                 <span>{t("search.uploadedLabel")}: </span>
                 {result.uploadedAt ? <LocalDate value={result.uploadedAt} /> : t("common.notAvailable")}
-                {result.mediaType === "video" && result.startMs != null ? (
+                {result.pageStart != null ? (
+                  <>
+                    {" · "}
+                    {t("asset.page", { page: result.pageStart })}
+                  </>
+                ) : result.mediaType === "video" && result.startMs != null ? (
                   <>
                     {" · "}
                     <Clock ms={result.startMs} />
@@ -85,7 +95,7 @@ function ResultGallery({
             </div>
           </button>
           <div className="media-card-actions action-bar">
-            <ActionLink href={assetHref(result)} label={t("common.open")}>
+            <ActionLink href={assetHref(result, query)} label={t("common.open")}>
               <ArrowUpRight aria-hidden size={16} />
             </ActionLink>
             <ActionLink href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}&similar=1`} label={t("search.findSimilar")}>
@@ -108,6 +118,7 @@ function ResultList({
   onSelect: (result: SearchResult | null) => void;
 }) {
   const t = useTranslations();
+  const query = useResultQuery();
   return (
     <div className="data-table data-table-spacious">
       <table>
@@ -146,17 +157,25 @@ function ResultList({
                 {result.uploadedAt ? <LocalDate value={result.uploadedAt} /> : t("common.notAvailable")}
               </td>
               <td className="num whitespace-nowrap">
-                <Clock ms={result.startMs} />
-                {result.endMs != null ? (
+                {result.pageStart != null ? (
+                  t("asset.page", { page: result.pageStart })
+                ) : result.mediaType === "video" ? (
                   <>
-                    {" – "}
-                    <Clock ms={result.endMs} />
+                    <Clock ms={result.startMs} />
+                    {result.endMs != null ? (
+                      <>
+                        {" – "}
+                        <Clock ms={result.endMs} />
+                      </>
+                    ) : null}
                   </>
-                ) : null}
+                ) : (
+                  t("common.notAvailable")
+                )}
               </td>
               <td>
                 <div className="action-bar">
-                  <ActionLink href={assetHref(result)} label={t("common.open")}>
+                  <ActionLink href={assetHref(result, query)} label={t("common.open")}>
                     <ArrowUpRight aria-hidden size={15} />
                   </ActionLink>
                   <ActionLink href={`/assets/${result.assetId}?segment=${encodeURIComponent(result.segmentId)}&similar=1`} label={t("search.findSimilar")}>
@@ -177,18 +196,30 @@ function ResultList({
 
 function ResultDetailPanel({ result, onClose }: { result: SearchResult; onClose: () => void }) {
   const t = useTranslations();
+  const query = useResultQuery();
   const evidence = result.matchEvidence;
+  const panelRef = useRef<HTMLElement>(null);
+  const pdf = result.mimeType === "application/pdf" && Boolean(result.playbackUrl);
+  useEffect(() => {
+    panelRef.current?.scrollIntoView({ block: "start" });
+  }, [result.segmentId]);
   return (
-    <aside className="result-detail panel" aria-label={t("search.detail.title")}>
+    <aside ref={panelRef} className={pdf ? "result-detail result-detail-pdf panel" : "result-detail panel"} aria-label={t("search.detail.title")}>
       <div className="result-detail-header">
         <h2 className="result-detail-title">{result.title || t("common.unknown")}</h2>
         <Button type="button" variant="ghost" onClick={onClose} aria-label={t("search.detail.close")}>
           <X aria-hidden size={18} />
         </Button>
       </div>
-      <div className="result-detail-preview">
-        {result.thumbnailUrl ? <img src={result.thumbnailUrl} alt="" className="result-detail-image" /> : <div className="media-card-placeholder" />}
-      </div>
+      {result.mimeType === "application/pdf" && result.playbackUrl ? (
+        <div className="result-detail-preview result-detail-preview-pdf">
+          <PdfBlock url={result.playbackUrl} text={result.transcript || result.matchText || ""} page={result.pageStart} query={query} />
+        </div>
+      ) : (
+        <div className="result-detail-preview">
+          {result.thumbnailUrl ? <img src={result.thumbnailUrl} alt="" className="result-detail-image" /> : <div className="media-card-placeholder" />}
+        </div>
+      )}
       {result.relevance ? (
         <div className="result-detail-block">
           <RelevanceBadge relevance={result.relevance} large />
@@ -210,7 +241,12 @@ function ResultDetailPanel({ result, onClose }: { result: SearchResult; onClose:
           <dt>{t("asset.captured")}</dt>
           <dd>{result.captureDateUnknown ? t("search.captureUnknown") : result.capturedAt ? <LocalDate value={result.capturedAt} /> : t("common.notAvailable")}</dd>
         </div>
-        {result.mediaType === "video" ? (
+        {result.pageStart != null ? (
+          <div>
+            <dt>{t("asset.timeline")}</dt>
+            <dd>{t("asset.page", { page: result.pageStart })}</dd>
+          </div>
+        ) : result.mediaType === "video" ? (
           <div>
             <dt>{t("asset.timeline")}</dt>
             <dd className="num">
@@ -227,7 +263,7 @@ function ResultDetailPanel({ result, onClose }: { result: SearchResult; onClose:
       </dl>
       {evidence ? <EvidenceBlock evidence={evidence} /> : null}
       <div className="result-detail-actions">
-        <Link href={assetHref(result)} className="btn btn-primary">
+        <Link href={assetHref(result, query)} className="btn btn-primary">
           {t("search.detail.openFull")}
         </Link>
       </div>
@@ -296,10 +332,16 @@ export function ActionLink({ href, label, children }: { href: string; label: str
   );
 }
 
-function assetHref(result: SearchResult) {
+function useResultQuery() {
+  const params = useSearchParams();
+  return params.get("q") || "";
+}
+
+function assetHref(result: SearchResult, query = "") {
   const params = new URLSearchParams();
   params.set("segment", result.segmentId);
   if (result.startMs != null) params.set("t", String(result.startMs));
+  if (query) params.set("q", query);
   return `/assets/${result.assetId}?${params.toString()}`;
 }
 

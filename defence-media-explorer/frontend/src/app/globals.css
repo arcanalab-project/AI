@@ -858,6 +858,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
     align-items: start;
   }
+
+  .search-results-layout-pdf {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.search-results-layout-pdf .result-detail {
+  position: relative;
+  top: auto;
+  order: -1;
 }
 
 .media-grid {
@@ -1029,6 +1039,43 @@ button, input, select, textarea { font: inherit; color: inherit; }
   overflow: hidden;
   border-radius: 10px;
   aspect-ratio: 16 / 10;
+}
+
+.result-detail-preview-pdf {
+  aspect-ratio: auto;
+  overflow: visible;
+}
+
+.pdf-view-caption {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.pdf-stage {
+  max-height: 34rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0e1a2b;
+}
+
+.pdf-stage-loading { min-height: 12rem; }
+
+.pdf-page {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
+  background: #fff;
+}
+
+.pdf-page canvas { display: block; }
+
+.pdf-mark {
+  position: absolute;
+  background: rgba(245, 197, 107, 0.48);
+  box-shadow: inset 0 0 0 1px rgba(120, 72, 0, 0.55);
+  pointer-events: none;
 }
 
 .result-detail-block { margin-top: 1rem; }

@@ -95,6 +95,8 @@ export type Segment = {
   source?: string | null;
   sourceLanguage?: string | null;
   thumbnailUrl?: string | null;
+  pageStart?: number | null;
+  pageEnd?: number | null;
   storyboard?: { object?: { key?: string }; timestampMs?: number; url?: string }[];
   processingStatus?: string;
   warnings?: string[];
@@ -135,6 +137,11 @@ export type SearchResult = {
   matchText?: string;
   startMs?: number | null;
   endMs?: number | null;
+  pageStart?: number | null;
+  pageEnd?: number | null;
+  mimeType?: string | null;
+  playbackUrl?: string | null;
+  transcript?: string | null;
   thumbnailUrl?: string | null;
   tags: string[];
   categories: string[];

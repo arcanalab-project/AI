@@ -14,7 +14,7 @@ from PIL import Image, UnidentifiedImageError
 
 from app.config import PIPELINE_VERSION, Settings
 from app.errors import AppError, ProviderError
-from app.media.documents import read_text_content
+from app.media.documents import PDF_MIME, pages_for_range, read_pdf_pages, read_text_content
 from app.media.ffmpeg import detect_scene_cuts, extract_clip, extract_frame, extract_wav, probe, split_wav, transcode_playback
 from app.media.images import inspect_image, write_thumbnail
 from app.media.hashing import sha256_file
@@ -376,7 +376,12 @@ def _extract_image(local: Path, asset: dict, generation: int, work: Path, deps: 
 
 
 def _extract_text_with_settings(local: Path, asset: dict, generation: int, settings: Settings) -> list[dict]:
-    text = read_text_content(local, asset.get("mimeType") or "text/plain")
+    mime = (asset.get("mimeType") or "text/plain").split(";", 1)[0].strip().lower()
+    page_spans: list[tuple[int, int, int]] = []
+    if mime == PDF_MIME:
+        text, page_spans = read_pdf_pages(local)
+    else:
+        text = read_text_content(local, mime)
     drafts = []
     for start, end, chunk in segment_text(text, settings.text_chunk_chars, settings.text_chunk_overlap_chars):
         draft = _base_draft(asset, generation, "text_chunk", None, None)
@@ -385,6 +390,10 @@ def _extract_text_with_settings(local: Path, asset: dict, generation: int, setti
         draft["transcript"] = chunk
         draft["embeddingPlan"] = "text"
         draft["sourceText"] = chunk
+        if page_spans:
+            page_start, page_end = pages_for_range(page_spans, start, end)
+            draft["pageStart"] = page_start
+            draft["pageEnd"] = page_end
         drafts.append(draft)
     if not drafts:
         draft = _base_draft(asset, generation, "text_chunk", None, None)
@@ -828,6 +837,8 @@ def _segment_document(asset: dict, draft: dict, generation: int, status: str, me
         "endMs": draft.get("endMs"),
         "startChar": draft.get("startChar"),
         "endChar": draft.get("endChar"),
+        "pageStart": draft.get("pageStart"),
+        "pageEnd": draft.get("pageEnd"),
         "capturedAt": captured_at,
         "captureDateUnknown": bool(unknown if captured_at is None else False) if captured_at is None else False,
         "uploadedAt": asset["uploadedAt"],
