@@ -1,0 +1,24 @@
+// Starter scheduled rule: user and role changes in the Atlas audit stream.
+MongoDBAtlasLogs_CL
+| where TimeGenerated > ago(1h)
+| where LogType in ("MONGOD_AUDIT", "MONGOS_AUDIT")
+| where AType in (
+    "createUser",
+    "dropUser",
+    "updateUser",
+    "grantRolesToUser",
+    "revokeRolesFromUser",
+    "createRole",
+    "dropRole",
+    "updateRole")
+| project
+    TimeGenerated,
+    AtlasGroupId,
+    AtlasProjectName,
+    AtlasClusterName,
+    AtlasHostName,
+    AType,
+    Result,
+    UserName,
+    RemoteIp,
+    Message
