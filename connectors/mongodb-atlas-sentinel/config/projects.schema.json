@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://arcanalab.example/mongodb-atlas-sentinel/projects.schema.json",
+  "title": "Atlas Sentinel projects",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["projects"],
+  "properties": {
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5000,
+      "items": { "$ref": "#/$defs/project" }
+    }
+  },
+  "$defs": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["displayName", "atlasGroupId", "entraTenantId", "allowedClientIds"],
+      "properties": {
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "atlasOrgId": { "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+        "atlasGroupId": { "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+        "entraTenantId": { "type": "string", "format": "uuid" },
+        "allowedClientIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "logIntegrationId": { "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+        "logTypes": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "enum": ["MONGOD", "MONGOS", "MONGOD_AUDIT", "MONGOS_AUDIT", "EVENTS"] }
+        },
+        "enabled": { "type": "boolean" },
+        "sink": { "$ref": "#/$defs/sink" }
+      }
+    },
+    "sink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dceEndpoint", "dcrImmutableId", "stream", "table"],
+      "properties": {
+        "dceEndpoint": { "type": "string", "format": "uri" },
+        "dcrImmutableId": { "type": "string", "pattern": "^dcr-[A-Za-z0-9]+$" },
+        "stream": { "type": "string" },
+        "table": { "type": "string" }
+      }
+    }
+  }
+}

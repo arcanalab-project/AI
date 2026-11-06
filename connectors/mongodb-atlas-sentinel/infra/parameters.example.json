@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": { "value": "sentinel-example" },
+    "createDedicatedWorkspace": { "value": true },
+    "projectsConfigJson": {
+      "value": "{\"projects\":[{\"displayName\":\"sogei-tax-prod\",\"atlasOrgId\":\"6650aa001122334455667701\",\"atlasGroupId\":\"6650aa001122334455667788\",\"entraTenantId\":\"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\",\"allowedClientIds\":[\"11111111-2222-3333-4444-555555555555\"],\"logIntegrationId\":\"6650aa001122334455667799\",\"logTypes\":[\"MONGOD\",\"MONGOS\",\"MONGOD_AUDIT\",\"MONGOS_AUDIT\",\"EVENTS\"]}]}"
+    },
+    "entraAudience": { "value": "api://00000000-0000-0000-0000-000000000000" },
+    "entraTenantId": { "value": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" },
+    "entraClientId": { "value": "11111111-2222-3333-4444-555555555555" },
+    "tlsCertificateName": { "value": "otlp-tls" },
+    "entraCertificateName": { "value": "entra-client" },
+    "atlasClientId": { "value": "atlas-service-account-client-id" },
+    "atlasClientSecretName": { "value": "atlas-service-account" },
+    "ingestImage": { "value": "example.azurecr.io/atlas-sentinel-ingest:0.9.0" },
+    "otlpHostname": { "value": "atlas-otel.example.com" },
+    "adminUsername": { "value": "atlasadmin" },
+    "adminSshPublicKey": { "value": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleOnlyNotARealKeyForDeployment atlas-sentinel-example" }
+  }
+}

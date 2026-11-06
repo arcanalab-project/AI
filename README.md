@@ -90,3 +90,9 @@ Mario Noioso
 Advisory Solution Architect
 Data, AI, and the Real World
 
+⸻
+
+MongoDB Atlas connector for Microsoft Sentinel
+
+A connector package for Atlas log export lives in `connectors/mongodb-atlas-sentinel/`. It is separate from this field report. That directory describes the private ingest path, Entra authentication, and what is still required before Azure Marketplace certification.
+

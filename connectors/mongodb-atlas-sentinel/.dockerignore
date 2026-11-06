@@ -1,0 +1,6 @@
+.git
+**/*_test.go
+infra
+packaging
+docs
+*.md

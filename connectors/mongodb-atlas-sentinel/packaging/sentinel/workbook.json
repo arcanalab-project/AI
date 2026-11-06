@@ -1,0 +1,39 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "## MongoDB Atlas logs\n\nStarter workbook for `MongoDBAtlasLogs_CL`. Not a Content Hub solution. Heartbeat rows are shown separately from Atlas events."
+      },
+      "name": "intro"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "MongoDBAtlasLogs_CL\n| where LogType != \"connector-heartbeat\"\n| summarize Events = count() by AtlasProjectName, LogType, bin(TimeGenerated, 1h)\n| render timechart",
+        "size": 0,
+        "title": "Events by project",
+        "timeContext": { "durationMs": 86400000 },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "events"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "MongoDBAtlasLogs_CL\n| where LogType == \"connector-heartbeat\"\n| summarize LastSeen = max(TimeGenerated) by IngestReplica, IngestVersion",
+        "size": 0,
+        "title": "Ingest heartbeat",
+        "timeContext": { "durationMs": 86400000 },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "heartbeat"
+    }
+  ],
+  "isLocked": false
+}

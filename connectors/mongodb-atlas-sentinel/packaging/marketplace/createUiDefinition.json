@@ -1,0 +1,287 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "isWizard": true,
+      "basics": {
+        "description": "MongoDB Atlas logs for Microsoft Sentinel. Version 0.9 deploys a private OTLP ingest path and an Entra token publisher. It does not collect secrets.",
+        "location": {
+          "label": "Region",
+          "toolTip": "Region for the connector resources. An existing workspace must already be in this region and in the selected resource group."
+        }
+      }
+    },
+    "basics": [],
+    "steps": [
+      {
+        "name": "workspace",
+        "label": "Workspace",
+        "elements": [
+          {
+            "name": "dedicated",
+            "type": "Microsoft.Common.CheckBox",
+            "label": "Create a dedicated workspace and onboard Sentinel",
+            "toolTip": "Uses a new workspace with public ingestion disabled. Leave cleared to use a workspace that already exists in this resource group.",
+            "constraints": { "required": false },
+            "visible": true
+          },
+          {
+            "name": "linkExisting",
+            "type": "Microsoft.Common.CheckBox",
+            "label": "Link an existing workspace to the private ingestion scope",
+            "toolTip": "This can stop public ingestion for every collector on that workspace. Ignored when a dedicated workspace is created, because that workspace is linked automatically.",
+            "constraints": { "required": false },
+            "visible": true
+          },
+          {
+            "name": "workspaceName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Log Analytics workspace name",
+            "toolTip": "Name in this resource group. Created only when the dedicated-workspace box is selected.",
+            "constraints": {
+              "required": true,
+              "regex": "^[A-Za-z0-9][A-Za-z0-9-]{2,61}[A-Za-z0-9]$",
+              "validationMessage": "Use 4 to 63 letters, numbers, and hyphens."
+            },
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "projects",
+        "label": "Projects",
+        "elements": [
+          {
+            "name": "note",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Paste project identifiers only. Do not paste tokens, certificates, or the Atlas service account secret. One deployment can list many Atlas projects."
+            }
+          },
+          {
+            "name": "projectsConfigJson",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Project allowlist JSON",
+            "toolTip": "A JSON object with a projects array. See config/projects.example.yaml in the connector repository.",
+            "multiline": true,
+            "constraints": {
+              "required": true,
+              "regex": "^\\s*\\{[\\s\\S]+\\}\\s*$",
+              "validationMessage": "Provide a JSON object. Do not paste secrets."
+            },
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "identity",
+        "label": "Identity",
+        "elements": [
+          {
+            "name": "entraAudience",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Entra audience",
+            "toolTip": "Application ID URI of the ingest API, usually api:// followed by the application id.",
+            "constraints": {
+              "required": true,
+              "regex": "^\\S+$",
+              "validationMessage": "Enter the Entra audience."
+            },
+            "visible": true
+          },
+          {
+            "name": "entraTenantId",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Publisher Entra tenant id",
+            "constraints": {
+              "required": true,
+              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "validationMessage": "Enter a tenant GUID."
+            },
+            "visible": true
+          },
+          {
+            "name": "entraClientId",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Publisher Entra client id",
+            "toolTip": "Application id that is also listed in allowedClientIds. No client secret is collected.",
+            "constraints": {
+              "required": true,
+              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "validationMessage": "Enter an application GUID."
+            },
+            "visible": true
+          },
+          {
+            "name": "tlsCertificateName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "TLS certificate name in the TLS Key Vault",
+            "constraints": {
+              "required": true,
+              "regex": "^[A-Za-z0-9-]{1,127}$",
+              "validationMessage": "Enter the certificate object name, not the certificate."
+            },
+            "visible": true
+          },
+          {
+            "name": "entraCertificateName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Entra certificate name in the control Key Vault",
+            "constraints": {
+              "required": true,
+              "regex": "^[A-Za-z0-9-]{1,127}$",
+              "validationMessage": "Enter the certificate object name, not the certificate."
+            },
+            "visible": true
+          },
+          {
+            "name": "atlasClientId",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Atlas service account client id",
+            "toolTip": "Used by the publisher to call the Atlas Admin API. The secret itself stays in Key Vault.",
+            "constraints": {
+              "required": true,
+              "regex": "^[A-Za-z0-9_.:-]{1,128}$",
+              "validationMessage": "Enter the Atlas client id."
+            },
+            "visible": true
+          },
+          {
+            "name": "atlasClientSecretName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Key Vault secret name for the Atlas service account",
+            "constraints": {
+              "required": true,
+              "regex": "^[A-Za-z0-9-]{1,127}$",
+              "validationMessage": "Enter the secret name, not the secret value."
+            },
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "network",
+        "label": "Network",
+        "elements": [
+          {
+            "name": "privateNote",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Warning",
+              "text": "The template creates a Private Link Service and does not create a public OTLP listener. Atlas cannot originate that private connection until MongoDB ships Private Link for log export (CUSTOMER-I-10570). The TLS name below must match a public-CA certificate."
+            }
+          },
+          {
+            "name": "otlpHostname",
+            "type": "Microsoft.Common.TextBox",
+            "label": "OTLP hostname",
+            "placeholder": "atlas-otel.example.com",
+            "constraints": {
+              "required": true,
+              "regex": "^(?=.{1,253}$)[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$",
+              "validationMessage": "Enter a DNS name without a scheme or port."
+            },
+            "visible": true
+          },
+          {
+            "name": "ingestImage",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Container image",
+            "placeholder": "example.azurecr.io/atlas-sentinel-ingest:0.9.0",
+            "toolTip": "Grant AcrPull to both managed identities when the registry is private.",
+            "constraints": {
+              "required": true,
+              "regex": "^[A-Za-z0-9][A-Za-z0-9_.:/@-]{0,255}$",
+              "validationMessage": "Enter an image reference."
+            },
+            "visible": true
+          },
+          {
+            "name": "ingestInstances",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Minimum ingest replicas",
+            "defaultValue": "2",
+            "constraints": {
+              "allowedValues": [
+                { "label": "2", "value": "2" },
+                { "label": "3", "value": "3" },
+                { "label": "4", "value": "4" },
+                { "label": "6", "value": "6" },
+                { "label": "8", "value": "8" }
+              ]
+            },
+            "visible": true
+          },
+          {
+            "name": "maxIngestInstances",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Maximum ingest replicas",
+            "defaultValue": "10",
+            "constraints": {
+              "allowedValues": [
+                { "label": "2", "value": "2" },
+                { "label": "4", "value": "4" },
+                { "label": "6", "value": "6" },
+                { "label": "10", "value": "10" },
+                { "label": "20", "value": "20" }
+              ]
+            },
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "vm",
+        "label": "Virtual machines",
+        "elements": [
+          {
+            "name": "credentials",
+            "type": "Microsoft.Compute.CredentialsCombo",
+            "label": {
+              "authenticationType": "Authentication type",
+              "password": "Password",
+              "confirmPassword": "Confirm password",
+              "sshPublicKey": "SSH public key"
+            },
+            "toolTip": {
+              "authenticationType": "SSH public key only.",
+              "password": "Not used.",
+              "sshPublicKey": "Public key for the scale set and the publisher VM. The private key is not stored."
+            },
+            "constraints": {
+              "allowedAuthenticationTypes": ["sshPublicKey"]
+            },
+            "options": { "hideConfirmation": true },
+            "osPlatform": "Linux",
+            "visible": true
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "workspaceName": "[steps('workspace').workspaceName]",
+      "createDedicatedWorkspace": "[steps('workspace').dedicated]",
+      "linkWorkspaceToAmpls": "[steps('workspace').linkExisting]",
+      "projectsConfigJson": "[steps('projects').projectsConfigJson]",
+      "entraAudience": "[steps('identity').entraAudience]",
+      "entraTenantId": "[steps('identity').entraTenantId]",
+      "entraClientId": "[steps('identity').entraClientId]",
+      "tlsCertificateName": "[steps('identity').tlsCertificateName]",
+      "entraCertificateName": "[steps('identity').entraCertificateName]",
+      "atlasClientId": "[steps('identity').atlasClientId]",
+      "atlasClientSecretName": "[steps('identity').atlasClientSecretName]",
+      "ingestImage": "[steps('network').ingestImage]",
+      "otlpHostname": "[steps('network').otlpHostname]",
+      "ingestInstances": "[int(steps('network').ingestInstances)]",
+      "maxIngestInstances": "[int(steps('network').maxIngestInstances)]",
+      "adminUsername": "[steps('vm').credentials.username]",
+      "adminSshPublicKey": "[steps('vm').credentials.sshPublicKey]"
+    }
+  }
+}

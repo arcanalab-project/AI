@@ -1,0 +1,13 @@
+// Starter scheduled rule: authentication failures by project and source.
+// Suggested schedule: 1 hour period, threshold above the project's normal noise.
+MongoDBAtlasLogs_CL
+| where TimeGenerated > ago(1h)
+| where LogType != "connector-heartbeat"
+| where AType =~ "authenticate"
+| where Result !in ("0", "success")
+| summarize
+    Failures = count(),
+    Users = make_set(UserName, 20),
+    Sources = make_set(RemoteIp, 20)
+    by AtlasGroupId, AtlasProjectName, AtlasClusterName, bin(TimeGenerated, 15m)
+| where Failures >= 20

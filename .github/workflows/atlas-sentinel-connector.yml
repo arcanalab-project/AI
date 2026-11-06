@@ -1,0 +1,40 @@
+name: atlas-sentinel-connector
+
+on:
+  pull_request:
+    paths:
+      - "connectors/mongodb-atlas-sentinel/**"
+      - ".github/workflows/atlas-sentinel-connector.yml"
+  push:
+    branches: [main]
+    paths:
+      - "connectors/mongodb-atlas-sentinel/**"
+      - ".github/workflows/atlas-sentinel-connector.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: connectors/mongodb-atlas-sentinel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+      - name: Test
+        run: go test ./...
+      - name: Install Bicep
+        run: |
+          curl -fsSL -o "${RUNNER_TEMP}/bicep" https://github.com/Azure/bicep/releases/download/v0.48.1/bicep-linux-x64
+          chmod +x "${RUNNER_TEMP}/bicep"
+      - name: Compile and compare the Marketplace template
+        run: |
+          "${RUNNER_TEMP}/bicep" build infra/main.bicep --outfile "${RUNNER_TEMP}/mainTemplate.json"
+          python3 - <<'PY'
+          import json, os, pathlib
+          built = json.loads(pathlib.Path(os.environ["RUNNER_TEMP"], "mainTemplate.json").read_text())
+          committed = json.loads(pathlib.Path("packaging/marketplace/mainTemplate.json").read_text())
+          if built != committed:
+              raise SystemExit("packaging/marketplace/mainTemplate.json is stale; run make bicep")
+          PY

@@ -1,0 +1,23 @@
+# Identifiers only. Do not put tokens, certificates, or client secrets in this file.
+projects:
+  - displayName: sogei-tax-prod
+    atlasOrgId: "6650aa001122334455667701"
+    atlasGroupId: "6650aa001122334455667788"
+    entraTenantId: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+    allowedClientIds:
+      - 11111111-2222-3333-4444-555555555555
+    logIntegrationId: "6650aa001122334455667799"
+    logTypes: [MONGOD, MONGOS, MONGOD_AUDIT, MONGOS_AUDIT, EVENTS]
+    sink:
+      dceEndpoint: https://dce-tax.westeurope-1.ingest.monitor.azure.com
+      dcrImmutableId: dcr-0123456789abcdef0123456789abcdef
+      stream: Custom-MongoDBAtlasLogs_CL
+      table: MongoDBAtlasLogs_CL
+  - displayName: sogei-customs-prod
+    atlasOrgId: "6650aa001122334455667702"
+    atlasGroupId: "6650aa00112233445566778a"
+    entraTenantId: bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee
+    allowedClientIds:
+      - 22222222-2222-3333-4444-555555555555
+    logIntegrationId: "6650aa00112233445566779a"
+    logTypes: [MONGOD, MONGOD_AUDIT, EVENTS]

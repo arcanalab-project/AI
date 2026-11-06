@@ -1,0 +1,34 @@
+// Starter parser. Save as a function named MongoDBAtlasLogs after the table exists.
+// connector-heartbeat rows are the ingest replica, not Atlas audit data.
+MongoDBAtlasLogs_CL
+| where LogType != "connector-heartbeat"
+| project
+    TimeGenerated,
+    EventTime,
+    TimeAdjusted,
+    AtlasOrgId,
+    AtlasGroupId,
+    AtlasProjectName,
+    AtlasClusterName,
+    AtlasHostName,
+    LogType,
+    Severity,
+    SeverityNumber,
+    Component,
+    MongoLogId,
+    Message,
+    AType,
+    Result,
+    UserName,
+    RemoteIp,
+    LocalIp,
+    RawLog,
+    RawLogTruncated,
+    Attributes,
+    RecordHash,
+    OtelTraceId,
+    OtelSpanId,
+    EntraTenantId,
+    EntraClientId,
+    IngestVersion,
+    IngestReplica

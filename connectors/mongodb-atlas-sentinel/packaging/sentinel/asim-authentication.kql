@@ -1,0 +1,27 @@
+// Starter ASIM Authentication projection for Atlas audit events.
+// This is not a certified ASIM parser and has not been run through the ASIM validator.
+MongoDBAtlasLogs_CL
+| where LogType in ("MONGOD_AUDIT", "MONGOS_AUDIT")
+| where AType =~ "authenticate"
+| extend
+    EventVendor = "MongoDB",
+    EventProduct = "Atlas",
+    EventType = iff(Result in ("0", "success"), "start", "fail"),
+    TargetUsername = UserName,
+    SrcIpAddr = RemoteIp,
+    EventStartTime = EventTime,
+    EventResult = iff(Result in ("0", "success"), "Success", "Failure"),
+    EventOriginalUid = RecordHash
+| project
+    TimeGenerated,
+    EventVendor,
+    EventProduct,
+    EventType,
+    EventResult,
+    EventStartTime,
+    TargetUsername,
+    SrcIpAddr,
+    AtlasGroupId,
+    AtlasProjectName,
+    AtlasClusterName,
+    EventOriginalUid
