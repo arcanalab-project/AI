@@ -11,14 +11,14 @@ export async function leggiAttore(db, req, { obbligatorio = true } = {}) {
   const codice = String(req.get('x-actor-code') || '').trim().toUpperCase();
   if (!codice) {
     if (!obbligatorio) return null;
-    throw new ErroreHttp(400, 'Seleziona la nazione con cui operi.');
+    throw new ErroreHttp(400, 'Select the nation you are acting as.');
   }
   const fornitore = await db.collection('fornitori').findOne(
     { _id: codice },
     { projection: { _id: 1, nome: 1, bandiera: 1 } },
   );
   if (!fornitore) {
-    throw new ErroreHttp(400, 'Nazione sconosciuta.');
+    throw new ErroreHttp(400, 'Unknown nation.');
   }
   return fornitore;
 }
@@ -80,7 +80,7 @@ export async function statoAccesso(db, prodotto, attore) {
 
 export function idRichiesta(valore) {
   if (!ObjectId.isValid(valore)) {
-    throw new ErroreHttp(400, 'Identificativo della richiesta non valido.');
+    throw new ErroreHttp(400, 'The request identifier is not valid.');
   }
   return new ObjectId(valore);
 }

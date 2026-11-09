@@ -3,12 +3,12 @@ import { MongoClient } from 'mongodb';
 const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const dbName = process.env.MONGODB_DB || 'nato_catalog';
 
-// Contesto assunto per questo processo: un solo server Node di lunga durata,
-// un mongod locale, letture brevi di catalogo e poche scritture sulle richieste.
-// La concorrenza attesa è quella di un browser dimostrativo, non di un cluster.
-// Il default del driver (100 connessioni) terrebbe circa 1 MB ciascuna sul
-// server senza servirne l'uso. Il pool resta piccolo, con una connessione già
-// pronta e un timeout breve se mongod non risponde.
+// Assumed context for this process: one long-running Node server, one local
+// mongod, short catalog reads, and few writes on requests. Expected concurrency
+// is a demonstration browser, not a cluster. The driver default (100
+// connections) would hold about 1 MB each on the server without being used.
+// The pool stays small, with one connection already ready and a short timeout
+// if mongod does not answer.
 const client = new MongoClient(uri, {
   maxPoolSize: 10,
   minPoolSize: 1,
@@ -37,7 +37,7 @@ export async function connetti() {
 
 export function getDb() {
   if (!database) {
-    throw new Error('MongoDB non è connesso.');
+    throw new Error('MongoDB is not connected.');
   }
   return database;
 }

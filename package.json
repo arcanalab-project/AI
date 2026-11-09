@@ -2,7 +2,7 @@
   "name": "nato-catalogo-federato",
   "private": true,
   "type": "module",
-  "description": "Catalogo federato: le nazioni sono fornitori di dati, con metadati, politiche di accesso e richieste su MongoDB.",
+  "description": "Federated catalog: nations are data providers, with metadata, access policies, and requests stored in MongoDB.",
   "scripts": {
     "start": "node server/index.js",
     "seed": "node server/seed.js"

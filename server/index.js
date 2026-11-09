@@ -28,8 +28,8 @@ try {
   await ensureSchema(db);
   const seminato = await seminaSeVuoto(db);
   app.listen(port, '127.0.0.1', () => {
-    const seme = seminato ? ' Seme iniziale inserito.' : '';
-    console.log(`Catalogo su http://localhost:${port} — MongoDB ${uriOscurata()} / ${nomeDatabase()}.${seme}`);
+    const seme = seminato ? ' Initial seed inserted.' : '';
+    console.log(`Catalog at http://localhost:${port} — MongoDB ${uriOscurata()} / ${nomeDatabase()}.${seme}`);
   });
 } catch (err) {
   console.error(err);

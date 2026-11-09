@@ -94,7 +94,7 @@ api.get('/fornitori/:codice', wrap(async (req, res) => {
   const db = getDb();
   const codice = String(req.params.codice || '').toUpperCase();
   const fornitore = await db.collection('fornitori').findOne({ _id: codice });
-  if (!fornitore) throw new ErroreHttp(404, 'Nazione non trovata.');
+  if (!fornitore) throw new ErroreHttp(404, 'Nation not found.');
   const prodotti = await db.collection('prodotti').find({ fornitoreId: codice }).toArray();
   prodotti.sort((a, b) => a.titolo.localeCompare(b.titolo, 'it'));
   const aperti = prodotti.filter((prodotto) => prodotto.politicaAccesso.livello === 'aperto').length;
@@ -115,7 +115,7 @@ api.get('/storia', wrap(async (req, res) => {
     db.collection('fornitori').findOne({ _id: STORIA.richiedenteId }),
   ]);
   if (!prodotto || !richiedente) {
-    throw new ErroreHttp(404, 'Il prodotto della storia non è nel catalogo.');
+    throw new ErroreHttp(404, 'The story product is not in the catalog.');
   }
   const richiesta = await ultimaRichiesta(db, STORIA.richiedenteId, STORIA.prodottoId);
   res.json({
@@ -135,18 +135,18 @@ api.get('/prodotti/:id/uso', wrap(async (req, res) => {
   const db = getDb();
   const attore = await leggiAttore(db, req);
   const prodotto = await db.collection('prodotti').findOne({ _id: req.params.id });
-  if (!prodotto) throw new ErroreHttp(404, 'Prodotto non trovato.');
+  if (!prodotto) throw new ErroreHttp(404, 'Product not found.');
   const accesso = await statoAccesso(db, prodotto, attore);
   if (!accesso.consentito) {
     res.status(403).json({
-      errore: 'Estratto non rilasciato. Il dataset è riservato e non c’è una concessione attiva del proprietario.',
+      errore: 'Extract not released. The dataset is restricted and the owner has no active grant.',
       prodotto: pubblicaProdottoBreve(prodotto),
       accesso,
     });
     return;
   }
   const estratto = await db.collection('estratti').findOne({ _id: prodotto._id });
-  if (!estratto) throw new ErroreHttp(404, 'Estratto non trovato.');
+  if (!estratto) throw new ErroreHttp(404, 'Extract not found.');
   res.json({
     prodotto: pubblicaProdottoBreve(prodotto),
     accesso,
@@ -161,7 +161,7 @@ api.get('/prodotti/:id/uso', wrap(async (req, res) => {
 api.get('/prodotti/:id', wrap(async (req, res) => {
   const db = getDb();
   const prodotto = await db.collection('prodotti').findOne({ _id: req.params.id });
-  if (!prodotto) throw new ErroreHttp(404, 'Prodotto non trovato.');
+  if (!prodotto) throw new ErroreHttp(404, 'Product not found.');
   const attore = await leggiAttore(db, req, { obbligatorio: false });
   const accesso = await statoAccesso(db, prodotto, attore);
   res.json({ prodotto: pubblicaProdotto(prodotto), accesso });
@@ -171,16 +171,16 @@ api.post('/prodotti/:id/richieste', wrap(async (req, res) => {
   const db = getDb();
   const attore = await leggiAttore(db, req);
   const prodotto = await db.collection('prodotti').findOne({ _id: req.params.id });
-  if (!prodotto) throw new ErroreHttp(404, 'Prodotto non trovato.');
+  if (!prodotto) throw new ErroreHttp(404, 'Product not found.');
   if (prodotto.politicaAccesso.livello === 'aperto') {
-    throw new ErroreHttp(400, 'Il dataset è aperto: si usa direttamente, senza richiesta.');
+    throw new ErroreHttp(400, 'This dataset is open: use it directly, with no request.');
   }
   if (attore._id === prodotto.fornitoreId) {
-    throw new ErroreHttp(400, 'Il proprietario non chiede accesso a un proprio prodotto.');
+    throw new ErroreHttp(400, 'The owner does not request access to their own product.');
   }
   const finalita = String(req.body?.finalita || '').trim();
   if (finalita.length < 12 || finalita.length > 500) {
-    throw new ErroreHttp(400, 'Descrivi la finalità in modo chiaro, tra 12 e 500 caratteri.');
+    throw new ErroreHttp(400, 'Describe the purpose clearly, in 12 to 500 characters.');
   }
   const attiva = await db.collection('richiesteAccesso').findOne({
     richiedenteId: attore._id,
@@ -189,8 +189,8 @@ api.post('/prodotti/:id/richieste', wrap(async (req, res) => {
   });
   if (attiva) {
     const testo = attiva.stato === 'approvata'
-      ? 'Hai già una concessione attiva su questo prodotto.'
-      : 'C’è già una richiesta in attesa di decisione.';
+      ? 'You already have an active grant for this product.'
+      : 'A request is already waiting for a decision.';
     throw new ErroreHttp(409, testo);
   }
   const documento = {
@@ -236,26 +236,26 @@ api.post('/richieste/:id/decisione', wrap(async (req, res) => {
   const esito = req.body?.esito;
   const nota = String(req.body?.nota || '').trim();
   if (!['approvata', 'respinta', 'revocata'].includes(esito)) {
-    throw new ErroreHttp(400, 'La decisione non è valida.');
+    throw new ErroreHttp(400, 'That decision is not valid.');
   }
   if ((esito === 'respinta' || esito === 'revocata') && nota.length < 8) {
-    throw new ErroreHttp(400, 'Scrivi una nota di almeno 8 caratteri: chi ha chiesto l’accesso deve sapere perché.');
+    throw new ErroreHttp(400, 'Write a note of at least 8 characters: the requesting nation needs to know why.');
   }
   if (nota.length > 500) {
-    throw new ErroreHttp(400, 'La nota supera i 500 caratteri.');
+    throw new ErroreHttp(400, 'The note is longer than 500 characters.');
   }
   const _id = idRichiesta(req.params.id);
   const richiesta = await db.collection('richiesteAccesso').findOne({ _id });
-  if (!richiesta) throw new ErroreHttp(404, 'Richiesta non trovata.');
+  if (!richiesta) throw new ErroreHttp(404, 'Request not found.');
   if (richiesta.proprietarioId !== attore._id) {
-    throw new ErroreHttp(403, 'Solo la nazione proprietaria può decidere su questa richiesta.');
+    throw new ErroreHttp(403, 'Only the owning nation can decide this request.');
   }
   const consentite = {
     in_attesa: ['approvata', 'respinta'],
     approvata: ['revocata'],
   };
   if (!consentite[richiesta.stato]?.includes(esito)) {
-    throw new ErroreHttp(409, 'Questa richiesta non può più ricevere quella decisione.');
+    throw new ErroreHttp(409, 'This request can no longer receive that decision.');
   }
   await db.collection('richiesteAccesso').updateOne(
     { _id },
@@ -271,7 +271,7 @@ api.post('/demo/ripristino', wrap(async (req, res) => {
 }));
 
 api.use((req, res) => {
-  res.status(404).json({ errore: 'Risorsa non trovata.' });
+  res.status(404).json({ errore: 'Resource not found.' });
 });
 
 api.use((err, req, res, next) => {
@@ -285,9 +285,9 @@ api.use((err, req, res, next) => {
   }
   if (err.code === 121) {
     console.error(JSON.stringify(err.errInfo, null, 2));
-    res.status(400).json({ errore: 'Il documento non rispetta lo schema del catalogo.' });
+    res.status(400).json({ errore: 'The document does not match the catalog schema.' });
     return;
   }
   console.error(err);
-  res.status(500).json({ errore: 'Errore del catalogo.' });
+  res.status(500).json({ errore: 'Catalog error.' });
 });

@@ -8,44 +8,44 @@ let silenzioso = false;
 let occupato = false;
 
 const STATI = {
-  in_attesa: 'In attesa',
-  approvata: 'Approvata',
-  respinta: 'Respinta',
-  revocata: 'Revocata',
+  in_attesa: 'Pending',
+  approvata: 'Approved',
+  respinta: 'Denied',
+  revocata: 'Revoked',
 };
 
 const COLONNE = {
-  etichetta: 'Contatto',
-  stazione: 'Stazione',
-  porto: 'Porto',
-  nodo: 'Nodo',
-  sito: 'Sito',
-  settore: 'Settore',
+  etichetta: 'Contact',
+  stazione: 'Station',
+  porto: 'Port',
+  nodo: 'Node',
+  sito: 'Site',
+  settore: 'Sector',
   area: 'Area',
-  tratto: 'Tratto',
+  tratto: 'Route',
   beacon: 'Beacon',
-  scena: 'Scena',
-  osservato: 'Osservato',
-  tipo: 'Tipo',
-  categoria: 'Categoria',
-  stato: 'Stato',
-  condizione: 'Condizione',
-  latitude: 'Latitudine',
-  longitude: 'Longitudine',
-  velocitaNodi: 'Velocità (nodi)',
-  affidabilita: 'Affidabilità',
-  ventoNodi: 'Vento (nodi)',
-  visibilitaKm: 'Visibilità (km)',
-  statoMare: 'Stato del mare',
-  arrivi: 'Arrivi',
-  partenze: 'Partenze',
-  transiti: 'Transiti',
-  traccia: 'Tracce',
-  quota: 'Quota (piedi)',
-  copertura: 'Copertura',
-  livelloMetri: 'Livello (m)',
-  avviso: 'Avviso',
-  annotazione: 'Nota',
+  scena: 'Scene',
+  osservato: 'Observed',
+  tipo: 'Type',
+  categoria: 'Category',
+  stato: 'Status',
+  condizione: 'Condition',
+  latitude: 'Latitude',
+  longitude: 'Longitude',
+  velocitaNodi: 'Speed (knots)',
+  affidabilita: 'Confidence',
+  ventoNodi: 'Wind (knots)',
+  visibilitaKm: 'Visibility (km)',
+  statoMare: 'Sea state',
+  arrivi: 'Arrivals',
+  partenze: 'Departures',
+  transiti: 'Transits',
+  traccia: 'Tracks',
+  quota: 'Altitude (feet)',
+  copertura: 'Coverage',
+  livelloMetri: 'Level (m)',
+  avviso: 'Notice',
+  annotazione: 'Note',
 };
 
 const ORDINE = Object.keys(COLONNE);
@@ -67,18 +67,18 @@ function messaggio(testo) {
 function dataLunga(iso) {
   const data = new Date(iso);
   if (Number.isNaN(data.getTime())) return '—';
-  return new Intl.DateTimeFormat('it-IT', { dateStyle: 'long', timeZone: 'UTC' }).format(data);
+  return new Intl.DateTimeFormat('en', { dateStyle: 'long', timeZone: 'UTC' }).format(data);
 }
 
 function formattaValore(chiave, valore) {
   if (valore == null || valore === '') return '—';
   if (chiave === 'affidabilita' && typeof valore === 'number') {
-    return new Intl.NumberFormat('it-IT', { style: 'percent', maximumFractionDigits: 0 }).format(valore);
+    return new Intl.NumberFormat('en', { style: 'percent', maximumFractionDigits: 0 }).format(valore);
   }
   if (chiave === 'osservato') {
     const data = new Date(valore);
     if (!Number.isNaN(data.getTime())) {
-      return `${new Intl.DateTimeFormat('it-IT', {
+      return `${new Intl.DateTimeFormat('en', {
         dateStyle: 'medium',
         timeStyle: 'short',
         timeZone: 'UTC',
@@ -86,7 +86,7 @@ function formattaValore(chiave, valore) {
     }
   }
   if (typeof valore === 'number') {
-    return new Intl.NumberFormat('it-IT', { maximumFractionDigits: 2 }).format(valore);
+    return new Intl.NumberFormat('en', { maximumFractionDigits: 2 }).format(valore);
   }
   return String(valore);
 }
@@ -96,7 +96,7 @@ function classeLivello(livello) {
 }
 
 function etichettaLivello(livello) {
-  return livello === 'aperto' ? 'Aperto' : 'Riservato';
+  return livello === 'aperto' ? 'Open' : 'Restricted';
 }
 
 async function api(percorso, opzioni = {}) {
@@ -110,7 +110,7 @@ async function api(percorso, opzioni = {}) {
   });
   const corpo = await risposta.json().catch(() => ({}));
   if (!risposta.ok) {
-    const errore = new Error(corpo.errore || 'Richiesta non riuscita.');
+    const errore = new Error(corpo.errore || 'Request failed.');
     errore.status = risposta.status;
     errore.body = corpo;
     throw errore;
@@ -153,7 +153,7 @@ let tokenRender = 0;
 async function render() {
   const token = ++tokenRender;
   const contenuto = document.querySelector('#contenuto');
-  contenuto.innerHTML = '<p class="caricamento">Caricamento…</p>';
+  contenuto.innerHTML = '<p class="caricamento">Loading…</p>';
   try {
     await caricaStoria();
     const html = await vista(location.pathname);
@@ -180,42 +180,42 @@ async function vista(percorso) {
     return vistaProdotto(corrispondenza[1]);
   }
   if (percorso === '/richieste') return vistaRichieste();
-  document.title = 'Pagina non trovata — Catalogo federato';
-  return `<section class="blocco" style="padding:1rem"><h1>Pagina non trovata</h1><p><a href="/" data-link>Torna alle nazioni</a></p></section>`;
+  document.title = 'Page not found — Federated catalog';
+  return `<section class="blocco" style="padding:1rem"><h1>Page not found</h1><p><a href="/" data-link>Back to nations</a></p></section>`;
 }
 
 async function vistaHome() {
   const dati = await api('/api/fornitori');
   state.fornitori = dati.fornitori;
   riempiSelettore();
-  document.title = 'Nazioni fornitrici — Catalogo federato';
+  document.title = 'Data-providing nations — Federated catalog';
   const schede = dati.fornitori.map((nazione) => {
     const evidenza = nazione.codice === 'DEU' ? ' evidenza' : '';
     const conteggi = nazione.conteggi || { totale: 0, aperti: 0, riservati: 0 };
     return `<article class="scheda${evidenza}">
       <a href="/nazioni/${esc(nazione.codice)}" data-link>
         <span class="bandiera" aria-hidden="true">${esc(nazione.bandiera)}</span>
-        <p class="ruolo">Fornitore di dati</p>
+        <p class="ruolo">Data provider</p>
         <h2>${esc(nazione.nome)}</h2>
         <p class="sintesi">${esc(nazione.profilo.sintesi)}</p>
         <p class="conteggi">
-          <span class="badge neutro">${conteggi.totale} prodotti</span>
-          <span class="badge aperto">${conteggi.aperti} aperti</span>
-          <span class="badge riservato">${conteggi.riservati} riservati</span>
+          <span class="badge neutro">${conteggi.totale} products</span>
+          <span class="badge aperto">${conteggi.aperti} open</span>
+          <span class="badge riservato">${conteggi.riservati} restricted</span>
         </p>
       </a>
     </article>`;
   }).join('');
   return `<section>
-    <p class="sopra">Scoperta tra nazioni</p>
-    <h1>I paesi sono fornitori, non prodotti</h1>
-    <p class="lede">Ogni nazione partecipante ha un profilo proprio e pubblica più prodotti di dati. Si scoprono metadati e politiche di accesso. Il dato resta di chi lo pubblica: un dataset aperto si usa subito, uno riservato solo se il proprietario approva la richiesta.</p>
+    <p class="sopra">Discovery across nations</p>
+    <h1>Countries are providers, not products</h1>
+    <p class="lede">Each participating nation has its own profile and publishes several data products. You discover metadata and access policies. The data stays with the publisher: an open dataset can be used at once, a restricted one only after the owner approves a request.</p>
     <ul class="principi">
-      <li><strong>Scoperta federata</strong> I metadati si consultano tra le nazioni. L’estratto non viaggia con la scheda.</li>
-      <li><strong>Sovranità nazionale</strong> Sul riservato decide il proprietario, che può anche revocare una concessione già data.</li>
-      <li><strong>Condivisione controllata</strong> Il server rilascia i record solo se la politica, in quel momento, lo consente.</li>
+      <li><strong>Federated discovery</strong> Metadata is consulted across nations. The extract does not travel with the dossier.</li>
+      <li><strong>National sovereignty</strong> The owner decides on restricted data, and can revoke a grant already given.</li>
+      <li><strong>Controlled sharing</strong> The server releases records only when the policy, at that moment, allows it.</li>
     </ul>
-    <h2>Nazioni nel catalogo</h2>
+    <h2>Nations in the catalog</h2>
     <div class="griglia">${schede}</div>
   </section>`;
 }
@@ -223,18 +223,18 @@ async function vistaHome() {
 async function vistaNazione(codice) {
   const dati = await api(`/api/fornitori/${codice}`);
   const nazione = dati.fornitore;
-  document.title = `${nazione.nome} — Catalogo federato`;
+  document.title = `${nazione.nome} — Federated catalog`;
   const storiaId = state.storia?.prodottoId;
   const righe = dati.prodotti
     .slice()
     .sort((a, b) => {
       if (a.id === storiaId) return -1;
       if (b.id === storiaId) return 1;
-      return a.titolo.localeCompare(b.titolo, 'it');
+      return a.titolo.localeCompare(b.titolo, 'en');
     })
     .map((prodotto) => {
       const evidenza = prodotto.id === storiaId ? ' evidenza' : '';
-      const nastro = prodotto.id === storiaId ? ' · percorso demo' : '';
+      const nastro = prodotto.id === storiaId ? ' · demo path' : '';
       return `<a class="riga${evidenza}" href="/prodotti/${esc(prodotto.id)}" data-link>
         <span class="badge ${classeLivello(prodotto.livello)}">${etichettaLivello(prodotto.livello)}</span>
         <strong>${esc(prodotto.titolo)}</strong>
@@ -243,26 +243,26 @@ async function vistaNazione(codice) {
       </a>`;
     }).join('');
   return `<section>
-    <p class="briciole"><a href="/" data-link>Nazioni</a> / ${esc(nazione.nome)}</p>
+    <p class="briciole"><a href="/" data-link>Nations</a> / ${esc(nazione.nome)}</p>
     <p class="bandiera" aria-hidden="true">${esc(nazione.bandiera)}</p>
-    <p class="ruolo">Fornitore di dati · ${esc(nazione.profilo.nomeUfficiale)}</p>
+    <p class="ruolo">Data provider · ${esc(nazione.profilo.nomeUfficiale)}</p>
     <h1>${esc(nazione.nome)}</h1>
     <div class="profilo">
       <div>
         <p class="lede">${esc(nazione.profilo.sintesi)}</p>
         <dl>
-          <dt>Capitale</dt><dd>${esc(nazione.profilo.capitale)}</dd>
-          <dt>Ufficio dati</dt><dd>${esc(nazione.profilo.ufficioDati)}</dd>
-          <dt>Contatto</dt><dd><a href="mailto:${esc(nazione.profilo.email)}">${esc(nazione.profilo.email)}</a></dd>
-          <dt>Prodotti</dt><dd>${nazione.conteggi.totale}, di cui ${nazione.conteggi.aperti} aperti e ${nazione.conteggi.riservati} riservati</dd>
+          <dt>Capital</dt><dd>${esc(nazione.profilo.capitale)}</dd>
+          <dt>Data office</dt><dd>${esc(nazione.profilo.ufficioDati)}</dd>
+          <dt>Contact</dt><dd><a href="mailto:${esc(nazione.profilo.email)}">${esc(nazione.profilo.email)}</a></dd>
+          <dt>Products</dt><dd>${nazione.conteggi.totale}, of which ${nazione.conteggi.aperti} open and ${nazione.conteggi.riservati} restricted</dd>
         </dl>
       </div>
       <blockquote class="citazione">
         <p>${esc(nazione.sovranita.dichiarazione)}</p>
-        <span class="badge neutro">Giurisdizione ${esc(nazione.sovranita.giurisdizione)}</span>
+        <span class="badge neutro">Jurisdiction ${esc(nazione.sovranita.giurisdizione)}</span>
       </blockquote>
     </div>
-    <h2>Prodotti pubblicati</h2>
+    <h2>Published products</h2>
     <div class="elenco-prodotti">${righe}</div>
   </section>`;
 }
@@ -274,7 +274,7 @@ function campiTabella(campi) {
     const unita = campo.unita && !unitaGiaNelNome ? ` <span class="badge neutro">${esc(campo.unita)}</span>` : '';
     return `<tr><td>${esc(nome)}${unita}</td><td>${esc(campo.descrizione)}</td></tr>`;
   }).join('');
-  return `<table class="campi"><thead><tr><th>Campo</th><th>Descrizione</th></tr></thead><tbody>${righe}</tbody></table>`;
+  return `<table class="campi"><thead><tr><th>Field</th><th>Description</th></tr></thead><tbody>${righe}</tbody></table>`;
 }
 
 function pannelloAccesso(prodotto, accesso) {
@@ -283,42 +283,42 @@ function pannelloAccesso(prodotto, accesso) {
   const finalita = politica.finalitaAmmesse.map((voce) => `<li>${esc(voce)}</li>`).join('');
   let corpo;
   if (politica.livello === 'aperto') {
-    corpo = `<p>Dataset aperto pubblicato da ${esc(nome)}. Si usa senza richiesta.</p>
-      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Usa il dataset</a></p>`;
+    corpo = `<p>Open dataset published by ${esc(nome)}. Use it with no request.</p>
+      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Use the dataset</a></p>`;
   } else if (state.actor === prodotto.fornitore.codice) {
-    corpo = `<p>Sei il proprietario. L’estratto resta tuo: puoi consultarlo e decidere le richieste delle altre nazioni.</p>
+    corpo = `<p>You are the owner. The extract stays yours: you can read it and decide requests from other nations.</p>
       <div class="azioni-riga">
-        <a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Apri il tuo estratto</a>
-        <a class="bottone secondario" href="/richieste" data-link>Vedi le richieste</a>
+        <a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Open your extract</a>
+        <a class="bottone secondario" href="/richieste" data-link>See requests</a>
       </div>`;
   } else if (!accesso.richiesta || accesso.richiesta.stato === 'respinta' || accesso.richiesta.stato === 'revocata') {
     const precedente = accesso.richiesta
-      ? `<p>Stato precedente: ${esc(STATI[accesso.richiesta.stato] || accesso.richiesta.stato)}. ${esc(accesso.richiesta.decisione?.nota || '')}</p>`
-      : '<p>Non hai ancora una richiesta su questo prodotto. L’estratto resta chiuso.</p>';
+      ? `<p>Previous status: ${esc(STATI[accesso.richiesta.stato] || accesso.richiesta.stato)}. ${esc(accesso.richiesta.decisione?.nota || '')}</p>`
+      : '<p>You have no request for this product yet. The extract stays closed.</p>';
     corpo = `${precedente}
       <form data-form="richiesta" data-prodotto="${esc(prodotto.id)}">
-        <label>Finalità della richiesta
-          <textarea name="finalita" required minlength="12" maxlength="500" placeholder="Perché ${esc(nome)} dovrebbe concederti l’uso, e per quale scopo."></textarea>
+        <label>Purpose of the request
+          <textarea name="finalita" required minlength="12" maxlength="500" placeholder="Why ${esc(nome)} should grant you use, and for what purpose."></textarea>
         </label>
-        <button type="submit">Richiedi accesso a ${esc(nome)}</button>
+        <button type="submit">Request access from ${esc(nome)}</button>
       </form>`;
   } else if (accesso.richiesta.stato === 'in_attesa') {
-    corpo = `<p>Richiesta inviata il ${esc(dataLunga(accesso.richiesta.richiestaIl))}. ${esc(nome)} non ha ancora deciso. Finalità dichiarata: ${esc(accesso.richiesta.finalita)}</p>
-      <p>L’estratto non viene rilasciato finché il proprietario non approva.</p>
-      <button type="button" data-attore="${esc(prodotto.fornitore.codice)}" data-vai="/richieste">Apri la coda di ${esc(nome)}</button>`;
+    corpo = `<p>Request sent on ${esc(dataLunga(accesso.richiesta.richiestaIl))}. ${esc(nome)} has not decided yet. Stated purpose: ${esc(accesso.richiesta.finalita)}</p>
+      <p>The extract is not released until the owner approves.</p>
+      <button type="button" data-attore="${esc(prodotto.fornitore.codice)}" data-vai="/richieste">Open ${esc(nome)}’s queue</button>`;
   } else {
-    corpo = `<p>Accesso concesso da ${esc(nome)}. La concessione è revocabile: se il proprietario la chiude, l’uso si interrompe.</p>
-      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Usa il dataset</a></p>`;
+    corpo = `<p>Access granted by ${esc(nome)}. The grant can be revoked: if the owner closes it, use stops.</p>
+      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Use the dataset</a></p>`;
   }
   return `<aside class="pannello">
-    <p class="ruolo">Politica di accesso</p>
+    <p class="ruolo">Access policy</p>
     <h2>${etichettaLivello(politica.livello)}</h2>
     <p>${esc(politica.condizioni)}</p>
-    <p><strong>Finalità ammesse</strong></p>
+    <p><strong>Allowed purposes</strong></p>
     <ul>${finalita}</ul>
-    <p><strong>Ridistribuzione.</strong> ${esc(politica.ridistribuzione)}</p>
-    <p><strong>Conservazione.</strong> ${esc(politica.conservazione)}</p>
-    <p class="nota-estratto">I record non sono in questa scheda. Stanno in un estratto separato e il server lo legge solo dopo il controllo della politica.</p>
+    <p><strong>Redistribution.</strong> ${esc(politica.ridistribuzione)}</p>
+    <p><strong>Retention.</strong> ${esc(politica.conservazione)}</p>
+    <p class="nota-estratto">The records are not on this dossier. They sit in a separate extract, and the server reads it only after the policy check.</p>
     ${corpo}
   </aside>`;
 }
@@ -327,28 +327,28 @@ async function vistaProdotto(id) {
   const dati = await api(`/api/prodotti/${id}`);
   const prodotto = dati.prodotto;
   const meta = prodotto.metadati;
-  document.title = `${prodotto.titolo} — Catalogo federato`;
-  const fine = meta.fineTemporale ? esc(meta.fineTemporale) : 'in corso';
+  document.title = `${prodotto.titolo} — Federated catalog`;
+  const fine = meta.fineTemporale ? esc(meta.fineTemporale) : 'ongoing';
   return `<article class="dossier">
-    <p class="briciole"><a href="/" data-link>Nazioni</a> / <a href="/nazioni/${esc(prodotto.fornitore.codice)}" data-link>${esc(prodotto.fornitore.bandiera)} ${esc(prodotto.fornitore.nome)}</a></p>
+    <p class="briciole"><a href="/" data-link>Nations</a> / <a href="/nazioni/${esc(prodotto.fornitore.codice)}" data-link>${esc(prodotto.fornitore.bandiera)} ${esc(prodotto.fornitore.nome)}</a></p>
     <p class="dominio">${esc(prodotto.dominio)}</p>
     <h1>${esc(prodotto.titolo)}</h1>
     <p class="lede">${esc(prodotto.sintesi)}</p>
     <div class="griglia-dossier">
       <section>
-        <h2>Metadati</h2>
+        <h2>Metadata</h2>
         <dl>
-          <dt>Fornitore</dt><dd>${esc(prodotto.fornitore.nome)}</dd>
-          <dt>Pubblicato il</dt><dd>${esc(dataLunga(prodotto.pubblicatoIl))}</dd>
-          <dt>Formato</dt><dd>${esc(meta.formato)}</dd>
-          <dt>Aggiornamento</dt><dd>${esc(meta.frequenzaAggiornamento)}</dd>
-          <dt>Copertura</dt><dd>${esc(meta.coperturaSpaziale)}</dd>
-          <dt>Periodo</dt><dd>${esc(meta.inizioTemporale)} — ${fine}</dd>
-          <dt>Lingua d’origine</dt><dd>${esc(meta.lingua)}</dd>
-          <dt>Responsabile</dt><dd>${esc(meta.responsabile)}</dd>
-          <dt>Qualità</dt><dd>${esc(meta.qualita)}</dd>
+          <dt>Provider</dt><dd>${esc(prodotto.fornitore.nome)}</dd>
+          <dt>Published</dt><dd>${esc(dataLunga(prodotto.pubblicatoIl))}</dd>
+          <dt>Format</dt><dd>${esc(meta.formato)}</dd>
+          <dt>Update</dt><dd>${esc(meta.frequenzaAggiornamento)}</dd>
+          <dt>Coverage</dt><dd>${esc(meta.coperturaSpaziale)}</dd>
+          <dt>Period</dt><dd>${esc(meta.inizioTemporale)} — ${fine}</dd>
+          <dt>Source language</dt><dd>${esc(meta.lingua)}</dd>
+          <dt>Steward</dt><dd>${esc(meta.responsabile)}</dd>
+          <dt>Quality</dt><dd>${esc(meta.qualita)}</dd>
         </dl>
-        <h3>Campi</h3>
+        <h3>Fields</h3>
         ${campiTabella(meta.campi)}
       </section>
       ${pannelloAccesso(prodotto, dati.accesso)}
@@ -375,9 +375,9 @@ function mappa(record) {
     const sigla = String(voce.etichetta || '').split('-').pop();
     return `<g><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="6"></circle><text x="${(sx + 9).toFixed(1)}" y="${(sy - 8).toFixed(1)}">${esc(sigla)}</text></g>`;
   }).join('');
-  return `<div class="mappa-wrap"><svg class="mappa" viewBox="0 0 ${larghezza} ${altezza}" role="img" aria-label="Posizione dei contatti autorizzati">
+  return `<div class="mappa-wrap"><svg class="mappa" viewBox="0 0 ${larghezza} ${altezza}" role="img" aria-label="Position of the authorized contacts">
     <rect width="${larghezza}" height="${altezza}" fill="#e7eef2"></rect>
-    <text x="24" y="28">Area dell’estratto</text>
+    <text x="24" y="28">Extract area</text>
     ${segni}
   </svg></div>`;
 }
@@ -402,29 +402,29 @@ function tabellaRecord(record) {
 function testoUso(dati) {
   const motivo = dati.accesso.motivo;
   if (motivo === 'aperto') {
-    return 'Dataset aperto: uso diretto, senza richiesta di accesso.';
+    return 'Open dataset: direct use, with no access request.';
   }
   if (motivo === 'proprietario') {
-    return 'Stai consultando un estratto del tuo paese. Resta sotto la tua sovranità e non risulta una concessione verso terzi.';
+    return 'You are reading an extract from your own country. It stays under your sovereignty, and no grant to another nation is recorded.';
   }
-  return `Concessione attiva di ${dati.prodotto.fornitore.nome}. Il proprietario può revocarla dalla coda delle richieste: a quel punto questi record non vengono più consegnati.`;
+  return `Active grant from ${dati.prodotto.fornitore.nome}. The owner can revoke it from the request queue: these records are then no longer delivered.`;
 }
 
 function paginaUso(dati) {
   const record = dati.estratto.record || [];
-  const superficie = record.filter((voce) => voce.tipo === 'superficie').length;
-  const sotto = record.filter((voce) => voce.tipo === 'subacqueo').length;
+  const superficie = record.filter((voce) => voce.tipo === 'surface').length;
+  const sotto = record.filter((voce) => voce.tipo === 'subsurface').length;
   const mappaHtml = dati.estratto.vista === 'mappa' ? mappa(record) : '';
-  const statistiche = dati.estratto.vista === 'mappa'
+  const statistiche = dati.estratto.vista === 'mappa' && superficie + sotto > 0
     ? `<div class="statistiche">
-        <div><strong>${record.length}</strong>contatti nell’estratto</div>
-        <div><strong>${superficie}</strong>di superficie</div>
-        <div><strong>${sotto}</strong>subacquei</div>
+        <div><strong>${record.length}</strong>contacts in the extract</div>
+        <div><strong>${superficie}</strong>surface</div>
+        <div><strong>${sotto}</strong>subsurface</div>
       </div>`
-    : `<div class="statistiche"><div><strong>${record.length}</strong>record nell’estratto</div></div>`;
+    : `<div class="statistiche"><div><strong>${record.length}</strong>records in the extract</div></div>`;
   return `<article>
-    <p class="briciole"><a href="/prodotti/${esc(dati.prodotto.id)}" data-link>Scheda del prodotto</a></p>
-    <p class="dominio">Uso dell’estratto · ${esc(dati.prodotto.fornitore.bandiera)} ${esc(dati.prodotto.fornitore.nome)}</p>
+    <p class="briciole"><a href="/prodotti/${esc(dati.prodotto.id)}" data-link>Product dossier</a></p>
+    <p class="dominio">Using the extract · ${esc(dati.prodotto.fornitore.bandiera)} ${esc(dati.prodotto.fornitore.nome)}</p>
     <h1>${esc(dati.prodotto.titolo)}</h1>
     <p class="lede">${esc(testoUso(dati))}</p>
     <p>${esc(dati.estratto.descrizione)}</p>
@@ -435,22 +435,22 @@ function paginaUso(dati) {
 }
 
 async function vistaUso(id) {
-  document.title = 'Uso dell’estratto — Catalogo federato';
+  document.title = 'Using the extract — Federated catalog';
   try {
     const dati = await api(`/api/prodotti/${id}/uso`);
-    document.title = `Uso · ${dati.prodotto.titolo} — Catalogo federato`;
+    document.title = `Use · ${dati.prodotto.titolo} — Federated catalog`;
     return paginaUso(dati);
   } catch (errore) {
     if (errore.status === 403 && errore.body?.prodotto) {
       const prodotto = errore.body.prodotto;
-      document.title = `Estratto chiuso · ${prodotto.titolo} — Catalogo federato`;
+      document.title = `Extract closed · ${prodotto.titolo} — Federated catalog`;
       return `<section class="chiuso">
-        <p class="briciole"><a href="/prodotti/${esc(prodotto.id)}" data-link>Torna ai metadati</a></p>
+        <p class="briciole"><a href="/prodotti/${esc(prodotto.id)}" data-link>Back to the metadata</a></p>
         <p class="dominio">${esc(prodotto.fornitore.bandiera)} ${esc(prodotto.fornitore.nome)}</p>
-        <h1>Estratto non rilasciato</h1>
+        <h1>Extract not released</h1>
         <p>${esc(errore.message)}</p>
-        <p>La scheda con metadati e politica resta consultabile. I record no.</p>
-        <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}" data-link>Apri la scheda</a></p>
+        <p>The dossier, with metadata and policy, stays readable. The records do not.</p>
+        <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}" data-link>Open the dossier</a></p>
       </section>`;
     }
     throw errore;
@@ -461,34 +461,34 @@ function cartaRichiesta(richiesta, ruolo) {
   const evidenza = richiesta.prodottoId === state.storia?.prodottoId && (richiesta.richiedenteId === 'NLD' || richiesta.proprietarioId === 'DEU')
     ? ' evidenza'
     : '';
-  const nastro = evidenza ? '<span class="badge neutro">Percorso guidato</span>' : '';
+  const nastro = evidenza ? '<span class="badge neutro">Guided path</span>' : '';
   let comandi = '';
   if (ruolo === 'in-arrivo' && richiesta.stato === 'in_attesa') {
     comandi = `<form data-form="decisione" data-id="${esc(richiesta.id)}">
-      <label>Nota per ${esc(richiesta.nomeRichiedente)}
-        <textarea name="nota" maxlength="500" placeholder="Facoltativa se approvi. Obbligatoria, e chiara, se respingi."></textarea>
+      <label>Note for ${esc(richiesta.nomeRichiedente)}
+        <textarea name="nota" maxlength="500" placeholder="Optional if you approve. Required, and clear, if you deny."></textarea>
       </label>
       <div class="azioni-riga">
-        <button type="submit" data-esito="approvata">Approva</button>
-        <button type="submit" class="secondario" data-esito="respinta">Respingi</button>
+        <button type="submit" data-esito="approvata">Approve</button>
+        <button type="submit" class="secondario" data-esito="respinta">Deny</button>
       </div>
     </form>`;
   } else if (ruolo === 'in-arrivo' && richiesta.stato === 'approvata') {
     comandi = `<form data-form="revoca" data-id="${esc(richiesta.id)}">
-      <label>Motivo della revoca
-        <textarea name="nota" required minlength="8" maxlength="500" placeholder="Perché chiudi la concessione."></textarea>
+      <label>Reason for revocation
+        <textarea name="nota" required minlength="8" maxlength="500" placeholder="Why you are closing the grant."></textarea>
       </label>
-      <button type="submit" class="pericolo">Revoca la concessione</button>
+      <button type="submit" class="pericolo">Revoke the grant</button>
     </form>`;
   }
   const decisione = richiesta.decisione
-    ? `<p>Decisione del ${esc(dataLunga(richiesta.decisione.il))}: ${esc(richiesta.decisione.nota || 'nessuna nota')}</p>`
+    ? `<p>Decision on ${esc(dataLunga(richiesta.decisione.il))}: ${esc(richiesta.decisione.nota || 'no note')}</p>`
     : '';
   return `<article class="carta-richiesta${evidenza}">
     <span class="badge ${richiesta.stato === 'approvata' ? 'aperto' : richiesta.stato === 'in_attesa' ? 'neutro' : 'riservato'}">${esc(STATI[richiesta.stato] || richiesta.stato)}</span>
     ${nastro}
     <h3>${esc(richiesta.titoloProdotto)}</h3>
-    <p>${ruolo === 'in-arrivo' ? `Da ${esc(richiesta.nomeRichiedente)}` : `Verso ${esc(richiesta.nomeProprietario)}`} · ${esc(dataLunga(richiesta.richiestaIl))}</p>
+    <p>${ruolo === 'in-arrivo' ? `From ${esc(richiesta.nomeRichiedente)}` : `To ${esc(richiesta.nomeProprietario)}`} · ${esc(dataLunga(richiesta.richiestaIl))}</p>
     <p>${esc(richiesta.finalita)}</p>
     ${decisione}
     ${comandi}
@@ -498,20 +498,20 @@ function cartaRichiesta(richiesta, ruolo) {
 async function vistaRichieste() {
   const dati = await api('/api/richieste');
   const attore = state.fornitori.find((voce) => voce.codice === state.actor);
-  document.title = 'Richieste — Catalogo federato';
+  document.title = 'Requests — Federated catalog';
   const inArrivo = dati.inArrivo.length
     ? dati.inArrivo.map((voce) => cartaRichiesta(voce, 'in-arrivo')).join('')
-    : '<p>Nessuna richiesta in arrivo. Quando un’altra nazione chiede un tuo dataset riservato, la decisione compare qui.</p>';
+    : '<p>No incoming requests. When another nation asks for one of your restricted datasets, the decision appears here.</p>';
   const inviate = dati.inviate.length
     ? dati.inviate.map((voce) => cartaRichiesta(voce, 'inviate')).join('')
-    : '<p>Non hai richieste inviate.</p>';
+    : '<p>You have not sent any requests.</p>';
   return `<section>
     <p class="ruolo">${esc(attore ? `${attore.bandiera} ${attore.nome}` : state.actor)}</p>
-    <h1>Richieste di accesso</h1>
-    <p class="lede">In arrivo decidi tu, perché i prodotti sono tuoi. Inviate sono le richieste che hai rivolto ad altre nazioni: lo stato lo aggiorna il proprietario.</p>
+    <h1>Access requests</h1>
+    <p class="lede">Incoming requests are yours to decide, because the products are yours. Outgoing requests are the ones you sent to other nations: the owner updates the status.</p>
     <div class="griglia-richieste">
-      <section><h2>In arrivo</h2>${inArrivo}</section>
-      <section><h2>Inviate</h2>${inviate}</section>
+      <section><h2>Incoming</h2>${inArrivo}</section>
+      <section><h2>Outgoing</h2>${inviate}</section>
     </div>
   </section>`;
 }
@@ -519,25 +519,25 @@ async function vistaRichieste() {
 function passiStoria(storia) {
   const stato = storia.richiesta?.stato || null;
   const passi = [
-    { titolo: 'Scoperta', testo: 'I metadati tedeschi sono nel catalogo.', fase: 'fatto' },
-    { titolo: 'Richiesta', testo: 'I Paesi Bassi chiedono l’uso.', fase: 'corso' },
-    { titolo: 'Decisione', testo: 'La Germania approva o respinge.', fase: 'attesa' },
-    { titolo: 'Uso', testo: 'L’estratto si apre solo dopo il sì.', fase: 'attesa' },
+    { titolo: 'Discovery', testo: 'The German metadata is in the catalog.', fase: 'fatto' },
+    { titolo: 'Request', testo: 'The Netherlands asks to use it.', fase: 'corso' },
+    { titolo: 'Decision', testo: 'Germany approves or denies.', fase: 'attesa' },
+    { titolo: 'Use', testo: 'The extract opens only after a yes.', fase: 'attesa' },
   ];
   if (stato === 'in_attesa') {
-    passi[1] = { titolo: 'Richiesta', testo: 'Inviata, in attesa del proprietario.', fase: 'fatto' };
-    passi[2] = { titolo: 'Decisione', testo: 'Tocca alla Germania.', fase: 'corso' };
+    passi[1] = { titolo: 'Request', testo: 'Sent, waiting on the owner.', fase: 'fatto' };
+    passi[2] = { titolo: 'Decision', testo: 'It is Germany’s turn.', fase: 'corso' };
   } else if (stato === 'approvata') {
-    passi[1] = { titolo: 'Richiesta', testo: 'Inviata dai Paesi Bassi.', fase: 'fatto' };
-    passi[2] = { titolo: 'Decisione', testo: 'La Germania ha concesso l’accesso.', fase: 'fatto' };
-    passi[3] = { titolo: 'Uso', testo: 'I Paesi Bassi possono aprire l’estratto.', fase: 'corso' };
+    passi[1] = { titolo: 'Request', testo: 'Sent by the Netherlands.', fase: 'fatto' };
+    passi[2] = { titolo: 'Decision', testo: 'Germany has granted access.', fase: 'fatto' };
+    passi[3] = { titolo: 'Use', testo: 'The Netherlands can open the extract.', fase: 'corso' };
   } else if (stato === 'respinta') {
-    passi[1] = { titolo: 'Richiesta', testo: 'Si può chiedere di nuovo.', fase: 'corso' };
-    passi[2] = { titolo: 'Decisione', testo: 'La Germania ha respinto.', fase: 'fatto' };
+    passi[1] = { titolo: 'Request', testo: 'A new request can be sent.', fase: 'corso' };
+    passi[2] = { titolo: 'Decision', testo: 'Germany denied it.', fase: 'fatto' };
   } else if (stato === 'revocata') {
-    passi[1] = { titolo: 'Richiesta', testo: 'La concessione non vale più.', fase: 'corso' };
-    passi[2] = { titolo: 'Decisione', testo: 'La Germania ha revocato.', fase: 'fatto' };
-    passi[3] = { titolo: 'Uso', testo: 'Estratto di nuovo chiuso.', fase: 'attesa' };
+    passi[1] = { titolo: 'Request', testo: 'The grant no longer holds.', fase: 'corso' };
+    passi[2] = { titolo: 'Decision', testo: 'Germany revoked it.', fase: 'fatto' };
+    passi[3] = { titolo: 'Use', testo: 'The extract is closed again.', fase: 'attesa' };
   }
   return passi;
 }
@@ -549,23 +549,23 @@ function azioneStoria(storia) {
   const proprietario = storia.proprietario.codice;
   if (!stato || stato === 'respinta' || stato === 'revocata') {
     if (state.actor !== richiedente) {
-      return { etichetta: 'Opera come i Paesi Bassi', attore: richiedente, vai: `/prodotti/${id}` };
+      return { etichetta: 'Act as the Netherlands', attore: richiedente, vai: `/prodotti/${id}` };
     }
-    return { etichetta: 'Apri i sensori tedeschi', vai: `/prodotti/${id}` };
+    return { etichetta: 'Open the German sensors', vai: `/prodotti/${id}` };
   }
   if (stato === 'in_attesa') {
     if (state.actor !== proprietario) {
-      return { etichetta: 'Passa alla Germania per decidere', attore: proprietario, vai: '/richieste' };
+      return { etichetta: 'Switch to Germany to decide', attore: proprietario, vai: '/richieste' };
     }
-    return { etichetta: 'Apri le richieste in arrivo', vai: '/richieste' };
+    return { etichetta: 'Open incoming requests', vai: '/richieste' };
   }
   if (stato === 'approvata') {
     if (state.actor !== richiedente) {
-      return { etichetta: 'Torna ai Paesi Bassi', attore: richiedente, vai: `/prodotti/${id}/uso` };
+      return { etichetta: 'Return to the Netherlands', attore: richiedente, vai: `/prodotti/${id}/uso` };
     }
-    return { etichetta: 'Usa i dati dei sensori', vai: `/prodotti/${id}/uso` };
+    return { etichetta: 'Use the sensor data', vai: `/prodotti/${id}/uso` };
   }
-  return { etichetta: 'Apri il prodotto', vai: `/prodotti/${id}` };
+  return { etichetta: 'Open the product', vai: `/prodotti/${id}` };
 }
 
 async function caricaStoria() {
@@ -587,13 +587,13 @@ function dipingiStoria() {
   const azione = azioneStoria(storia);
   const attributi = `${azione.attore ? `data-attore="${esc(azione.attore)}" ` : ''}data-vai="${esc(azione.vai)}"`;
   const nota = storia.richiesta?.decisione?.nota
-    ? `<p>Nota della Germania: ${esc(storia.richiesta.decisione.nota)}</p>`
+    ? `<p>Germany’s note: ${esc(storia.richiesta.decisione.nota)}</p>`
     : '';
   sezione.innerHTML = `<div class="storia-interno">
     <div>
-      <p class="sopra">Storia dimostrativa</p>
-      <h2>Dalla Germania ai Paesi Bassi</h2>
-      <p>La Germania pubblica i contatti dei sensori nel Baltico meridionale. I Paesi Bassi li scoprono, chiedono accesso e, dopo il sì tedesco, li usano qui.</p>
+      <p class="sopra">Demo story</p>
+      <h2>From Germany to the Netherlands</h2>
+      <p>Germany publishes contacts from the southern Baltic sensor network. The Netherlands discovers them, requests access, and, after Germany agrees, uses them here.</p>
       ${nota}
     </div>
     <ol class="passi">${passi}</ol>
@@ -621,10 +621,10 @@ document.addEventListener('click', (evento) => {
   const ripristino = evento.target.closest('[data-azione="ripristina"]');
   if (ripristino) {
     evento.preventDefault();
-    if (!window.confirm('Ripristinare i dati dimostrativi? Le richieste inserite verranno cancellate.')) return;
+    if (!window.confirm('Reset the demonstration data? Requests already entered will be deleted.')) return;
     conOccupazione(async () => {
       await api('/api/demo/ripristino', { method: 'POST', body: '{}' });
-      messaggio('Dati dimostrativi ripristinati. La storia Germania → Paesi Bassi riparte dall’inizio.');
+      messaggio('Demonstration data restored. The Germany → Netherlands story starts over.');
       await go('/');
     }).catch((errore) => messaggio(errore.message));
     return;
@@ -648,7 +648,7 @@ document.addEventListener('submit', (evento) => {
         method: 'POST',
         body: JSON.stringify({ finalita }),
       });
-      messaggio('Richiesta inviata. La decisione spetta alla nazione proprietaria.');
+      messaggio('Request sent. The owning nation makes the decision.');
       await render();
     }).catch((errore) => messaggio(errore.message));
     return;
@@ -658,7 +658,7 @@ document.addEventListener('submit', (evento) => {
     const esito = form.dataset.form === 'revoca' ? 'revocata' : evento.submitter?.dataset.esito;
     const nota = String(new FormData(form).get('nota') || '').trim();
     if (!esito) {
-      messaggio('Scegli se approvare o respingere.');
+      messaggio('Choose whether to approve or deny.');
       return;
     }
     conOccupazione(async () => {
@@ -667,9 +667,9 @@ document.addEventListener('submit', (evento) => {
         body: JSON.stringify({ esito, nota }),
       });
       const testi = {
-        approvata: 'Concessione registrata. Il richiedente può usare l’estratto.',
-        respinta: 'Richiesta respinta. L’estratto resta chiuso.',
-        revocata: 'Concessione revocata. L’uso si interrompe subito.',
+        approvata: 'Grant recorded. The requester can use the extract.',
+        respinta: 'Request denied. The extract stays closed.',
+        revocata: 'Grant revoked. Use stops at once.',
       };
       messaggio(testi[esito]);
       await render();
@@ -697,7 +697,7 @@ async function avvia() {
     riempiSelettore();
     await render();
   } catch (errore) {
-    document.querySelector('#contenuto').innerHTML = `<p class="errore">Il catalogo non raggiunge MongoDB. Avvia il database e ricarica la pagina. ${esc(errore.message)}</p>`;
+    document.querySelector('#contenuto').innerHTML = `<p class="errore">The catalog cannot reach MongoDB. Start the database and reload the page. ${esc(errore.message)}</p>`;
   }
 }
 

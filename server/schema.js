@@ -1,15 +1,15 @@
-// Modello (si legge insieme ciò che si mostra insieme).
+// Model (what is shown together is stored together).
 //
-// fornitori — la nazione è un fornitore, non un prodotto.
-// prodotti — un fornitore ne pubblica molti. Metadati e politica di accesso
-//   sono 1:1 con il prodotto e si aprono sempre nella stessa scheda: stanno
-//   nello stesso documento. Il nome del fornitore è copiato sul prodotto
-//   (riferimento esteso) così l'elenco non deve fare un join.
-// estratti — 1:1 con il prodotto, ma in un'altra collezione: è un confine di
-//   accesso, non un dato di scoperta. La scheda pubblica non lo legge.
-// richiesteAccesso — crescono senza un tetto e cambiano stato da sole
-//   (approva, respingi, revoca). Non si annidano nel prodotto.
-//   Titolo e nomi sono copiati sulla richiesta per le code in entrata e in uscita.
+// fornitori — the nation is a provider, not a product.
+// prodotti — a provider publishes many. Metadata and the access policy are
+//   1:1 with the product and always open on the same dossier: they live on
+//   the same document. The provider’s name is copied onto the product
+//   (an extended reference) so a list does not need a join.
+// estratti — 1:1 with the product, but in another collection: an access
+//   boundary, not a discovery field. The public dossier does not read it.
+// richiesteAccesso — they grow without a ceiling and change state on their
+//   own (approve, deny, revoke). They are not nested in the product.
+//   Title and names are copied onto the request for the incoming and outgoing queues.
 
 async function ensureCollection(db, name, jsonSchema) {
   const exists = (await db.listCollections({ name }).toArray()).length > 0;
@@ -228,9 +228,9 @@ export async function ensureSchema(db) {
   await ensureCollection(db, 'estratti', estrattoSchema);
   await ensureCollection(db, 'richiesteAccesso', richiestaSchema);
 
-  // Indici allineati alle query reali: scheda nazione, coda del proprietario,
-  // storia delle richieste di una coppia richiedente/prodotto. Niente indici
-  // sovrapposti solo "per sicurezza".
+  // Indexes match the real queries: nation dossier, owner queue, and the
+  // request history of a requester/product pair. No overlapping indexes
+  // added only "just in case".
   await db.collection('prodotti').createIndex({ fornitoreId: 1 }, { name: 'fornitoreId' });
   await db.collection('richiesteAccesso').createIndex(
     { proprietarioId: 1, stato: 1, richiestaIl: -1 },
