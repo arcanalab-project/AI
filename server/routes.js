@@ -70,10 +70,10 @@ api.get('/fornitori', wrap(async (req, res) => {
           _id: '$fornitoreId',
           totale: { $sum: 1 },
           aperti: {
-            $sum: { $cond: [{ $eq: ['$politicaAccesso.livello', 'aperto'] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$politicaAccesso.livello', 'open'] }, 1, 0] },
           },
           riservati: {
-            $sum: { $cond: [{ $eq: ['$politicaAccesso.livello', 'riservato'] }, 1, 0] },
+            $sum: { $cond: [{ $eq: ['$politicaAccesso.livello', 'restricted'] }, 1, 0] },
           },
         },
       },
@@ -97,7 +97,7 @@ api.get('/fornitori/:codice', wrap(async (req, res) => {
   if (!fornitore) throw new ErroreHttp(404, 'Nation not found.');
   const prodotti = await db.collection('prodotti').find({ fornitoreId: codice }).toArray();
   prodotti.sort((a, b) => a.titolo.localeCompare(b.titolo, 'it'));
-  const aperti = prodotti.filter((prodotto) => prodotto.politicaAccesso.livello === 'aperto').length;
+  const aperti = prodotti.filter((prodotto) => prodotto.politicaAccesso.livello === 'open').length;
   res.json({
     fornitore: pubblicaFornitore(fornitore, {
       totale: prodotti.length,
@@ -172,7 +172,7 @@ api.post('/prodotti/:id/richieste', wrap(async (req, res) => {
   const attore = await leggiAttore(db, req);
   const prodotto = await db.collection('prodotti').findOne({ _id: req.params.id });
   if (!prodotto) throw new ErroreHttp(404, 'Product not found.');
-  if (prodotto.politicaAccesso.livello === 'aperto') {
+  if (prodotto.politicaAccesso.livello === 'open') {
     throw new ErroreHttp(400, 'This dataset is open: use it directly, with no request.');
   }
   if (attore._id === prodotto.fornitoreId) {
@@ -185,10 +185,10 @@ api.post('/prodotti/:id/richieste', wrap(async (req, res) => {
   const attiva = await db.collection('richiesteAccesso').findOne({
     richiedenteId: attore._id,
     prodottoId: prodotto._id,
-    stato: { $in: ['in_attesa', 'approvata'] },
+    stato: { $in: ['pending', 'approved'] },
   });
   if (attiva) {
-    const testo = attiva.stato === 'approvata'
+    const testo = attiva.stato === 'approved'
       ? 'You already have an active grant for this product.'
       : 'A request is already waiting for a decision.';
     throw new ErroreHttp(409, testo);
@@ -202,7 +202,7 @@ api.post('/prodotti/:id/richieste', wrap(async (req, res) => {
     richiedenteId: attore._id,
     nomeRichiedente: attore.nome,
     finalita,
-    stato: 'in_attesa',
+    stato: 'pending',
     richiestaIl: new Date(),
     decisione: null,
   };
@@ -235,10 +235,10 @@ api.post('/richieste/:id/decisione', wrap(async (req, res) => {
   const attore = await leggiAttore(db, req);
   const esito = req.body?.esito;
   const nota = String(req.body?.nota || '').trim();
-  if (!['approvata', 'respinta', 'revocata'].includes(esito)) {
+  if (!['approved', 'denied', 'revoked'].includes(esito)) {
     throw new ErroreHttp(400, 'That decision is not valid.');
   }
-  if ((esito === 'respinta' || esito === 'revocata') && nota.length < 8) {
+  if ((esito === 'denied' || esito === 'revoked') && nota.length < 8) {
     throw new ErroreHttp(400, 'Write a note of at least 8 characters: the requesting nation needs to know why.');
   }
   if (nota.length > 500) {
@@ -251,8 +251,8 @@ api.post('/richieste/:id/decisione', wrap(async (req, res) => {
     throw new ErroreHttp(403, 'Only the owning nation can decide this request.');
   }
   const consentite = {
-    in_attesa: ['approvata', 'respinta'],
-    approvata: ['revocata'],
+    pending: ['approved', 'denied'],
+    approved: ['revoked'],
   };
   if (!consentite[richiesta.stato]?.includes(esito)) {
     throw new ErroreHttp(409, 'This request can no longer receive that decision.');

@@ -8,44 +8,44 @@ let silenzioso = false;
 let occupato = false;
 
 const STATI = {
-  in_attesa: 'Pending',
-  approvata: 'Approved',
-  respinta: 'Denied',
-  revocata: 'Revoked',
+  pending: 'Pending',
+  approved: 'Approved',
+  denied: 'Denied',
+  revoked: 'Revoked',
 };
 
 const COLONNE = {
-  etichetta: 'Contact',
-  stazione: 'Station',
-  porto: 'Port',
-  nodo: 'Node',
-  sito: 'Site',
-  settore: 'Sector',
+  label: 'Contact',
+  station: 'Station',
+  port: 'Port',
+  node: 'Node',
+  site: 'Site',
+  sector: 'Sector',
   area: 'Area',
-  tratto: 'Route',
+  route: 'Route',
   beacon: 'Beacon',
-  scena: 'Scene',
-  osservato: 'Observed',
-  tipo: 'Type',
-  categoria: 'Category',
-  stato: 'Status',
-  condizione: 'Condition',
+  scene: 'Scene',
+  observed: 'Observed',
+  type: 'Type',
+  category: 'Category',
+  status: 'Status',
+  condition: 'Condition',
   latitude: 'Latitude',
   longitude: 'Longitude',
-  velocitaNodi: 'Speed (knots)',
-  affidabilita: 'Confidence',
-  ventoNodi: 'Wind (knots)',
-  visibilitaKm: 'Visibility (km)',
-  statoMare: 'Sea state',
-  arrivi: 'Arrivals',
-  partenze: 'Departures',
-  transiti: 'Transits',
-  traccia: 'Tracks',
-  quota: 'Altitude (feet)',
-  copertura: 'Coverage',
-  livelloMetri: 'Level (m)',
-  avviso: 'Notice',
-  annotazione: 'Note',
+  speedKnots: 'Speed (knots)',
+  confidence: 'Confidence',
+  windKnots: 'Wind (knots)',
+  visibilityKm: 'Visibility (km)',
+  seaState: 'Sea state',
+  arrivals: 'Arrivals',
+  departures: 'Departures',
+  transits: 'Transits',
+  tracks: 'Tracks',
+  altitude: 'Altitude (feet)',
+  coverage: 'Coverage',
+  levelMeters: 'Level (m)',
+  notice: 'Notice',
+  note: 'Note',
 };
 
 const ORDINE = Object.keys(COLONNE);
@@ -72,10 +72,10 @@ function dataLunga(iso) {
 
 function formattaValore(chiave, valore) {
   if (valore == null || valore === '') return '—';
-  if (chiave === 'affidabilita' && typeof valore === 'number') {
+  if (chiave === 'confidence' && typeof valore === 'number') {
     return new Intl.NumberFormat('en', { style: 'percent', maximumFractionDigits: 0 }).format(valore);
   }
-  if (chiave === 'osservato') {
+  if (chiave === 'observed') {
     const data = new Date(valore);
     if (!Number.isNaN(data.getTime())) {
       return `${new Intl.DateTimeFormat('en', {
@@ -92,11 +92,11 @@ function formattaValore(chiave, valore) {
 }
 
 function classeLivello(livello) {
-  return livello === 'aperto' ? 'aperto' : 'riservato';
+  return livello === 'open' ? 'aperto' : 'riservato';
 }
 
 function etichettaLivello(livello) {
-  return livello === 'aperto' ? 'Open' : 'Restricted';
+  return livello === 'open' ? 'Open' : 'Restricted';
 }
 
 async function api(percorso, opzioni = {}) {
@@ -282,7 +282,7 @@ function pannelloAccesso(prodotto, accesso) {
   const nome = prodotto.fornitore.nome;
   const finalita = politica.finalitaAmmesse.map((voce) => `<li>${esc(voce)}</li>`).join('');
   let corpo;
-  if (politica.livello === 'aperto') {
+  if (politica.livello === 'open') {
     corpo = `<p>Open dataset published by ${esc(nome)}. Use it with no request.</p>
       <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Use the dataset</a></p>`;
   } else if (state.actor === prodotto.fornitore.codice) {
@@ -291,7 +291,7 @@ function pannelloAccesso(prodotto, accesso) {
         <a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Open your extract</a>
         <a class="bottone secondario" href="/richieste" data-link>See requests</a>
       </div>`;
-  } else if (!accesso.richiesta || accesso.richiesta.stato === 'respinta' || accesso.richiesta.stato === 'revocata') {
+  } else if (!accesso.richiesta || accesso.richiesta.stato === 'denied' || accesso.richiesta.stato === 'revoked') {
     const precedente = accesso.richiesta
       ? `<p>Previous status: ${esc(STATI[accesso.richiesta.stato] || accesso.richiesta.stato)}. ${esc(accesso.richiesta.decisione?.nota || '')}</p>`
       : '<p>You have no request for this product yet. The extract stays closed.</p>';
@@ -302,7 +302,7 @@ function pannelloAccesso(prodotto, accesso) {
         </label>
         <button type="submit">Request access from ${esc(nome)}</button>
       </form>`;
-  } else if (accesso.richiesta.stato === 'in_attesa') {
+  } else if (accesso.richiesta.stato === 'pending') {
     corpo = `<p>Request sent on ${esc(dataLunga(accesso.richiesta.richiestaIl))}. ${esc(nome)} has not decided yet. Stated purpose: ${esc(accesso.richiesta.finalita)}</p>
       <p>The extract is not released until the owner approves.</p>
       <button type="button" data-attore="${esc(prodotto.fornitore.codice)}" data-vai="/richieste">Open ${esc(nome)}’s queue</button>`;
@@ -372,7 +372,7 @@ function mappa(record) {
   const segni = punti.map((voce) => {
     const sx = x(voce.longitude);
     const sy = y(voce.latitude);
-    const sigla = String(voce.etichetta || '').split('-').pop();
+    const sigla = String(voce.label || '').split('-').pop();
     return `<g><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="6"></circle><text x="${(sx + 9).toFixed(1)}" y="${(sy - 8).toFixed(1)}">${esc(sigla)}</text></g>`;
   }).join('');
   return `<div class="mappa-wrap"><svg class="mappa" viewBox="0 0 ${larghezza} ${altezza}" role="img" aria-label="Position of the authorized contacts">
@@ -401,10 +401,10 @@ function tabellaRecord(record) {
 
 function testoUso(dati) {
   const motivo = dati.accesso.motivo;
-  if (motivo === 'aperto') {
+  if (motivo === 'open') {
     return 'Open dataset: direct use, with no access request.';
   }
-  if (motivo === 'proprietario') {
+  if (motivo === 'owner') {
     return 'You are reading an extract from your own country. It stays under your sovereignty, and no grant to another nation is recorded.';
   }
   return `Active grant from ${dati.prodotto.fornitore.nome}. The owner can revoke it from the request queue: these records are then no longer delivered.`;
@@ -412,10 +412,10 @@ function testoUso(dati) {
 
 function paginaUso(dati) {
   const record = dati.estratto.record || [];
-  const superficie = record.filter((voce) => voce.tipo === 'surface').length;
-  const sotto = record.filter((voce) => voce.tipo === 'subsurface').length;
-  const mappaHtml = dati.estratto.vista === 'mappa' ? mappa(record) : '';
-  const statistiche = dati.estratto.vista === 'mappa' && superficie + sotto > 0
+  const superficie = record.filter((voce) => voce.type === 'surface').length;
+  const sotto = record.filter((voce) => voce.type === 'subsurface').length;
+  const mappaHtml = dati.estratto.vista === 'map' ? mappa(record) : '';
+  const statistiche = dati.estratto.vista === 'map' && superficie + sotto > 0
     ? `<div class="statistiche">
         <div><strong>${record.length}</strong>contacts in the extract</div>
         <div><strong>${superficie}</strong>surface</div>
@@ -463,17 +463,17 @@ function cartaRichiesta(richiesta, ruolo) {
     : '';
   const nastro = evidenza ? '<span class="badge neutro">Guided path</span>' : '';
   let comandi = '';
-  if (ruolo === 'in-arrivo' && richiesta.stato === 'in_attesa') {
+  if (ruolo === 'in-arrivo' && richiesta.stato === 'pending') {
     comandi = `<form data-form="decisione" data-id="${esc(richiesta.id)}">
       <label>Note for ${esc(richiesta.nomeRichiedente)}
         <textarea name="nota" maxlength="500" placeholder="Optional if you approve. Required, and clear, if you deny."></textarea>
       </label>
       <div class="azioni-riga">
-        <button type="submit" data-esito="approvata">Approve</button>
-        <button type="submit" class="secondario" data-esito="respinta">Deny</button>
+        <button type="submit" data-esito="approved">Approve</button>
+        <button type="submit" class="secondario" data-esito="denied">Deny</button>
       </div>
     </form>`;
-  } else if (ruolo === 'in-arrivo' && richiesta.stato === 'approvata') {
+  } else if (ruolo === 'in-arrivo' && richiesta.stato === 'approved') {
     comandi = `<form data-form="revoca" data-id="${esc(richiesta.id)}">
       <label>Reason for revocation
         <textarea name="nota" required minlength="8" maxlength="500" placeholder="Why you are closing the grant."></textarea>
@@ -485,7 +485,7 @@ function cartaRichiesta(richiesta, ruolo) {
     ? `<p>Decision on ${esc(dataLunga(richiesta.decisione.il))}: ${esc(richiesta.decisione.nota || 'no note')}</p>`
     : '';
   return `<article class="carta-richiesta${evidenza}">
-    <span class="badge ${richiesta.stato === 'approvata' ? 'aperto' : richiesta.stato === 'in_attesa' ? 'neutro' : 'riservato'}">${esc(STATI[richiesta.stato] || richiesta.stato)}</span>
+    <span class="badge ${richiesta.stato === 'approved' ? 'aperto' : richiesta.stato === 'pending' ? 'neutro' : 'riservato'}">${esc(STATI[richiesta.stato] || richiesta.stato)}</span>
     ${nastro}
     <h3>${esc(richiesta.titoloProdotto)}</h3>
     <p>${ruolo === 'in-arrivo' ? `From ${esc(richiesta.nomeRichiedente)}` : `To ${esc(richiesta.nomeProprietario)}`} · ${esc(dataLunga(richiesta.richiestaIl))}</p>
@@ -524,17 +524,17 @@ function passiStoria(storia) {
     { titolo: 'Decision', testo: 'Germany approves or denies.', fase: 'attesa' },
     { titolo: 'Use', testo: 'The extract opens only after a yes.', fase: 'attesa' },
   ];
-  if (stato === 'in_attesa') {
+  if (stato === 'pending') {
     passi[1] = { titolo: 'Request', testo: 'Sent, waiting on the owner.', fase: 'fatto' };
     passi[2] = { titolo: 'Decision', testo: 'It is Germany’s turn.', fase: 'corso' };
-  } else if (stato === 'approvata') {
+  } else if (stato === 'approved') {
     passi[1] = { titolo: 'Request', testo: 'Sent by the Netherlands.', fase: 'fatto' };
     passi[2] = { titolo: 'Decision', testo: 'Germany has granted access.', fase: 'fatto' };
     passi[3] = { titolo: 'Use', testo: 'The Netherlands can open the extract.', fase: 'corso' };
-  } else if (stato === 'respinta') {
+  } else if (stato === 'denied') {
     passi[1] = { titolo: 'Request', testo: 'A new request can be sent.', fase: 'corso' };
     passi[2] = { titolo: 'Decision', testo: 'Germany denied it.', fase: 'fatto' };
-  } else if (stato === 'revocata') {
+  } else if (stato === 'revoked') {
     passi[1] = { titolo: 'Request', testo: 'The grant no longer holds.', fase: 'corso' };
     passi[2] = { titolo: 'Decision', testo: 'Germany revoked it.', fase: 'fatto' };
     passi[3] = { titolo: 'Use', testo: 'The extract is closed again.', fase: 'attesa' };
@@ -547,19 +547,19 @@ function azioneStoria(storia) {
   const id = storia.prodottoId;
   const richiedente = storia.richiedente.codice;
   const proprietario = storia.proprietario.codice;
-  if (!stato || stato === 'respinta' || stato === 'revocata') {
+  if (!stato || stato === 'denied' || stato === 'revoked') {
     if (state.actor !== richiedente) {
       return { etichetta: 'Act as the Netherlands', attore: richiedente, vai: `/prodotti/${id}` };
     }
     return { etichetta: 'Open the German sensors', vai: `/prodotti/${id}` };
   }
-  if (stato === 'in_attesa') {
+  if (stato === 'pending') {
     if (state.actor !== proprietario) {
       return { etichetta: 'Switch to Germany to decide', attore: proprietario, vai: '/richieste' };
     }
     return { etichetta: 'Open incoming requests', vai: '/richieste' };
   }
-  if (stato === 'approvata') {
+  if (stato === 'approved') {
     if (state.actor !== richiedente) {
       return { etichetta: 'Return to the Netherlands', attore: richiedente, vai: `/prodotti/${id}/uso` };
     }
@@ -655,7 +655,7 @@ document.addEventListener('submit', (evento) => {
   }
   if (form.dataset.form === 'decisione' || form.dataset.form === 'revoca') {
     evento.preventDefault();
-    const esito = form.dataset.form === 'revoca' ? 'revocata' : evento.submitter?.dataset.esito;
+    const esito = form.dataset.form === 'revoca' ? 'revoked' : evento.submitter?.dataset.esito;
     const nota = String(new FormData(form).get('nota') || '').trim();
     if (!esito) {
       messaggio('Choose whether to approve or deny.');
@@ -667,9 +667,9 @@ document.addEventListener('submit', (evento) => {
         body: JSON.stringify({ esito, nota }),
       });
       const testi = {
-        approvata: 'Grant recorded. The requester can use the extract.',
-        respinta: 'Request denied. The extract stays closed.',
-        revocata: 'Grant revoked. Use stops at once.',
+        approved: 'Grant recorded. The requester can use the extract.',
+        denied: 'Request denied. The extract stays closed.',
+        revoked: 'Grant revoked. Use stops at once.',
       };
       messaggio(testi[esito]);
       await render();

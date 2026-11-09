@@ -54,26 +54,26 @@ export async function ultimaRichiesta(db, richiedenteId, prodottoId) {
 
 export async function statoAccesso(db, prodotto, attore) {
   if (!attore) {
-    return { consentito: false, motivo: 'attore-mancante', richiesta: null };
+    return { consentito: false, motivo: 'missing-actor', richiesta: null };
   }
-  if (prodotto.politicaAccesso.livello === 'aperto') {
-    return { consentito: true, motivo: 'aperto', richiesta: null };
+  if (prodotto.politicaAccesso.livello === 'open') {
+    return { consentito: true, motivo: 'open', richiesta: null };
   }
   if (attore._id === prodotto.fornitoreId) {
-    return { consentito: true, motivo: 'proprietario', richiesta: null };
+    return { consentito: true, motivo: 'owner', richiesta: null };
   }
   const approvata = await db.collection('richiesteAccesso').findOne({
     richiedenteId: attore._id,
     prodottoId: prodotto._id,
-    stato: 'approvata',
+    stato: 'approved',
   });
   if (approvata) {
-    return { consentito: true, motivo: 'concessione', richiesta: pubblicaRichiesta(approvata) };
+    return { consentito: true, motivo: 'grant', richiesta: pubblicaRichiesta(approvata) };
   }
   const ultima = await ultimaRichiesta(db, attore._id, prodotto._id);
   return {
     consentito: false,
-    motivo: ultima ? ultima.stato : 'nessuna-richiesta',
+    motivo: ultima ? ultima.stato : 'no-request',
     richiesta: pubblicaRichiesta(ultima),
   };
 }

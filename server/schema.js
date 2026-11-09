@@ -145,7 +145,7 @@ const prodottoSchema = {
       ],
       additionalProperties: false,
       properties: {
-        livello: { enum: ['aperto', 'riservato'] },
+        livello: { enum: ['open', 'restricted'] },
         ilProprietarioDecide: { bsonType: 'bool' },
         finalitaAmmesse: {
           bsonType: 'array',
@@ -171,7 +171,7 @@ const estrattoSchema = {
     schemaVersion: { bsonType: 'int', minimum: 1 },
     prodottoId: { bsonType: 'string', minLength: 3, maxLength: 80 },
     descrizione: testo,
-    vista: { enum: ['mappa', 'tabella'] },
+    vista: { enum: ['map', 'table'] },
     record: {
       bsonType: 'array',
       minItems: 1,
@@ -207,7 +207,7 @@ const richiestaSchema = {
     richiedenteId: { bsonType: 'string', minLength: 3, maxLength: 3 },
     nomeRichiedente: stringa,
     finalita: { bsonType: 'string', minLength: 12, maxLength: 500 },
-    stato: { enum: ['in_attesa', 'approvata', 'respinta', 'revocata'] },
+    stato: { enum: ['pending', 'approved', 'denied', 'revoked'] },
     richiestaIl: { bsonType: 'date' },
     decisione: {
       bsonType: ['object', 'null'],
