@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
+const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27001';
 const dbName = process.env.MONGODB_DB || 'nato_catalog';
 
 // Contesto assunto per questo processo: un solo server Node di lunga durata,

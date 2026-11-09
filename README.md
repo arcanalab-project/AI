@@ -10,7 +10,7 @@ Serve un MongoDB in ascolto. Esempio in locale, senza systemd:
 
 ```bash
 mkdir -p data/mongo
-mongod --dbpath data/mongo --bind_ip 127.0.0.1 --port 27017 --fork --logpath data/mongod.log
+mongod --dbpath data/mongo --bind_ip 127.0.0.1 --port 27001 --fork --logpath data/mongod.log
 npm install
 npm start
 ```
@@ -21,7 +21,7 @@ All’avvio, se il catalogo è vuoto, viene inserito il seme. `npm run seed` lo 
 
 Variabili:
 
-- `MONGODB_URI` — default `mongodb://127.0.0.1:27017`
+- `MONGODB_URI` — default `mongodb://127.0.0.1:27001`
 - `MONGODB_DB` — default `nato_catalog`
 - `PORT` — default `3000`
 
