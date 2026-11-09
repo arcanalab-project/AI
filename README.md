@@ -6,22 +6,20 @@ L’interfaccia è in italiano. Il catalogo legge e scrive MongoDB (niente file 
 
 ## Avvio
 
-Serve un MongoDB in ascolto. Esempio in locale, senza systemd:
+Il portale ascolta solo su `127.0.0.1`, porta `3000`. Il catalogo usa MongoDB già in ascolto su `mongodb://localhost:27017`, database `nato_catalog`.
 
 ```bash
-mkdir -p data/mongo
-mongod --dbpath data/mongo --bind_ip 127.0.0.1 --port 27001 --fork --logpath data/mongod.log
 npm install
 npm start
 ```
 
-Apri http://127.0.0.1:3000
+Apri http://localhost:3000
 
 All’avvio, se il catalogo è vuoto, viene inserito il seme. `npm run seed` lo riscrive da zero.
 
 Variabili:
 
-- `MONGODB_URI` — default `mongodb://127.0.0.1:27001`
+- `MONGODB_URI` — default `mongodb://localhost:27017`
 - `MONGODB_DB` — default `nato_catalog`
 - `PORT` — default `3000`
 
