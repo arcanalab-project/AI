@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catalogo federato — nazioni fornitrici</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect fill='%230f2744' width='16' height='16'/%3E%3Crect fill='%23c4a15a' x='3' y='3' width='4' height='4'/%3E%3Crect fill='%23c4a15a' x='9' y='9' width='4' height='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="salta" href="#contenuto">Vai al contenuto</a>
+  <header class="barra">
+    <a class="marca" href="/" data-link>
+      <span class="segno" aria-hidden="true"></span>
+      <span>
+        <span class="sopra">Nazioni fornitrici</span>
+        <strong>Catalogo federato</strong>
+      </span>
+    </a>
+    <nav class="nav" aria-label="Sezioni">
+      <a href="/" data-link>Nazioni</a>
+      <a href="/richieste" data-link>Richieste</a>
+    </nav>
+    <label class="attore">
+      <span>Operi come</span>
+      <select id="selettore-attore" aria-label="Nazione con cui operi"></select>
+    </label>
+  </header>
+  <p id="messaggio" class="messaggio" role="status"></p>
+  <section id="storia" class="storia" aria-label="Storia dimostrativa"></section>
+  <main id="contenuto">
+    <p class="caricamento">Apertura del catalogo…</p>
+  </main>
+  <footer class="pie">
+    <p>Dimostrazione di catalogo federato. «Operi come» non è un’autenticazione: il server, però, non consegna un estratto riservato senza una concessione attiva del proprietario.</p>
+    <button type="button" data-azione="ripristina">Ripristina i dati dimostrativi</button>
+  </footer>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

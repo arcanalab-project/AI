@@ -1,3 +1,51 @@
+# Catalogo federato dei dati
+
+Le nazioni sono fornitori, non prodotti. Ognuna ha un profilo e pubblica più dataset. Ogni dataset ha metadati e una politica di accesso. La scoperta è condivisa; l’estratto riservato esce solo se il proprietario approva, e si chiude se revoca.
+
+L’interfaccia è in italiano. Il catalogo legge e scrive MongoDB (niente file e niente memoria come archivio).
+
+## Avvio
+
+Serve un MongoDB in ascolto. Esempio in locale, senza systemd:
+
+```bash
+mkdir -p data/mongo
+mongod --dbpath data/mongo --bind_ip 127.0.0.1 --port 27017 --fork --logpath data/mongod.log
+npm install
+npm start
+```
+
+Apri http://127.0.0.1:3000
+
+All’avvio, se il catalogo è vuoto, viene inserito il seme. `npm run seed` lo riscrive da zero.
+
+Variabili:
+
+- `MONGODB_URI` — default `mongodb://127.0.0.1:27017`
+- `MONGODB_DB` — default `nato_catalog`
+- `PORT` — default `3000`
+
+Un solo processo, query brevi, un mongod locale: il pool è volutamente piccolo (`maxPoolSize` 10, `minPoolSize` 1). Vedi `server/db.js`.
+
+## Storia
+
+La Germania pubblica «Contatti della rete sensori nel Baltico meridionale», prodotto riservato. I Paesi Bassi lo scoprono, leggono i metadati, chiedono accesso. La Germania approva. I Paesi Bassi usano l’estratto nella pagina di uso (mappa e tabella). Il bollettino meteo tedesco è aperto e si usa senza richiesta.
+
+In alto, «Operi come» cambia la nazione. Il percorso è anche nel riquadro «Dalla Germania ai Paesi Bassi». «Ripristina i dati dimostrativi» cancella le richieste e rimette il seme.
+
+## Modello
+
+Quattro collezioni, con validazione JSON Schema:
+
+- `fornitori` — profilo della nazione e dichiarazione di sovranità
+- `prodotti` — titolo, dominio, metadati e politica di accesso nello stesso documento, perché la scheda li mostra insieme. Il nome del fornitore è copiato sul prodotto
+- `estratti` — i record, uno per prodotto, in una collezione a parte: la scoperta non deve leggerli e il server li consegna solo dopo il controllo della politica
+- `richiesteAccesso` — richieste illimitate, con stato proprio (in attesa, approvata, respinta, revocata). Titolo e nomi sono copiati sulla richiesta per le code
+
+Indici: prodotti per fornitore; richieste per proprietario e stato; richieste per richiedente e prodotto.
+
+---
+
 ⸻
 
 Production AI is not a demo
