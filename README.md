@@ -29,7 +29,7 @@ One process, short queries, one local mongod: the pool stays small on purpose (`
 
 Germany publishes “Contacts from the southern Baltic sensor network”, a restricted product. The Netherlands discovers it, reads the metadata, and requests access. Germany approves. The Netherlands uses the extract on the use page (map and table). The German weather bulletin is open and can be used with no request.
 
-“Acting as” at the top switches the nation. The same path is in the “From Germany to the Netherlands” banner. “Reset demonstration data” clears requests and reloads the seed.
+“Acting as” at the top switches the nation. The same path is in the “From Germany to the Netherlands” banner. The **Example** tab writes the six clicks in order: act as the Netherlands, open Germany’s sensors, read the metadata, request access, approve as Germany, then use the extract. “Reset demonstration data” clears requests and reloads the seed.
 
 ## Model
 

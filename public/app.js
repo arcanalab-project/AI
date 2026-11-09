@@ -160,6 +160,7 @@ async function render() {
     if (token !== tokenRender) return;
     contenuto.innerHTML = html;
     document.querySelector('#selettore-attore').value = state.actor;
+    segnaNavigazione();
     dipingiStoria();
   } catch (errore) {
     if (token !== tokenRender) return;
@@ -180,8 +181,83 @@ async function vista(percorso) {
     return vistaProdotto(corrispondenza[1]);
   }
   if (percorso === '/richieste') return vistaRichieste();
+  if (percorso === '/example') return vistaEsempio();
   document.title = 'Page not found — Federated catalog';
   return `<section class="blocco" style="padding:1rem"><h1>Page not found</h1><p><a href="/" data-link>Back to nations</a></p></section>`;
+}
+
+function segnaNavigazione() {
+  const percorso = location.pathname;
+  document.querySelectorAll('.nav a').forEach((link) => {
+    const href = link.getAttribute('href');
+    const attivo = href === '/example'
+      ? percorso === '/example'
+      : href === '/richieste'
+        ? percorso === '/richieste'
+        : percorso !== '/example' && percorso !== '/richieste';
+    if (attivo) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+}
+
+function vistaEsempio() {
+  document.title = 'Example scenario — Federated catalog';
+  return `<section class="esempio">
+    <p class="sopra">Example scenario</p>
+    <h1>From Germany to the Netherlands</h1>
+    <p class="lede">Germany has already published “Contacts from the southern Baltic sensor network”. The policy is restricted, so the Netherlands can read the description and then has to ask before the records appear. Follow the six steps in order.</p>
+    <p>If this path has already been run, click <strong>Reset demonstration data</strong> at the bottom of the page first. That clears requests and starts the story again.</p>
+    <ol class="passi-esempio">
+      <li>
+        <span class="numero" aria-hidden="true">1</span>
+        <div>
+          <h2>Act as the Netherlands</h2>
+          <p><span class="passo-etichetta">Click</span> the <strong>Acting as</strong> menu at the top right and choose <strong>Netherlands</strong>.</p>
+          <p><span class="passo-etichetta">You should see</span> the Dutch flag and the name Netherlands in that menu. The story banner says the Netherlands asks to use the German sensors, and the button reads <strong>Open the German sensors</strong>.</p>
+        </div>
+      </li>
+      <li>
+        <span class="numero" aria-hidden="true">2</span>
+        <div>
+          <h2>Discover the dataset</h2>
+          <p><span class="passo-etichetta">Click</span> <strong>Nations</strong>, then <strong>Germany</strong>.</p>
+          <p><span class="passo-etichetta">You should see</span> Germany’s provider page. Among the published products is <strong>Contacts from the southern Baltic sensor network</strong>, marked <strong>Restricted</strong>, with the note “demo path”.</p>
+        </div>
+      </li>
+      <li>
+        <span class="numero" aria-hidden="true">3</span>
+        <div>
+          <h2>Read the metadata</h2>
+          <p><span class="passo-etichetta">Click</span> <strong>Contacts from the southern Baltic sensor network</strong>. The story button <strong>Open the German sensors</strong> opens this same page.</p>
+          <p><span class="passo-etichetta">You should see</span> the dossier. <strong>Metadata</strong> names Germany as the provider, the southern Baltic as the coverage, and fields such as Contact, Type, and Speed. <strong>Access policy</strong> says <strong>Restricted</strong>. Contact identifiers such as DEU-SNS-2401 are not on this page. The records stay in a separate extract.</p>
+        </div>
+      </li>
+      <li>
+        <span class="numero" aria-hidden="true">4</span>
+        <div>
+          <h2>Request access</h2>
+          <p><span class="passo-etichetta">Click</span> in <strong>Purpose of the request</strong>, type a clear sentence such as “Collective defence picture for the southern Baltic.”, then click <strong>Request access from Germany</strong>.</p>
+          <p><span class="passo-etichetta">You should see</span> the notice “Request sent. The owning nation makes the decision.” The extract stays closed. The story banner moves to Germany’s decision, and the button changes to <strong>Switch to Germany to decide</strong>.</p>
+        </div>
+      </li>
+      <li>
+        <span class="numero" aria-hidden="true">5</span>
+        <div>
+          <h2>Germany approves</h2>
+          <p><span class="passo-etichetta">Click</span> <strong>Switch to Germany to decide</strong>. On the requests page, under <strong>Incoming</strong>, click <strong>Approve</strong>. A note is optional when you approve.</p>
+          <p><span class="passo-etichetta">You should see</span> <strong>Acting as</strong> change to Germany, and one incoming request from the Netherlands for this sensor product, with status <strong>Pending</strong>. After Approve, the notice reads “Grant recorded. The requester can use the extract.” The status becomes <strong>Approved</strong>.</p>
+        </div>
+      </li>
+      <li>
+        <span class="numero" aria-hidden="true">6</span>
+        <div>
+          <h2>The Netherlands uses the data</h2>
+          <p><span class="passo-etichetta">Click</span> <strong>Return to the Netherlands</strong> in the story banner.</p>
+          <p><span class="passo-etichetta">You should see</span> the use page: “Using the extract”, an active grant from Germany, a map of the contacts, and a table. The table includes <strong>DEU-SNS-2401</strong>, and the counts separate surface contacts from subsurface contacts. Those records were not visible before Germany approved.</p>
+        </div>
+      </li>
+    </ol>
+  </section>`;
 }
 
 async function vistaHome() {

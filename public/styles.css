@@ -117,7 +117,8 @@ button, select, textarea {
   border-bottom: 1px solid transparent;
 }
 
-.nav a:hover { border-bottom-color: var(--ottone-chiaro); color: white; }
+.nav a:hover,
+.nav a[aria-current="page"] { border-bottom-color: var(--ottone-chiaro); color: white; }
 
 .attore {
   display: flex;
@@ -487,6 +488,50 @@ textarea {
 .caricamento { color: var(--inchiostro-soft); }
 
 .tabella-wrap { overflow-x: auto; }
+
+.esempio { max-width: 48rem; }
+
+.passi-esempio {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.passi-esempio > li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.9rem;
+  padding: 1rem 1.05rem;
+  background: var(--carta-2);
+  border: 1px solid var(--linea);
+  box-shadow: var(--ombra);
+}
+
+.passi-esempio h2 { margin: 0 0 0.45rem; font-size: 1.35rem; }
+
+.passi-esempio p { margin: 0.35rem 0 0; }
+
+.numero {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  background: var(--navy);
+  color: #f6f1e6;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+}
+
+.passo-etichetta {
+  display: inline-block;
+  margin-right: 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ottone);
+}
 
 @media (max-width: 900px) {
   .barra { flex-wrap: wrap; }
