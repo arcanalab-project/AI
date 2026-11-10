@@ -22,6 +22,17 @@ Variables:
 - `MONGODB_URI` — default `mongodb://localhost:27017`
 - `MONGODB_DB` — default `nato_catalog`
 - `PORT` — default `3000`
+- `BIND_HOST` — default `127.0.0.1`. The container sets `0.0.0.0` so the Service can reach it.
+
+## Kubernetes
+
+```bash
+docker build -t nato-catalog:latest .
+kubectl apply -f k8s/nato-catalog.yaml
+kubectl -n nato-catalog port-forward svc/nato-catalog 3000:3000
+```
+
+Open http://localhost:3000. The catalog reaches MongoDB at `mongodb://mongo:27017/nato_catalog`.
 
 One process, short queries, one local mongod: the pool stays small on purpose (`maxPoolSize` 10, `minPoolSize` 1). See `server/db.js`.
 

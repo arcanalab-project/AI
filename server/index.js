@@ -10,6 +10,7 @@ import { avviaAggiornamentoDroni } from './live.js';
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(directory, '..', 'public');
 const port = Number(process.env.PORT || 3000);
+const host = process.env.BIND_HOST || '127.0.0.1';
 
 const app = express();
 app.disable('x-powered-by');
@@ -29,7 +30,7 @@ try {
   await ensureSchema(db);
   const seminato = await seminaSeVuoto(db);
   avviaAggiornamentoDroni(db);
-  app.listen(port, '127.0.0.1', () => {
+  app.listen(port, host, () => {
     const seme = seminato ? ' Initial seed inserted.' : '';
     console.log(`Catalog at http://localhost:${port} — MongoDB ${uriOscurata()} / ${nomeDatabase()}.${seme}`);
   });
