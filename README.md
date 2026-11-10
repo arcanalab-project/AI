@@ -29,9 +29,9 @@ One process, short queries, one local mongod: the pool stays small on purpose (`
 
 Germany publishes “Contacts from the southern Baltic sensor network”, a restricted product. The Netherlands discovers it, reads the metadata, and requests access. Germany approves. The Netherlands uses the extract on the use page (map and table). The German weather bulletin is open and can be used with no request.
 
-Italy, France, Turkey, and Germany each also publish one live tactical-drone feed. The document is the current slice and a short ground track of about 12 points. `eventCount` is a counter. The server nudges the feed on an interval. Headquarters shares only Turkey’s drone with Portugal. Portugal can then open it. Turkey remains the publisher, and Portugal still publishes nothing.
+Italy, France, Turkey, and Germany each also publish one live tactical-drone feed. The document is the current slice and a short ground track of about 12 points. `eventCount` is a counter. The server nudges the feed on an interval. On a drone, **Share with** picks any other NATO country. That country then shows the same live feed. The publisher remains the owner. Portugal starts with no publications.
 
-“Acting as” at the top switches the nation. The same sensor path is in the “From Germany to the Netherlands” banner. The **Example** tab writes the sensor clicks and then the Turkey → Portugal share. “Reset demonstration data” clears requests and shares and reloads the seed.
+“Acting as” switches the nation for access requests. “Reset catalog data” clears requests and shares and reloads the seed.
 
 ## Model
 

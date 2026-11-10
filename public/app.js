@@ -1,7 +1,6 @@
 const state = {
   actor: localStorage.getItem('catalogo-attore') || 'NLD',
   fornitori: [],
-  storia: null,
 };
 
 let silenzioso = false;
@@ -184,13 +183,11 @@ async function render() {
   const contenuto = document.querySelector('#contenuto');
   contenuto.innerHTML = '<p class="caricamento">Loading…</p>';
   try {
-    await caricaStoria();
     const html = await vista(location.pathname);
     if (token !== tokenRender) return;
     contenuto.innerHTML = html;
     document.querySelector('#selettore-attore').value = state.actor;
     segnaNavigazione();
-    dipingiStoria();
     avviaLive();
   } catch (errore) {
     if (token !== tokenRender) return;
@@ -211,107 +208,20 @@ async function vista(percorso) {
     return vistaProdotto(corrispondenza[1]);
   }
   if (percorso === '/richieste') return vistaRichieste();
-  if (percorso === '/example') return vistaEsempio();
-  document.title = 'Page not found — Federated catalog';
-  return `<section class="blocco" style="padding:1rem"><h1>Page not found</h1><p><a href="/" data-link>Back to nations</a></p></section>`;
+  document.title = 'Page not found — NATO headquarters';
+  return `<section class="blocco" style="padding:1rem"><h1>Page not found</h1><p><a href="/" data-link>Back to headquarters</a></p></section>`;
 }
 
 function segnaNavigazione() {
   const percorso = location.pathname;
   document.querySelectorAll('.nav a').forEach((link) => {
     const href = link.getAttribute('href');
-    const attivo = href === '/example'
-      ? percorso === '/example'
-      : href === '/richieste'
-        ? percorso === '/richieste'
-        : percorso !== '/example' && percorso !== '/richieste';
+    const attivo = href === '/richieste'
+      ? percorso === '/richieste'
+      : percorso !== '/richieste';
     if (attivo) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
-}
-
-function vistaEsempio() {
-  document.title = 'Example scenario — NATO headquarters';
-  return `<section class="esempio">
-    <p class="sopra">Example scenario</p>
-    <h1>From Germany to the Netherlands, then Turkey to Portugal</h1>
-    <p class="lede">Germany has already published “Contacts from the southern Baltic sensor network”. The policy is restricted, so the Netherlands can read the description and then has to ask before the records appear. After that path, headquarters shares only Turkey’s tactical drone with Portugal. Portugal publishes nothing and does not become the publisher.</p>
-    <p>If this path has already been run, click <strong>Reset demonstration data</strong> at the bottom of the page first. That clears requests and starts the story again.</p>
-    <ol class="passi-esempio">
-      <li>
-        <span class="numero" aria-hidden="true">1</span>
-        <div>
-          <h2>Act as the Netherlands</h2>
-          <p><span class="passo-etichetta">Click</span> the <strong>Acting as</strong> menu at the top right and choose <strong>Netherlands</strong>.</p>
-          <p><span class="passo-etichetta">You should see</span> the Dutch flag and the name Netherlands in that menu. The story banner says the Netherlands asks to use the German sensors, and the button reads <strong>Open the German sensors</strong>.</p>
-        </div>
-      </li>
-      <li>
-        <span class="numero" aria-hidden="true">2</span>
-        <div>
-          <h2>Discover the dataset</h2>
-          <p><span class="passo-etichetta">Click</span> <strong>Headquarters</strong>, then <strong>Germany</strong>.</p>
-          <p><span class="passo-etichetta">You should see</span> Germany’s provider page. Among the published products is <strong>Contacts from the southern Baltic sensor network</strong>, marked <strong>Restricted</strong>, with the note “demo path”.</p>
-        </div>
-      </li>
-      <li>
-        <span class="numero" aria-hidden="true">3</span>
-        <div>
-          <h2>Read the metadata</h2>
-          <p><span class="passo-etichetta">Click</span> <strong>Contacts from the southern Baltic sensor network</strong>. The story button <strong>Open the German sensors</strong> opens this same page.</p>
-          <p><span class="passo-etichetta">You should see</span> the dossier. <strong>Metadata</strong> names Germany as the provider, the southern Baltic as the coverage, and fields such as Contact, Type, and Speed. <strong>Access policy</strong> says <strong>Restricted</strong>. Contact identifiers such as DEU-SNS-2401 are not on this page. The records stay in a separate extract.</p>
-        </div>
-      </li>
-      <li>
-        <span class="numero" aria-hidden="true">4</span>
-        <div>
-          <h2>Request access</h2>
-          <p><span class="passo-etichetta">Click</span> in <strong>Purpose of the request</strong>, type a clear sentence such as “Collective defence picture for the southern Baltic.”, then click <strong>Request access from Germany</strong>.</p>
-          <p><span class="passo-etichetta">You should see</span> the notice “Request sent. The owning nation makes the decision.” The extract stays closed. The story banner moves to Germany’s decision, and the button changes to <strong>Switch to Germany to decide</strong>.</p>
-        </div>
-      </li>
-      <li>
-        <span class="numero" aria-hidden="true">5</span>
-        <div>
-          <h2>Germany approves</h2>
-          <p><span class="passo-etichetta">Click</span> <strong>Switch to Germany to decide</strong>. On the requests page, under <strong>Incoming</strong>, click <strong>Approve</strong>. A note is optional when you approve.</p>
-          <p><span class="passo-etichetta">You should see</span> <strong>Acting as</strong> change to Germany, and one incoming request from the Netherlands for this sensor product, with status <strong>Pending</strong>. After Approve, the notice reads “Grant recorded. The requester can use the extract.” The status becomes <strong>Approved</strong>.</p>
-        </div>
-      </li>
-      <li>
-        <span class="numero" aria-hidden="true">6</span>
-        <div>
-          <h2>The Netherlands uses the data</h2>
-          <p><span class="passo-etichetta">Click</span> <strong>Return to the Netherlands</strong> in the story banner.</p>
-          <p><span class="passo-etichetta">You should see</span> the use page: “Using the extract”, an active grant from Germany, a map of the contacts, and a table. The table includes <strong>DEU-SNS-2401</strong>, and the counts separate surface contacts from subsurface contacts. Those records were not visible before Germany approved.</p>
-        </div>
-      </li>
-      <li>
-        <span class="numero" aria-hidden="true">7</span>
-        <div>
-          <h2>Open Turkey’s live drone</h2>
-          <p><span class="passo-etichetta">Click</span> <strong>Headquarters</strong>, then <strong>Turkey</strong>.</p>
-          <p><span class="passo-etichetta">You should see</span> one published product, “Tactical drone over the Turkish NATO exercise”, and a live slice: battery, speed, heading, altitude, mission status, thermal readings, propulsion health, the last detection, and a short track of one land vehicle. Those figures change while the page stays open. The event counter is a number, not a list of events.</p>
-        </div>
-      </li>
-      <li>
-        <span class="numero" aria-hidden="true">8</span>
-        <div>
-          <h2>Share it with Portugal</h2>
-          <p><span class="passo-etichetta">Click</span> the Turkish drone product. Under <strong>Share</strong>, choose <strong>Portugal</strong> as the recipient country and click <strong>Confirm share</strong>.</p>
-          <p><span class="passo-etichetta">You should see</span> “Shared with Portugal. Turkey remains the publisher.” Germany’s drone is not part of this share.</p>
-        </div>
-      </li>
-      <li>
-        <span class="numero" aria-hidden="true">9</span>
-        <div>
-          <h2>Portugal receives it and opens it</h2>
-          <p><span class="passo-etichetta">Click</span> <strong>Acting as</strong> and choose <strong>Portugal</strong>. Then click <strong>Headquarters</strong>, then <strong>Portugal</strong>, then <strong>Open</strong> on the received product.</p>
-          <p><span class="passo-etichetta">You should see</span> that Portugal has not published a dataset, and under Received the Turkish drone. The open page names Turkey as the publisher and shows the same live slice. Portugal still publishes nothing.</p>
-        </div>
-      </li>
-    </ol>
-  </section>`;
 }
 
 function formattaNumero(valore, cifre = 1) {
@@ -359,7 +269,7 @@ function htmlFetta(drone) {
       <div><strong>${esc(drone.propulsion.health)}</strong>propulsion</div>
       <div><strong data-eventi>${esc(formattaNumero(drone.eventCount, 0))}</strong>events counted</div>
     </div>
-    <p>Aircraft UTM ${esc(formattaNumero(volo.position.x, 1))}, ${esc(formattaNumero(volo.position.y, 1))} · callsign ${esc(drone.platform.callsign)}</p>
+    <p data-utm="${esc(formattaNumero(volo.position.x, 1))},${esc(formattaNumero(volo.position.y, 1))}">Aircraft UTM ${esc(formattaNumero(volo.position.x, 1))}, ${esc(formattaNumero(volo.position.y, 1))} · callsign ${esc(drone.platform.callsign)}</p>
     <p class="ruolo">Thermal</p>
     <p>Ambient ${esc(formattaNumero(termico.ambientC))} °C · ground ${esc(formattaNumero(termico.groundSurfaceC))} °C · humidity ${esc(formattaNumero(termico.humidityPct, 0))}%</p>
     <p class="ruolo">Last detection</p>
@@ -368,12 +278,15 @@ function htmlFetta(drone) {
     ${svgTraccia(drone.payload.groundDetections)}`;
 }
 
-function pannelloLive(drone, prodotto) {
+function pannelloLive(drone, prodotto, origine) {
   if (!drone || !prodotto) return '';
+  const fonte = origine === 'shared'
+    ? `Shared from ${prodotto.fornitore.bandiera} ${prodotto.fornitore.nome}`
+    : `Published by ${prodotto.fornitore.bandiera} ${prodotto.fornitore.nome}`;
   return `<section class="fetta" data-live-prodotto="${esc(prodotto.id)}">
-    <p class="ruolo">Live tactical drone · ${esc(drone.platform.callsign)}</p>
+    <p class="ruolo">Live tactical drone · ${esc(drone.platform.callsign)} · ${fonte}</p>
     <h2>${esc(prodotto.titolo)}</h2>
-    <p>Publisher ${esc(prodotto.fornitore.bandiera)} ${esc(prodotto.fornitore.nome)}. This slice fits the page. The event counter is not a stored history.</p>
+    <p>${esc(prodotto.fornitore.nome)} remains the owner. This is the same live feed wherever it is shown.</p>
     <div class="fetta-corpo">${htmlFetta(drone)}</div>
   </section>`;
 }
@@ -410,7 +323,7 @@ async function vistaHome() {
   return `<section>
     <p class="sopra">NATO headquarters</p>
     <h1>Every member, and everything it published</h1>
-    <p class="lede">Each country is a provider and keeps ownership of what it publishes. This dashboard lists all ${nazioni.fornitori.length} NATO members and every published product. Open a country to see that country’s own publications. Portugal publishes nothing. A restricted extract still opens only for the owner, an approved grant, or a country headquarters has shared it with.</p>
+    <p class="lede">Each country publishes its own products and remains the owner. Open a country to see what it published and what was shared with it. On a drone, Share with sends that live feed to any other NATO country.</p>
     <h2>Member countries</h2>
     <div class="griglia">${schede}</div>
     <h2>Every published product</h2>
@@ -422,37 +335,27 @@ async function vistaNazione(codice) {
   const dati = await api(`/api/fornitori/${codice}`);
   const nazione = dati.fornitore;
   document.title = `${nazione.nome} — NATO headquarters`;
-  const storiaId = state.storia?.prodottoId;
   const perId = new Map(dati.prodotti.map((prodotto) => [prodotto.id, prodotto]));
-  const live = (dati.droni || []).map((drone) => pannelloLive(drone, perId.get(drone.prodottoId))).join('');
+  const live = (dati.droni || []).map((drone) => pannelloLive(drone, perId.get(drone.prodottoId), 'published')).join('');
   const righe = dati.prodotti
     .slice()
-    .sort((a, b) => {
-      if (a.id === storiaId) return -1;
-      if (b.id === storiaId) return 1;
-      return a.titolo.localeCompare(b.titolo, 'en');
-    })
-    .map((prodotto) => {
-      const evidenza = prodotto.id === storiaId ? ' evidenza' : '';
-      const nastro = prodotto.id === storiaId ? ' · demo path' : '';
-      return `<a class="riga${evidenza}" href="/prodotti/${esc(prodotto.id)}" data-link>
+    .sort((a, b) => a.titolo.localeCompare(b.titolo, 'en'))
+    .map((prodotto) => `<a class="riga" href="/prodotti/${esc(prodotto.id)}" data-link>
         <span class="badge ${classeLivello(prodotto.livello)}">${etichettaLivello(prodotto.livello)}</span>
         <strong>${esc(prodotto.titolo)}</strong>
-        <em>${esc(prodotto.dominio)}${esc(nastro)}</em>
+        <em>Published by ${esc(nazione.nome)} · ${esc(prodotto.dominio)}</em>
         <span>${esc(prodotto.sintesi)}</span>
-      </a>`;
-    }).join('');
+      </a>`).join('');
   const pubblicati = righe || '<p class="vuoto">This nation has not published a dataset.</p>';
   const ricevuti = (dati.ricevuti || []).map((voce) => `<article class="ricevuto">
-      <p class="ruolo">Received · publisher ${esc(voce.prodotto.fornitore.bandiera)} ${esc(voce.prodotto.fornitore.nome)}</p>
+      <p class="ruolo">Source · ${esc(voce.prodotto.fornitore.bandiera)} ${esc(voce.prodotto.fornitore.nome)}</p>
       <h3>${esc(voce.prodotto.titolo)}</h3>
-      <p>${esc(voce.prodotto.fornitore.nome)} remains the publisher. ${esc(nazione.nome)} did not publish this product.</p>
-      <p><a class="bottone" href="/prodotti/${esc(voce.prodotto.id)}/uso" data-link>Open</a></p>
-      ${pannelloLive(voce.drone, voce.prodotto)}
+      <p>Shared from ${esc(voce.prodotto.fornitore.nome)}. ${esc(voce.prodotto.fornitore.nome)} remains the owner. ${esc(nazione.nome)} did not publish this product.</p>
+      ${pannelloLive(voce.drone, voce.prodotto, 'shared')}
     </article>`).join('');
   const sezioneRicevuti = ricevuti
-    ? `<h2>Received</h2>${ricevuti}`
-    : '';
+    ? `<h2>Shared with ${esc(nazione.nome)}</h2>${ricevuti}`
+    : `<h2>Shared with ${esc(nazione.nome)}</h2><p class="vuoto">Nothing has been shared with ${esc(nazione.nome)}.</p>`;
   return `<section>
     <p class="briciole"><a href="/" data-link>Headquarters</a> / ${esc(nazione.nome)}</p>
     <p class="bandiera" aria-hidden="true">${esc(nazione.bandiera)}</p>
@@ -474,7 +377,7 @@ async function vistaNazione(codice) {
       </blockquote>
     </div>
     ${live}
-    <h2>Published products</h2>
+    <h2>Published by ${esc(nazione.nome)}</h2>
     <div class="elenco-prodotti">${pubblicati}</div>
     ${sezioneRicevuti}
   </section>`;
@@ -541,26 +444,25 @@ function pannelloAccesso(prodotto, accesso) {
 
 function moduloCondivisione(prodotto, condivisioni) {
   if (prodotto.tipo !== 'drone') return '';
-  const opzioni = state.fornitori
-    .filter((nazione) => nazione.codice !== prodotto.fornitore.codice)
-    .map((nazione) => {
-      const selezionato = prodotto.id === 'tur-drone-esercizio' && nazione.codice === 'PRT' ? ' selected' : '';
-      return `<option value="${esc(nazione.codice)}"${selezionato}>${esc(nazione.bandiera)} ${esc(nazione.nome)}</option>`;
-    })
+  const altri = state.fornitori.filter((nazione) => nazione.codice !== prodotto.fornitore.codice);
+  const opzioni = altri
+    .map((nazione) => `<option value="${esc(nazione.codice)}">${esc(nazione.bandiera)} ${esc(nazione.nome)}</option>`)
     .join('');
   const elenco = (condivisioni || []).length
-    ? `<ul>${condivisioni.map((voce) => `<li>Shared with ${esc(voce.nomeDestinatario)}. ${esc(voce.nomeProprietario)} remains the publisher.</li>`).join('')}</ul>`
+    ? `<ul>${condivisioni.map((voce) => `<li>Shared with ${esc(voce.nomeDestinatario)}. ${esc(voce.nomeProprietario)} remains the owner.</li>`).join('')}</ul>`
     : '<p>Not shared yet.</p>';
   return `<section class="condividi">
-    <p class="ruolo">Headquarters share</p>
-    <h2>Share</h2>
-    <p>Choose the recipient country and confirm. ${esc(prodotto.fornitore.nome)} remains the publisher.</p>
+    <h2>Share with</h2>
+    <p>${esc(prodotto.fornitore.nome)} remains the owner. Choose one of the other ${altri.length} NATO countries.</p>
     ${elenco}
     <form data-form="condivisione" data-prodotto="${esc(prodotto.id)}">
-      <label>Recipient country
-        <select name="destinatarioId" required aria-label="Recipient country">${opzioni}</select>
+      <label>Share with
+        <select name="destinatarioId" required aria-label="Share with">
+          <option value="">Choose a country</option>
+          ${opzioni}
+        </select>
       </label>
-      <button type="submit">Confirm share</button>
+      <button type="submit">Confirm</button>
     </form>
   </section>`;
 }
@@ -717,10 +619,6 @@ async function vistaUso(id) {
 }
 
 function cartaRichiesta(richiesta, ruolo) {
-  const evidenza = richiesta.prodottoId === state.storia?.prodottoId && (richiesta.richiedenteId === 'NLD' || richiesta.proprietarioId === 'DEU')
-    ? ' evidenza'
-    : '';
-  const nastro = evidenza ? '<span class="badge neutro">Guided path</span>' : '';
   let comandi = '';
   if (ruolo === 'in-arrivo' && richiesta.stato === 'pending') {
     comandi = `<form data-form="decisione" data-id="${esc(richiesta.id)}">
@@ -743,9 +641,8 @@ function cartaRichiesta(richiesta, ruolo) {
   const decisione = richiesta.decisione
     ? `<p>Decision on ${esc(dataLunga(richiesta.decisione.il))}: ${esc(richiesta.decisione.nota || 'no note')}</p>`
     : '';
-  return `<article class="carta-richiesta${evidenza}">
+  return `<article class="carta-richiesta">
     <span class="badge ${richiesta.stato === 'approved' ? 'aperto' : richiesta.stato === 'pending' ? 'neutro' : 'riservato'}">${esc(STATI[richiesta.stato] || richiesta.stato)}</span>
-    ${nastro}
     <h3>${esc(richiesta.titoloProdotto)}</h3>
     <p>${ruolo === 'in-arrivo' ? `From ${esc(richiesta.nomeRichiedente)}` : `To ${esc(richiesta.nomeProprietario)}`} · ${esc(dataLunga(richiesta.richiestaIl))}</p>
     <p>${esc(richiesta.finalita)}</p>
@@ -775,91 +672,6 @@ async function vistaRichieste() {
   </section>`;
 }
 
-function passiStoria(storia) {
-  const stato = storia.richiesta?.stato || null;
-  const passi = [
-    { titolo: 'Discovery', testo: 'The German metadata is in the catalog.', fase: 'fatto' },
-    { titolo: 'Request', testo: 'The Netherlands asks to use it.', fase: 'corso' },
-    { titolo: 'Decision', testo: 'Germany approves or denies.', fase: 'attesa' },
-    { titolo: 'Use', testo: 'The extract opens only after a yes.', fase: 'attesa' },
-  ];
-  if (stato === 'pending') {
-    passi[1] = { titolo: 'Request', testo: 'Sent, waiting on the owner.', fase: 'fatto' };
-    passi[2] = { titolo: 'Decision', testo: 'It is Germany’s turn.', fase: 'corso' };
-  } else if (stato === 'approved') {
-    passi[1] = { titolo: 'Request', testo: 'Sent by the Netherlands.', fase: 'fatto' };
-    passi[2] = { titolo: 'Decision', testo: 'Germany has granted access.', fase: 'fatto' };
-    passi[3] = { titolo: 'Use', testo: 'The Netherlands can open the extract.', fase: 'corso' };
-  } else if (stato === 'denied') {
-    passi[1] = { titolo: 'Request', testo: 'A new request can be sent.', fase: 'corso' };
-    passi[2] = { titolo: 'Decision', testo: 'Germany denied it.', fase: 'fatto' };
-  } else if (stato === 'revoked') {
-    passi[1] = { titolo: 'Request', testo: 'The grant no longer holds.', fase: 'corso' };
-    passi[2] = { titolo: 'Decision', testo: 'Germany revoked it.', fase: 'fatto' };
-    passi[3] = { titolo: 'Use', testo: 'The extract is closed again.', fase: 'attesa' };
-  }
-  return passi;
-}
-
-function azioneStoria(storia) {
-  const stato = storia.richiesta?.stato || null;
-  const id = storia.prodottoId;
-  const richiedente = storia.richiedente.codice;
-  const proprietario = storia.proprietario.codice;
-  if (!stato || stato === 'denied' || stato === 'revoked') {
-    if (state.actor !== richiedente) {
-      return { etichetta: 'Act as the Netherlands', attore: richiedente, vai: `/prodotti/${id}` };
-    }
-    return { etichetta: 'Open the German sensors', vai: `/prodotti/${id}` };
-  }
-  if (stato === 'pending') {
-    if (state.actor !== proprietario) {
-      return { etichetta: 'Switch to Germany to decide', attore: proprietario, vai: '/richieste' };
-    }
-    return { etichetta: 'Open incoming requests', vai: '/richieste' };
-  }
-  if (stato === 'approved') {
-    if (state.actor !== richiedente) {
-      return { etichetta: 'Return to the Netherlands', attore: richiedente, vai: `/prodotti/${id}/uso` };
-    }
-    return { etichetta: 'Use the sensor data', vai: `/prodotti/${id}/uso` };
-  }
-  return { etichetta: 'Open the product', vai: `/prodotti/${id}` };
-}
-
-async function caricaStoria() {
-  try {
-    state.storia = await api('/api/storia');
-  } catch (errore) {
-    state.storia = null;
-  }
-}
-
-function dipingiStoria() {
-  const sezione = document.querySelector('#storia');
-  const storia = state.storia;
-  if (!storia) {
-    sezione.innerHTML = '';
-    return;
-  }
-  const passi = passiStoria(storia).map((passo) => `<li class="${passo.fase}" ${passo.fase === 'corso' ? 'aria-current="step"' : ''}><strong>${esc(passo.titolo)}</strong><span>${esc(passo.testo)}</span></li>`).join('');
-  const azione = azioneStoria(storia);
-  const attributi = `${azione.attore ? `data-attore="${esc(azione.attore)}" ` : ''}data-vai="${esc(azione.vai)}"`;
-  const nota = storia.richiesta?.decisione?.nota
-    ? `<p>Germany’s note: ${esc(storia.richiesta.decisione.nota)}</p>`
-    : '';
-  sezione.innerHTML = `<div class="storia-interno">
-    <div>
-      <p class="sopra">Demo story</p>
-      <h2>From Germany to the Netherlands</h2>
-      <p>Germany publishes contacts from the southern Baltic sensor network. The Netherlands discovers them, requests access, and, after Germany agrees, uses them here.</p>
-      ${nota}
-    </div>
-    <ol class="passi">${passi}</ol>
-    <button type="button" class="azione" ${attributi}>${esc(azione.etichetta)}</button>
-  </div>`;
-}
-
 async function conOccupazione(lavoro) {
   if (occupato) return;
   occupato = true;
@@ -880,10 +692,10 @@ document.addEventListener('click', (evento) => {
   const ripristino = evento.target.closest('[data-azione="ripristina"]');
   if (ripristino) {
     evento.preventDefault();
-    if (!window.confirm('Reset the demonstration data? Requests and headquarters shares will be deleted.')) return;
+    if (!window.confirm('Reset the catalog data? Requests and shares will be deleted.')) return;
     conOccupazione(async () => {
       await api('/api/demo/ripristino', { method: 'POST', body: '{}' });
-      messaggio('Demonstration data restored. Requests and headquarters shares start over.');
+      messaggio('Catalog data restored. Requests and shares start over.');
       await go('/');
     }).catch((errore) => messaggio(errore.message));
     return;
@@ -907,7 +719,7 @@ document.addEventListener('submit', (evento) => {
         method: 'POST',
         body: JSON.stringify({ destinatarioId }),
       });
-      messaggio(`Shared with ${dati.condivisione.nomeDestinatario}. ${dati.condivisione.nomeProprietario} remains the publisher.`);
+      messaggio(`Shared with ${dati.condivisione.nomeDestinatario}. ${dati.condivisione.nomeProprietario} remains the owner.`);
       await render();
     }).catch((errore) => messaggio(errore.message));
     return;
