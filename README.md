@@ -31,7 +31,7 @@ Germany publishes “Contacts from the southern Baltic sensor network”, a rest
 
 Italy, France, Turkey, and Germany each also publish one live tactical-drone feed. The document is the current slice and a short ground track of about 12 points. `eventCount` is a counter. The server nudges the feed on an interval. On a drone, **Share with** picks any other NATO country. That country then shows the same live feed. The publisher remains the owner. Portugal starts with no publications.
 
-“Acting as” switches the nation for access requests. “Reset catalog data” clears requests and shares and reloads the seed.
+The headquarters manager uses the portal directly. **Share with** on a published product picks any other NATO country. A shared drone stays one live feed, shown for the publisher and for the country it was shared with. The publisher remains the owner. “Reset catalog data” clears shares and reloads the seed.
 
 ## Model
 

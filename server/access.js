@@ -68,7 +68,7 @@ export async function ultimaRichiesta(db, richiedenteId, prodottoId) {
 
 export async function statoAccesso(db, prodotto, attore) {
   if (!attore) {
-    return { consentito: false, motivo: 'missing-actor', richiesta: null };
+    return { consentito: true, motivo: 'headquarters', richiesta: null };
   }
   if (prodotto.politicaAccesso.livello === 'open') {
     return { consentito: true, motivo: 'open', richiesta: null };

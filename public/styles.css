@@ -516,6 +516,10 @@ textarea {
 
 .scheda.nazione h2 { font-size: 1.2rem; }
 
+.pubblicato { margin: 0 0 1rem; }
+
+.pubblicato .condividi { margin-top: 0; }
+
 .fetta, .ricevuto, .condividi {
   background: #ffffff;
   border: 1px solid #d0d3d8;

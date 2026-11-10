@@ -1,17 +1,8 @@
 const state = {
-  actor: localStorage.getItem('catalogo-attore') || 'NLD',
   fornitori: [],
 };
 
-let silenzioso = false;
 let occupato = false;
-
-const STATI = {
-  pending: 'Pending',
-  approved: 'Approved',
-  denied: 'Denied',
-  revoked: 'Revoked',
-};
 
 const COLONNE = {
   label: 'Contact',
@@ -104,7 +95,6 @@ async function api(percorso, opzioni = {}) {
     ...opzioni,
     headers: {
       'Content-Type': 'application/json',
-      'X-Actor-Code': state.actor,
       ...(opzioni.headers || {}),
     },
   });
@@ -118,34 +108,12 @@ async function api(percorso, opzioni = {}) {
   return corpo;
 }
 
-function riempiSelettore() {
-  const select = document.querySelector('#selettore-attore');
-  const html = state.fornitori
-    .map((voce) => `<option value="${esc(voce.codice)}">${esc(voce.bandiera)} ${esc(voce.nome)}</option>`)
-    .join('');
-  silenzioso = true;
-  if (select.dataset.pronto !== html) {
-    select.innerHTML = html;
-    select.dataset.pronto = html;
-  }
-  select.value = state.actor;
-  silenzioso = false;
-}
-
 function go(percorso) {
   if (percorso && percorso !== location.pathname) {
     history.pushState(null, '', percorso);
     window.scrollTo(0, 0);
   }
   return render();
-}
-
-function impostaAttore(codice, percorso) {
-  state.actor = codice;
-  localStorage.setItem('catalogo-attore', codice);
-  const select = document.querySelector('#selettore-attore');
-  if (select) select.value = codice;
-  return go(percorso || location.pathname);
 }
 
 let tokenRender = 0;
@@ -186,7 +154,6 @@ async function render() {
     const html = await vista(location.pathname);
     if (token !== tokenRender) return;
     contenuto.innerHTML = html;
-    document.querySelector('#selettore-attore').value = state.actor;
     segnaNavigazione();
     avviaLive();
   } catch (errore) {
@@ -207,7 +174,6 @@ async function vista(percorso) {
   if ((corrispondenza = percorso.match(/^\/prodotti\/([a-z0-9-]+)$/))) {
     return vistaProdotto(corrispondenza[1]);
   }
-  if (percorso === '/richieste') return vistaRichieste();
   document.title = 'Page not found — NATO headquarters';
   return `<section class="blocco" style="padding:1rem"><h1>Page not found</h1><p><a href="/" data-link>Back to headquarters</a></p></section>`;
 }
@@ -216,9 +182,7 @@ function segnaNavigazione() {
   const percorso = location.pathname;
   document.querySelectorAll('.nav a').forEach((link) => {
     const href = link.getAttribute('href');
-    const attivo = href === '/richieste'
-      ? percorso === '/richieste'
-      : percorso !== '/richieste';
+    const attivo = href === '/' && (percorso === '/' || percorso.startsWith('/nazioni/') || percorso.startsWith('/prodotti/'));
     if (attivo) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
@@ -297,7 +261,6 @@ async function vistaHome() {
     api('/api/prodotti'),
   ]);
   state.fornitori = nazioni.fornitori;
-  riempiSelettore();
   document.title = 'NATO headquarters — Federated catalog';
   const schede = nazioni.fornitori.map((nazione) => {
     const conteggi = nazione.conteggi || { totale: 0, aperti: 0, riservati: 0 };
@@ -323,7 +286,7 @@ async function vistaHome() {
   return `<section>
     <p class="sopra">NATO headquarters</p>
     <h1>Every member, and everything it published</h1>
-    <p class="lede">Each country publishes its own products and remains the owner. Open a country to see what it published and what was shared with it. On a drone, Share with sends that live feed to any other NATO country.</p>
+    <p class="lede">Each country publishes its own products and remains the owner. Open a country to see what it published and what was shared with it. Share with on a product sends it to any other NATO country. A shared drone is the same live feed.</p>
     <h2>Member countries</h2>
     <div class="griglia">${schede}</div>
     <h2>Every published product</h2>
@@ -335,17 +298,29 @@ async function vistaNazione(codice) {
   const dati = await api(`/api/fornitori/${codice}`);
   const nazione = dati.fornitore;
   document.title = `${nazione.nome} — NATO headquarters`;
-  const perId = new Map(dati.prodotti.map((prodotto) => [prodotto.id, prodotto]));
-  const live = (dati.droni || []).map((drone) => pannelloLive(drone, perId.get(drone.prodottoId), 'published')).join('');
+  const dronePerProdotto = new Map((dati.droni || []).map((drone) => [drone.prodottoId, drone]));
+  const uscitePerProdotto = new Map();
+  for (const voce of dati.uscite || []) {
+    const lista = uscitePerProdotto.get(voce.prodottoId) || [];
+    lista.push(voce);
+    uscitePerProdotto.set(voce.prodottoId, lista);
+  }
   const righe = dati.prodotti
     .slice()
     .sort((a, b) => a.titolo.localeCompare(b.titolo, 'en'))
-    .map((prodotto) => `<a class="riga" href="/prodotti/${esc(prodotto.id)}" data-link>
-        <span class="badge ${classeLivello(prodotto.livello)}">${etichettaLivello(prodotto.livello)}</span>
-        <strong>${esc(prodotto.titolo)}</strong>
-        <em>Published by ${esc(nazione.nome)} · ${esc(prodotto.dominio)}</em>
-        <span>${esc(prodotto.sintesi)}</span>
-      </a>`).join('');
+    .map((prodotto) => {
+      const drone = dronePerProdotto.get(prodotto.id);
+      return `<article class="pubblicato">
+        <a class="riga" href="/prodotti/${esc(prodotto.id)}" data-link>
+          <span class="badge ${classeLivello(prodotto.livello)}">${etichettaLivello(prodotto.livello)}</span>
+          <strong>${esc(prodotto.titolo)}</strong>
+          <em>Published by ${esc(nazione.nome)} · ${esc(prodotto.dominio)}</em>
+          <span>${esc(prodotto.sintesi)}</span>
+        </a>
+        ${pannelloLive(drone, prodotto, 'published')}
+        ${moduloCondivisione(prodotto, uscitePerProdotto.get(prodotto.id) || [])}
+      </article>`;
+    }).join('');
   const pubblicati = righe || '<p class="vuoto">This nation has not published a dataset.</p>';
   const ricevuti = (dati.ricevuti || []).map((voce) => `<article class="ricevuto">
       <p class="ruolo">Source · ${esc(voce.prodotto.fornitore.bandiera)} ${esc(voce.prodotto.fornitore.nome)}</p>
@@ -376,7 +351,6 @@ async function vistaNazione(codice) {
         <span class="badge neutro">Jurisdiction ${esc(nazione.sovranita.giurisdizione)}</span>
       </blockquote>
     </div>
-    ${live}
     <h2>Published by ${esc(nazione.nome)}</h2>
     <div class="elenco-prodotti">${pubblicati}</div>
     ${sezioneRicevuti}
@@ -393,42 +367,14 @@ function campiTabella(campi) {
   return `<table class="campi"><thead><tr><th>Field</th><th>Description</th></tr></thead><tbody>${righe}</tbody></table>`;
 }
 
-function pannelloAccesso(prodotto, accesso) {
+function pannelloAccesso(prodotto) {
   const politica = prodotto.politicaAccesso;
   const nome = prodotto.fornitore.nome;
   const finalita = politica.finalitaAmmesse.map((voce) => `<li>${esc(voce)}</li>`).join('');
-  let corpo;
-  if (politica.livello === 'open') {
-    corpo = `<p>Open dataset published by ${esc(nome)}. Use it with no request.</p>
-      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Use the dataset</a></p>`;
-  } else if (state.actor === prodotto.fornitore.codice) {
-    corpo = `<p>You are the owner. The extract stays yours: you can read it and decide requests from other nations.</p>
-      <div class="azioni-riga">
-        <a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Open your extract</a>
-        <a class="bottone secondario" href="/richieste" data-link>See requests</a>
-      </div>`;
-  } else if (accesso.motivo === 'share') {
-    corpo = `<p>Headquarters shared this product with you. ${esc(nome)} remains the publisher.</p>
-      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Open the shared feed</a></p>`;
-  } else if (!accesso.richiesta || accesso.richiesta.stato === 'denied' || accesso.richiesta.stato === 'revoked') {
-    const precedente = accesso.richiesta
-      ? `<p>Previous status: ${esc(STATI[accesso.richiesta.stato] || accesso.richiesta.stato)}. ${esc(accesso.richiesta.decisione?.nota || '')}</p>`
-      : '<p>You have no request for this product yet. The extract stays closed.</p>';
-    corpo = `${precedente}
-      <form data-form="richiesta" data-prodotto="${esc(prodotto.id)}">
-        <label>Purpose of the request
-          <textarea name="finalita" required minlength="12" maxlength="500" placeholder="Why ${esc(nome)} should grant you use, and for what purpose."></textarea>
-        </label>
-        <button type="submit">Request access from ${esc(nome)}</button>
-      </form>`;
-  } else if (accesso.richiesta.stato === 'pending') {
-    corpo = `<p>Request sent on ${esc(dataLunga(accesso.richiesta.richiestaIl))}. ${esc(nome)} has not decided yet. Stated purpose: ${esc(accesso.richiesta.finalita)}</p>
-      <p>The extract is not released until the owner approves.</p>
-      <button type="button" data-attore="${esc(prodotto.fornitore.codice)}" data-vai="/richieste">Open ${esc(nome)}’s queue</button>`;
-  } else {
-    corpo = `<p>Access granted by ${esc(nome)}. The grant can be revoked: if the owner closes it, use stops.</p>
-      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Use the dataset</a></p>`;
-  }
+  const corpo = prodotto.tipo === 'drone'
+    ? `<p>${esc(nome)} remains the owner. Share with sends this same live feed to another NATO country.</p>`
+    : `<p>Published by ${esc(nome)}. ${esc(nome)} remains the owner.</p>
+      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Open the dataset</a></p>`;
   return `<aside class="pannello">
     <p class="ruolo">Access policy</p>
     <h2>${etichettaLivello(politica.livello)}</h2>
@@ -437,13 +383,11 @@ function pannelloAccesso(prodotto, accesso) {
     <ul>${finalita}</ul>
     <p><strong>Redistribution.</strong> ${esc(politica.ridistribuzione)}</p>
     <p><strong>Retention.</strong> ${esc(politica.conservazione)}</p>
-    <p class="nota-estratto">The records are not on this dossier. They sit in a separate extract, and the server reads it only after the policy check.</p>
     ${corpo}
   </aside>`;
 }
 
 function moduloCondivisione(prodotto, condivisioni) {
-  if (prodotto.tipo !== 'drone') return '';
   const altri = state.fornitori.filter((nazione) => nazione.codice !== prodotto.fornitore.codice);
   const opzioni = altri
     .map((nazione) => `<option value="${esc(nazione.codice)}">${esc(nazione.bandiera)} ${esc(nazione.nome)}</option>`)
@@ -457,7 +401,7 @@ function moduloCondivisione(prodotto, condivisioni) {
     ${elenco}
     <form data-form="condivisione" data-prodotto="${esc(prodotto.id)}">
       <label>Share with
-        <select name="destinatarioId" required aria-label="Share with">
+        <select name="destinatarioId" required aria-label="Share ${esc(prodotto.titolo)} with">
           <option value="">Choose a country</option>
           ${opzioni}
         </select>
@@ -497,7 +441,7 @@ async function vistaProdotto(id) {
       </section>
       <div>
         ${moduloCondivisione(prodotto, dati.condivisioni)}
-        ${pannelloAccesso(prodotto, dati.accesso)}
+        ${pannelloAccesso(prodotto)}
       </div>
     </div>
   </article>`;
@@ -549,15 +493,15 @@ function tabellaRecord(record) {
 function testoUso(dati) {
   const motivo = dati.accesso.motivo;
   if (motivo === 'open') {
-    return 'Open dataset: direct use, with no access request.';
+    return `Open dataset published by ${dati.prodotto.fornitore.nome}. ${dati.prodotto.fornitore.nome} remains the owner.`;
   }
   if (motivo === 'owner') {
     return 'You are reading an extract from your own country. It stays under your sovereignty, and no grant to another nation is recorded.';
   }
-  if (motivo === 'share') {
-    return `Headquarters shared this feed with you. ${dati.prodotto.fornitore.nome} remains the publisher.`;
+  if (motivo === 'headquarters' || motivo === 'share') {
+    return `${dati.prodotto.fornitore.nome} remains the owner. This is the same feed shown for that country.`;
   }
-  return `Active grant from ${dati.prodotto.fornitore.nome}. The owner can revoke it from the request queue: these records are then no longer delivered.`;
+  return `${dati.prodotto.fornitore.nome} remains the owner.`;
 }
 
 function paginaDrone(dati) {
@@ -618,60 +562,6 @@ async function vistaUso(id) {
   }
 }
 
-function cartaRichiesta(richiesta, ruolo) {
-  let comandi = '';
-  if (ruolo === 'in-arrivo' && richiesta.stato === 'pending') {
-    comandi = `<form data-form="decisione" data-id="${esc(richiesta.id)}">
-      <label>Note for ${esc(richiesta.nomeRichiedente)}
-        <textarea name="nota" maxlength="500" placeholder="Optional if you approve. Required, and clear, if you deny."></textarea>
-      </label>
-      <div class="azioni-riga">
-        <button type="submit" data-esito="approved">Approve</button>
-        <button type="submit" class="secondario" data-esito="denied">Deny</button>
-      </div>
-    </form>`;
-  } else if (ruolo === 'in-arrivo' && richiesta.stato === 'approved') {
-    comandi = `<form data-form="revoca" data-id="${esc(richiesta.id)}">
-      <label>Reason for revocation
-        <textarea name="nota" required minlength="8" maxlength="500" placeholder="Why you are closing the grant."></textarea>
-      </label>
-      <button type="submit" class="pericolo">Revoke the grant</button>
-    </form>`;
-  }
-  const decisione = richiesta.decisione
-    ? `<p>Decision on ${esc(dataLunga(richiesta.decisione.il))}: ${esc(richiesta.decisione.nota || 'no note')}</p>`
-    : '';
-  return `<article class="carta-richiesta">
-    <span class="badge ${richiesta.stato === 'approved' ? 'aperto' : richiesta.stato === 'pending' ? 'neutro' : 'riservato'}">${esc(STATI[richiesta.stato] || richiesta.stato)}</span>
-    <h3>${esc(richiesta.titoloProdotto)}</h3>
-    <p>${ruolo === 'in-arrivo' ? `From ${esc(richiesta.nomeRichiedente)}` : `To ${esc(richiesta.nomeProprietario)}`} · ${esc(dataLunga(richiesta.richiestaIl))}</p>
-    <p>${esc(richiesta.finalita)}</p>
-    ${decisione}
-    ${comandi}
-  </article>`;
-}
-
-async function vistaRichieste() {
-  const dati = await api('/api/richieste');
-  const attore = state.fornitori.find((voce) => voce.codice === state.actor);
-  document.title = 'Requests — Federated catalog';
-  const inArrivo = dati.inArrivo.length
-    ? dati.inArrivo.map((voce) => cartaRichiesta(voce, 'in-arrivo')).join('')
-    : '<p>No incoming requests. When another nation asks for one of your restricted datasets, the decision appears here.</p>';
-  const inviate = dati.inviate.length
-    ? dati.inviate.map((voce) => cartaRichiesta(voce, 'inviate')).join('')
-    : '<p>You have not sent any requests.</p>';
-  return `<section>
-    <p class="ruolo">${esc(attore ? `${attore.bandiera} ${attore.nome}` : state.actor)}</p>
-    <h1>Access requests</h1>
-    <p class="lede">Incoming requests are yours to decide, because the products are yours. Outgoing requests are the ones you sent to other nations: the owner updates the status.</p>
-    <div class="griglia-richieste">
-      <section><h2>Incoming</h2>${inArrivo}</section>
-      <section><h2>Outgoing</h2>${inviate}</section>
-    </div>
-  </section>`;
-}
-
 async function conOccupazione(lavoro) {
   if (occupato) return;
   occupato = true;
@@ -692,10 +582,10 @@ document.addEventListener('click', (evento) => {
   const ripristino = evento.target.closest('[data-azione="ripristina"]');
   if (ripristino) {
     evento.preventDefault();
-    if (!window.confirm('Reset the catalog data? Requests and shares will be deleted.')) return;
+    if (!window.confirm('Reset the catalog data? Shares will be deleted.')) return;
     conOccupazione(async () => {
       await api('/api/demo/ripristino', { method: 'POST', body: '{}' });
-      messaggio('Catalog data restored. Requests and shares start over.');
+      messaggio('Catalog data restored.');
       await go('/');
     }).catch((errore) => messaggio(errore.message));
     return;
@@ -703,8 +593,7 @@ document.addEventListener('click', (evento) => {
   const scorciatoia = evento.target.closest('[data-vai]');
   if (scorciatoia && scorciatoia.tagName !== 'FORM') {
     evento.preventDefault();
-    if (scorciatoia.dataset.attore) impostaAttore(scorciatoia.dataset.attore, scorciatoia.dataset.vai);
-    else go(scorciatoia.dataset.vai);
+    go(scorciatoia.dataset.vai);
   }
 });
 
@@ -722,42 +611,6 @@ document.addEventListener('submit', (evento) => {
       messaggio(`Shared with ${dati.condivisione.nomeDestinatario}. ${dati.condivisione.nomeProprietario} remains the owner.`);
       await render();
     }).catch((errore) => messaggio(errore.message));
-    return;
-  }
-  if (form.dataset.form === 'richiesta') {
-    evento.preventDefault();
-    const finalita = String(new FormData(form).get('finalita') || '').trim();
-    conOccupazione(async () => {
-      await api(`/api/prodotti/${form.dataset.prodotto}/richieste`, {
-        method: 'POST',
-        body: JSON.stringify({ finalita }),
-      });
-      messaggio('Request sent. The owning nation makes the decision.');
-      await render();
-    }).catch((errore) => messaggio(errore.message));
-    return;
-  }
-  if (form.dataset.form === 'decisione' || form.dataset.form === 'revoca') {
-    evento.preventDefault();
-    const esito = form.dataset.form === 'revoca' ? 'revoked' : evento.submitter?.dataset.esito;
-    const nota = String(new FormData(form).get('nota') || '').trim();
-    if (!esito) {
-      messaggio('Choose whether to approve or deny.');
-      return;
-    }
-    conOccupazione(async () => {
-      await api(`/api/richieste/${form.dataset.id}/decisione`, {
-        method: 'POST',
-        body: JSON.stringify({ esito, nota }),
-      });
-      const testi = {
-        approved: 'Grant recorded. The requester can use the extract.',
-        denied: 'Request denied. The extract stays closed.',
-        revoked: 'Grant revoked. Use stops at once.',
-      };
-      messaggio(testi[esito]);
-      await render();
-    }).catch((errore) => messaggio(errore.message));
   }
 });
 
@@ -765,20 +618,10 @@ window.addEventListener('popstate', () => {
   render();
 });
 
-document.querySelector('#selettore-attore').addEventListener('change', (evento) => {
-  if (silenzioso) return;
-  impostaAttore(evento.target.value);
-});
-
 async function avvia() {
   try {
     const dati = await api('/api/fornitori');
     state.fornitori = dati.fornitori;
-    if (!state.fornitori.some((voce) => voce.codice === state.actor)) {
-      state.actor = 'NLD';
-      localStorage.setItem('catalogo-attore', 'NLD');
-    }
-    riempiSelettore();
     await render();
   } catch (errore) {
     document.querySelector('#contenuto').innerHTML = `<p class="errore">The catalog cannot reach MongoDB. Start the database and reload the page. ${esc(errore.message)}</p>`;

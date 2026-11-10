@@ -102,9 +102,10 @@ api.get('/fornitori/:codice', wrap(async (req, res) => {
   prodotti.sort((a, b) => a.titolo.localeCompare(b.titolo, 'en'));
   const aperti = prodotti.filter((prodotto) => prodotto.politicaAccesso.livello === 'open').length;
   const idPubblicati = prodotti.map((prodotto) => prodotto._id);
-  const [droni, ricevute] = await Promise.all([
+  const [droni, ricevute, uscite] = await Promise.all([
     db.collection('droni').find({ prodottoId: { $in: idPubblicati } }).toArray(),
     db.collection('condivisioni').find({ destinatarioId: codice }).toArray(),
+    db.collection('condivisioni').find({ proprietarioId: codice }).toArray(),
   ]);
   const idRicevuti = ricevute.map((voce) => voce.prodottoId);
   const [prodottiRicevuti, droniRicevuti] = await Promise.all([
@@ -125,6 +126,7 @@ api.get('/fornitori/:codice', wrap(async (req, res) => {
     }),
     prodotti: prodotti.map(pubblicaProdottoBreve),
     droni: droni.map(pubblicaDrone),
+    uscite: uscite.map(pubblicaCondivisione),
     ricevuti: ricevute.map((voce) => {
       const prodotto = perProdotto.get(voce.prodottoId);
       const drone = dronePerProdotto.get(voce.prodottoId);
@@ -181,7 +183,7 @@ api.get('/storia', wrap(async (req, res) => {
 
 api.get('/prodotti/:id/uso', wrap(async (req, res) => {
   const db = getDb();
-  const attore = await leggiAttore(db, req);
+  const attore = await leggiAttore(db, req, { obbligatorio: false });
   const prodotto = await db.collection('prodotti').findOne({ _id: req.params.id });
   if (!prodotto) throw new ErroreHttp(404, 'Product not found.');
   const accesso = await statoAccesso(db, prodotto, attore);
@@ -233,9 +235,6 @@ api.post('/prodotti/:id/condivisioni', wrap(async (req, res) => {
   const db = getDb();
   const prodotto = await db.collection('prodotti').findOne({ _id: req.params.id });
   if (!prodotto) throw new ErroreHttp(404, 'Product not found.');
-  if (prodotto.tipo !== 'drone') {
-    throw new ErroreHttp(400, 'Headquarters shares a tactical-drone product.');
-  }
   const destinatarioId = String(req.body?.destinatarioId || '').trim().toUpperCase();
   const destinatario = await db.collection('fornitori').findOne({ _id: destinatarioId });
   if (!destinatario) throw new ErroreHttp(400, 'Choose a recipient country.');
