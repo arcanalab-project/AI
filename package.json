@@ -1,0 +1,17 @@
+{
+  "name": "nato-catalogo-federato",
+  "private": true,
+  "type": "module",
+  "description": "Federated catalog: nations are data providers, with metadata, access policies, and requests stored in MongoDB.",
+  "scripts": {
+    "start": "node server/index.js",
+    "seed": "node server/seed.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongodb": "^6.16.0"
+  }
+}

@@ -1,0 +1,1214 @@
+import { Int32 } from 'mongodb';
+import { documentoDrone } from './drone.js';
+
+export const STORIA = {
+  prodottoId: 'deu-sensori-baltico',
+  proprietarioId: 'DEU',
+  richiedenteId: 'NLD',
+};
+
+const versione = () => new Int32(1);
+
+const nazioni = [
+  {
+    codice: 'BEL',
+    nome: 'Belgium',
+    bandiera: '🇧🇪',
+    nomeUfficiale: 'Kingdom of Belgium',
+    capitale: 'Brussels',
+    sintesi: 'Publishes the status of land transit nodes and the port bulletin for Antwerp and Zeebrugge.',
+    ufficio: 'Belgian Defence data office',
+    email: 'catalog@defence.belgium.example',
+    dichiarazione: 'Belgium remains the owner of restricted products and answers every access request itself.',
+    giurisdizione: 'BE',
+  },
+  {
+    codice: 'CAN',
+    nome: 'Canada',
+    bandiera: '🇨🇦',
+    nomeUfficiale: 'Canada',
+    capitale: 'Ottawa',
+    sintesi: 'Publishes Arctic search-and-rescue beacons and the condition of northern runways.',
+    ufficio: 'Canadian Defence data office',
+    email: 'catalog@defence.canada.example',
+    dichiarazione: 'Canada decides which Arctic extracts may leave its control, and for how long.',
+    giurisdizione: 'CA',
+  },
+  {
+    codice: 'DNK',
+    nome: 'Denmark',
+    bandiera: '🇩🇰',
+    nomeUfficiale: 'Kingdom of Denmark',
+    capitale: 'Copenhagen',
+    sintesi: 'Publishes transits through the straits and the Kattegat weather bulletin.',
+    ufficio: 'Danish Defence data authority',
+    email: 'catalog@defence.denmark.example',
+    dichiarazione: 'Danish data on the straits stays under Danish jurisdiction even when an ally consults it.',
+    giurisdizione: 'DK',
+  },
+  {
+    codice: 'FRA',
+    nome: 'France',
+    bandiera: '🇫🇷',
+    nomeUfficiale: 'French Republic',
+    capitale: 'Paris',
+    sintesi: 'Publishes optical satellite coverage, the status of Channel ports, and a live tactical-drone feed from its NATO exercise.',
+    ufficio: 'Data service of the Ministry of the Armed Forces',
+    email: 'catalog@data.defence.france.example',
+    dichiarazione: 'France separates what anyone may consult from what requires its own decision.',
+    giurisdizione: 'FR',
+  },
+  {
+    codice: 'DEU',
+    nome: 'Germany',
+    bandiera: '🇩🇪',
+    nomeUfficiale: 'Federal Republic of Germany',
+    capitale: 'Berlin',
+    sintesi: 'Publishes contacts from the southern Baltic sensor network, an open operational weather bulletin, and a live tactical-drone feed from its NATO exercise.',
+    ufficio: 'Bundeswehr data authority',
+    email: 'catalog@data.bundeswehr.example',
+    dichiarazione: 'Germany remains the owner of its products. A grant is specific, justified, and revocable.',
+    giurisdizione: 'DE',
+  },
+  {
+    codice: 'ITA',
+    nome: 'Italy',
+    bandiera: '🇮🇹',
+    nomeUfficiale: 'Italian Republic',
+    capitale: 'Rome',
+    sintesi: 'Publishes the central Mediterranean radar picture, hydrographic notices for national ports, and a live tactical-drone feed from its NATO exercise.',
+    ufficio: 'Defence data office',
+    email: 'catalog@data.defence.italy.example',
+    dichiarazione: 'Italy does not transfer ownership of restricted data: it authorizes use only, and can close it.',
+    giurisdizione: 'IT',
+  },
+  {
+    codice: 'NLD',
+    nome: 'Netherlands',
+    bandiera: '🇳🇱',
+    nomeUfficiale: 'Kingdom of the Netherlands',
+    capitale: 'Amsterdam',
+    sintesi: 'Publishes port movements on the Rhine–Scheldt and the capacity of land corridors.',
+    ufficio: 'Data authority of the Ministry of Defence',
+    email: 'catalog@data.defence.netherlands.example',
+    dichiarazione: 'The Netherlands discovers allied catalogs and, for its own restricted products, decides itself.',
+    giurisdizione: 'NL',
+  },
+  {
+    codice: 'NOR',
+    nome: 'Norway',
+    bandiera: '🇳🇴',
+    nomeUfficiale: 'Kingdom of Norway',
+    capitale: 'Oslo',
+    sintesi: 'Publishes Arctic weather-ocean buoys and a summary of northern radar tracks.',
+    ufficio: 'Norwegian Defence data authority',
+    email: 'catalog@data.defence.norway.example',
+    dichiarazione: 'Norwegian radar tracks are not redistributed. The weather buoys are open.',
+    giurisdizione: 'NO',
+  },
+  {
+    codice: 'POL',
+    nome: 'Poland',
+    bandiera: '🇵🇱',
+    nomeUfficiale: 'Republic of Poland',
+    capitale: 'Warsaw',
+    sintesi: 'Publishes a summary of sensors on the eastern border and water levels on the Vistula.',
+    ufficio: 'Armed Forces data office',
+    email: 'catalog@data.defence.poland.example',
+    dichiarazione: 'Poland authorizes use of the border sensors one request at a time, and can revoke it.',
+    giurisdizione: 'PL',
+  },
+  {
+    codice: 'ESP',
+    nome: 'Spain',
+    bandiera: '🇪🇸',
+    nomeUfficiale: 'Kingdom of Spain',
+    capitale: 'Madrid',
+    sintesi: 'Publishes the western Mediterranean maritime picture and Atlantic coastal warnings.',
+    ufficio: 'Data office of the Ministry of Defence',
+    email: 'catalog@data.defence.spain.example',
+    dichiarazione: 'The restricted maritime picture stays Spanish. Open coastal warnings are used with the source cited.',
+    giurisdizione: 'ES',
+  },
+  {
+    codice: 'GBR',
+    nome: 'United Kingdom',
+    bandiera: '🇬🇧',
+    nomeUfficiale: 'United Kingdom of Great Britain and Northern Ireland',
+    capitale: 'London',
+    sintesi: 'Publishes the North Sea AIS picture and the availability of air-support bases.',
+    ufficio: 'Data authority of the Ministry of Defence',
+    email: 'catalog@data.defence.united-kingdom.example',
+    dichiarazione: 'The United Kingdom keeps open AIS traffic separate from base availability, which it authorizes itself.',
+    giurisdizione: 'GB',
+  },
+  {
+    codice: 'USA',
+    nome: 'United States',
+    bandiera: '🇺🇸',
+    nomeUfficiale: 'United States of America',
+    capitale: 'Washington',
+    sintesi: 'Publishes transatlantic logistics corridors and weather warnings for Atlantic routes.',
+    ufficio: 'Department of Defense data office',
+    email: 'catalog@data.defence.united-states.example',
+    dichiarazione: 'The United States does not transfer ownership of logistics corridors: it grants revocable use.',
+    giurisdizione: 'US',
+  },
+  membro('ALB', 'Albania', '🇦🇱', 'Republic of Albania', 'Tirana', 'AL'),
+  membro('BGR', 'Bulgaria', '🇧🇬', 'Republic of Bulgaria', 'Sofia', 'BG'),
+  membro('HRV', 'Croatia', '🇭🇷', 'Republic of Croatia', 'Zagreb', 'HR'),
+  membro('CZE', 'Czechia', '🇨🇿', 'Czech Republic', 'Prague', 'CZ'),
+  membro('EST', 'Estonia', '🇪🇪', 'Republic of Estonia', 'Tallinn', 'EE'),
+  membro('FIN', 'Finland', '🇫🇮', 'Republic of Finland', 'Helsinki', 'FI'),
+  membro('GRC', 'Greece', '🇬🇷', 'Hellenic Republic', 'Athens', 'GR'),
+  membro('HUN', 'Hungary', '🇭🇺', 'Hungary', 'Budapest', 'HU'),
+  membro('ISL', 'Iceland', '🇮🇸', 'Iceland', 'Reykjavik', 'IS'),
+  membro('LVA', 'Latvia', '🇱🇻', 'Republic of Latvia', 'Riga', 'LV'),
+  membro('LTU', 'Lithuania', '🇱🇹', 'Republic of Lithuania', 'Vilnius', 'LT'),
+  membro('LUX', 'Luxembourg', '🇱🇺', 'Grand Duchy of Luxembourg', 'Luxembourg', 'LU'),
+  membro('MNE', 'Montenegro', '🇲🇪', 'Montenegro', 'Podgorica', 'ME'),
+  membro('MKD', 'North Macedonia', '🇲🇰', 'Republic of North Macedonia', 'Skopje', 'MK'),
+  {
+    codice: 'PRT',
+    nome: 'Portugal',
+    bandiera: '🇵🇹',
+    nomeUfficiale: 'Portuguese Republic',
+    capitale: 'Lisbon',
+    sintesi: 'Publishes nothing. Headquarters can share another nation’s product with Portugal; Portugal receives it and remains a nation with no publications of its own.',
+    ufficio: 'Portuguese defence data office',
+    email: 'catalog@defence.portugal.example',
+    dichiarazione: 'Portugal publishes no dataset. A product shared with Portugal stays owned by the publishing nation.',
+    giurisdizione: 'PT',
+  },
+  membro('ROU', 'Romania', '🇷🇴', 'Romania', 'Bucharest', 'RO'),
+  membro('SVK', 'Slovakia', '🇸🇰', 'Slovak Republic', 'Bratislava', 'SK'),
+  membro('SVN', 'Slovenia', '🇸🇮', 'Republic of Slovenia', 'Ljubljana', 'SI'),
+  membro('SWE', 'Sweden', '🇸🇪', 'Kingdom of Sweden', 'Stockholm', 'SE'),
+  {
+    codice: 'TUR',
+    nome: 'Turkey',
+    bandiera: '🇹🇷',
+    nomeUfficiale: 'Republic of Turkey',
+    capitale: 'Ankara',
+    sintesi: 'Publishes one live tactical-drone feed watching its NATO exercise. Turkey remains the publisher if headquarters shares that feed.',
+    ufficio: 'Turkish defence data office',
+    email: 'catalog@defence.turkey.example',
+    dichiarazione: 'Turkey remains the owner of its drone feed. Headquarters may share use with another member without changing the publisher.',
+    giurisdizione: 'TR',
+  },
+];
+
+function membro(codice, nome, bandiera, nomeUfficiale, capitale, giurisdizione) {
+  return {
+    codice,
+    nome,
+    bandiera,
+    nomeUfficiale,
+    capitale,
+    sintesi: `${nome} is listed in the headquarters catalog and has not published a dataset.`,
+    ufficio: `${nome} defence data office`,
+    email: `catalog@defence.${codice.toLowerCase()}.example`,
+    dichiarazione: `${nome} remains the owner of any restricted product it publishes later.`,
+    giurisdizione,
+  };
+}
+
+function fornitore(nazione) {
+  return {
+    _id: nazione.codice,
+    schemaVersion: versione(),
+    codice: nazione.codice,
+    nome: nazione.nome,
+    bandiera: nazione.bandiera,
+    profilo: {
+      nomeUfficiale: nazione.nomeUfficiale,
+      capitale: nazione.capitale,
+      sintesi: nazione.sintesi,
+      ufficioDati: nazione.ufficio,
+      email: nazione.email,
+    },
+    sovranita: {
+      dichiarazione: nazione.dichiarazione,
+      giurisdizione: nazione.giurisdizione,
+    },
+  };
+}
+
+function politica(livello, condizioni, finalita) {
+  if (livello === 'open') {
+    return {
+      livello,
+      ilProprietarioDecide: false,
+      finalitaAmmesse: finalita || ['planning', 'common operational picture'],
+      ridistribuzione: 'Allowed within the mission, citing the publishing nation.',
+      conservazione: 'According to the rules of whoever uses the open data.',
+      condizioni,
+    };
+  }
+  return {
+    livello,
+    ilProprietarioDecide: true,
+    finalitaAmmesse: finalita,
+    ridistribuzione: 'Forbidden to third parties without a new decision by the owner.',
+    conservazione: 'Only for the life of the grant. Use stops when it is revoked.',
+    condizioni,
+  };
+}
+
+function campi(...voci) {
+  return voci.map(([nome, descrizione, unita]) => {
+    const campo = { nome, descrizione };
+    if (unita) campo.unita = unita;
+    return campo;
+  });
+}
+
+const prodottiGrezzi = [
+  {
+    id: 'bel-nodi-transito',
+    fornitoreId: 'BEL',
+    titolo: 'Availability of land transit nodes',
+    sintesi: 'Operational status of the Belgian nodes used for allied land transit.',
+    dominio: 'Land logistics',
+    pubblicatoIl: '2026-02-02',
+    livello: 'restricted',
+    condizioni: 'Each request names the corridor and the time window. Belgium approves or denies.',
+    finalita: ['allied transit', 'logistics planning'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 6 hours',
+      coperturaSpaziale: 'Nodes at Liege, Mons, and Antwerp east',
+      inizioTemporale: '2025-09-01',
+      lingua: 'French',
+      responsabile: 'Belgian logistics command',
+      qualita: 'Status declared by the node, not a real-time traffic measurement.',
+      campi: campi(
+        ['node', 'Name of the transit node'],
+        ['status', 'Available, limited, or closed'],
+        ['note', 'Current operational constraint'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Extract of the three main nodes, released only with a Belgian grant.',
+      record: [
+        { node: 'Liege', observed: '2026-11-09T05:00:00Z', status: 'available', note: 'Heavy corridor open' },
+        { node: 'Mons', observed: '2026-11-09T05:00:00Z', status: 'limited', note: 'Night works on the link road' },
+        { node: 'Antwerp east', observed: '2026-11-09T05:00:00Z', status: 'available', note: 'Daytime window confirmed' },
+      ],
+    },
+  },
+  {
+    id: 'bel-porti',
+    fornitoreId: 'BEL',
+    titolo: 'Port bulletin for Antwerp and Zeebrugge',
+    sintesi: 'Declared arrivals and departures at the two ports, in the clear.',
+    dominio: 'Ports',
+    pubblicatoIl: '2026-01-20',
+    livello: 'open',
+    condizioni: 'Open data. Cite Belgium as the source and do not present it as a military picture.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every hour',
+      coperturaSpaziale: 'Antwerp and Zeebrugge',
+      inizioTemporale: '2024-05-01',
+      lingua: 'Dutch',
+      responsabile: 'Port authorities, through the Defence data office',
+      qualita: 'Ordinary port counts, with no identification of sensitive cargo.',
+      campi: campi(
+        ['port', 'Port observed'],
+        ['arrivals', 'Arrivals in the window', 'ships'],
+        ['departures', 'Departures in the window', 'ships'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open bulletin: use it with no request.',
+      record: [
+        { port: 'Antwerp', observed: '2026-11-09T06:00:00Z', arrivals: 18, departures: 15, note: 'Ordinary traffic' },
+        { port: 'Zeebrugge', observed: '2026-11-09T06:00:00Z', arrivals: 7, departures: 6, note: 'One delay for the tide' },
+      ],
+    },
+  },
+  {
+    id: 'can-sar-artico',
+    fornitoreId: 'CAN',
+    titolo: 'Arctic search-and-rescue beacons',
+    sintesi: 'Latest SAR beacons detected in the Canadian Arctic archipelago.',
+    dominio: 'Search and rescue',
+    pubblicatoIl: '2026-04-11',
+    livello: 'open',
+    condizioni: 'Open data for rescue. It does not identify the craft beyond the beacon code.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'continuous, published every 10 minutes',
+      coperturaSpaziale: 'Canadian Arctic archipelago',
+      inizioTemporale: '2023-11-01',
+      lingua: 'English',
+      responsabile: 'Joint rescue coordination centre',
+      qualita: 'Beacon position, not confirmation of recovery.',
+      campi: campi(
+        ['beacon', 'Beacon code'],
+        ['area', 'Detection area'],
+        ['status', 'Active or closed'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open extract of beacons still relevant this morning.',
+      record: [
+        { beacon: 'CAN-SAR-118', observed: '2026-11-09T04:40:00Z', area: 'Davis Strait', status: 'active' },
+        { beacon: 'CAN-SAR-122', observed: '2026-11-09T02:10:00Z', area: 'Baffin Island', status: 'closed' },
+        { beacon: 'CAN-SAR-130', observed: '2026-11-08T22:05:00Z', area: 'Hudson Bay', status: 'active' },
+      ],
+    },
+  },
+  {
+    id: 'can-piste-artiche',
+    fornitoreId: 'CAN',
+    titolo: 'Arctic runway conditions',
+    sintesi: 'Conditions of the runways used for support in northern Canada.',
+    dominio: 'Air support',
+    pubblicatoIl: '2026-03-18',
+    livello: 'restricted',
+    condizioni: 'Canada assesses the request against the mission and the runway named.',
+    finalita: ['resupply', 'medical evacuation'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'twice a day',
+      coperturaSpaziale: 'Runways at Resolute Bay, Inuvik, and Iqaluit',
+      inizioTemporale: '2025-01-15',
+      lingua: 'English',
+      responsabile: 'Arctic airfields command',
+      qualita: 'Declared condition, not a weather forecast.',
+      campi: campi(
+        ['site', 'Runway'],
+        ['condition', 'Usable, limited, or closed'],
+        ['note', 'Main constraint'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Restricted extract: visible to Canada and to anyone with a grant.',
+      record: [
+        { site: 'Resolute Bay', observed: '2026-11-09T00:30:00Z', condition: 'limited', note: 'Ice on the threshold' },
+        { site: 'Inuvik', observed: '2026-11-09T00:30:00Z', condition: 'usable', note: 'No constraint' },
+        { site: 'Iqaluit', observed: '2026-11-09T00:30:00Z', condition: 'usable', note: 'Crosswind within limits' },
+      ],
+    },
+  },
+  {
+    id: 'dnk-stretti',
+    fornitoreId: 'DNK',
+    titolo: 'Transits through the Danish straits',
+    sintesi: 'Count of transits observed between the Kattegat and the Belt.',
+    dominio: 'Maritime surveillance',
+    pubblicatoIl: '2026-05-06',
+    livello: 'restricted',
+    condizioni: 'Denmark authorizes aggregated use. Identifying detail does not leave.',
+    finalita: ['common maritime picture', 'collective defence'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every hour',
+      coperturaSpaziale: 'Great Belt, Øresund, and the southern Kattegat',
+      inizioTemporale: '2024-03-01',
+      lingua: 'Danish',
+      responsabile: 'Danish naval command',
+      qualita: 'Counts by sector, with no unit names.',
+      campi: campi(
+        ['sector', 'Stretch of strait'],
+        ['transits', 'Transits in the last hour', 'units'],
+        ['note', 'Context note'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Restricted counts for the last hour, released only after a Danish decision.',
+      record: [
+        { sector: 'Great Belt', observed: '2026-11-09T07:00:00Z', transits: 4, note: 'Flow to the north' },
+        { sector: 'Øresund', observed: '2026-11-09T07:00:00Z', transits: 6, note: 'Two units stopped in the roads' },
+        { sector: 'Southern Kattegat', observed: '2026-11-09T07:00:00Z', transits: 3, note: 'Within the seasonal norm' },
+      ],
+    },
+  },
+  {
+    id: 'dnk-meteo-kattegat',
+    fornitoreId: 'DNK',
+    titolo: 'Kattegat weather bulletin',
+    sintesi: 'Wind, visibility, and sea state for navigation in the Kattegat.',
+    dominio: 'Operational weather',
+    pubblicatoIl: '2025-11-02',
+    livello: 'open',
+    condizioni: 'Open bulletin. It does not replace the official notice to mariners.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 3 hours',
+      coperturaSpaziale: 'Kattegat',
+      inizioTemporale: '2022-01-01',
+      lingua: 'Danish',
+      responsabile: 'Danish Defence weather service',
+      qualita: 'Station observation, not a fine-grid model.',
+      campi: campi(
+        ['station', 'Station'],
+        ['windKnots', 'Mean wind', 'knots'],
+        ['seaState', 'Sea state'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open bulletin, usable at once.',
+      record: [
+        { station: 'Anholt', observed: '2026-11-09T06:00:00Z', windKnots: 14, visibilityKm: 12, seaState: 'moderate' },
+        { station: 'Skagen', observed: '2026-11-09T06:00:00Z', windKnots: 18, visibilityKm: 9, seaState: 'rough' },
+      ],
+    },
+  },
+  {
+    id: 'fra-ottico-sahel',
+    fornitoreId: 'FRA',
+    titolo: 'Optical satellite coverage of the Sahel belt',
+    sintesi: 'Recent optical scenes and the share of useful coverage, without the imagery.',
+    dominio: 'Satellite observation',
+    pubblicatoIl: '2026-06-21',
+    livello: 'restricted',
+    condizioni: 'France assesses purpose and area. The extract lists the scenes and does not deliver the pixels.',
+    finalita: ['shared reconnaissance', 'planning'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'on each useful pass',
+      coperturaSpaziale: 'Sahel belt, agreed windows',
+      inizioTemporale: '2025-04-01',
+      lingua: 'French',
+      responsabile: 'Military satellite observation centre',
+      qualita: 'Coverage estimated after cloud. This is not the image product.',
+      campi: campi(
+        ['area', 'Geographic window'],
+        ['scene', 'Scene identifier'],
+        ['coverage', 'Useful coverage', 'percent'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Restricted list of scenes. The images stay in France.',
+      record: [
+        { area: 'Eastern window', observed: '2026-11-08T10:12:00Z', scene: 'FRA-OPT-8841', coverage: 72, note: 'Cloud on the northern edge' },
+        { area: 'Central window', observed: '2026-11-08T10:14:00Z', scene: 'FRA-OPT-8844', coverage: 91, note: 'Usable scene' },
+        { area: 'Western window', observed: '2026-11-07T10:40:00Z', scene: 'FRA-OPT-8790', coverage: 40, note: 'Repeat on the next pass' },
+      ],
+    },
+  },
+  {
+    id: 'fra-porti-manica',
+    fornitoreId: 'FRA',
+    titolo: 'Status of the Channel ports',
+    sintesi: 'Ordinary port notices on the French side of the Channel.',
+    dominio: 'Ports',
+    pubblicatoIl: '2025-12-09',
+    livello: 'open',
+    condizioni: 'Open port-context data, with no military movements.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 6 hours',
+      coperturaSpaziale: 'Cherbourg, Le Havre, and Calais',
+      inizioTemporale: '2023-06-01',
+      lingua: 'French',
+      responsabile: 'Ports office, through the Defence data service',
+      qualita: 'Notices declared by the harbour masters.',
+      campi: campi(
+        ['port', 'Port'],
+        ['status', 'Operational or limited'],
+        ['notice', 'Notice in force'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open notices, usable with no request.',
+      record: [
+        { port: 'Cherbourg', observed: '2026-11-09T05:30:00Z', status: 'operational', notice: 'None' },
+        { port: 'Le Havre', observed: '2026-11-09T05:30:00Z', status: 'limited', notice: 'North quay under maintenance' },
+        { port: 'Calais', observed: '2026-11-09T05:30:00Z', status: 'operational', notice: 'Strong wind this evening' },
+      ],
+    },
+  },
+  {
+    id: 'deu-sensori-baltico',
+    fornitoreId: 'DEU',
+    titolo: 'Contacts from the southern Baltic sensor network',
+    sintesi: 'Surface and subsurface contacts detected between Kiel Bay and Bornholm. This is the restricted product in the demonstration story.',
+    dominio: 'Maritime surveillance',
+    pubblicatoIl: '2026-03-12',
+    livello: 'restricted',
+    condizioni: 'Germany reviews every request. The extract is used only after an explicit yes, and it closes if the grant is revoked. It is not redistributed.',
+    finalita: ['collective defence', 'common operational picture'],
+    metadati: {
+      formato: 'JSON, normalized contacts',
+      frequenzaAggiornamento: 'every 15 minutes',
+      coperturaSpaziale: 'Southern Baltic, from Kiel Bay toward Bornholm',
+      inizioTemporale: '2024-01-01',
+      lingua: 'German',
+      responsabile: 'German Navy sensor operations centre',
+      qualita: 'Contacts correlated by the coastal network. Confidence is a centre estimate, not a certain identification.',
+      campi: campi(
+        ['label', 'Contact identifier inside the German perimeter'],
+        ['observed', 'Observation time in UTC'],
+        ['type', 'Surface or subsurface'],
+        ['latitude', 'Contact latitude', 'degrees'],
+        ['longitude', 'Contact longitude', 'degrees'],
+        ['speedKnots', 'Estimated speed', 'knots'],
+        ['confidence', 'Centre confidence estimate', '0-1'],
+        ['note', 'Short operational note'],
+      ),
+    },
+    estratto: {
+      vista: 'map',
+      descrizione: 'Extract of this morning’s contacts. It is not the live feed: it is the portion Germany releases to a nation that holds a grant.',
+      record: [
+        { label: 'DEU-SNS-2401', observed: '2026-11-09T06:15:00Z', type: 'surface', latitude: 54.32, longitude: 10.14, speedKnots: 12.4, confidence: 0.91, note: 'Northeast track, Kiel Bay' },
+        { label: 'DEU-SNS-2402', observed: '2026-11-09T06:15:00Z', type: 'surface', latitude: 54.48, longitude: 11.22, speedKnots: 8.1, confidence: 0.87, note: 'Fehmarn Belt, steady speed' },
+        { label: 'DEU-SNS-2403', observed: '2026-11-09T06:00:00Z', type: 'surface', latitude: 54.18, longitude: 11.95, speedKnots: 15.6, confidence: 0.78, note: 'Off Mecklenburg' },
+        { label: 'DEU-SNS-2404', observed: '2026-11-09T05:45:00Z', type: 'subsurface', latitude: 54.7, longitude: 12.55, speedKnots: 6.2, confidence: 0.64, note: 'Weak contact toward Bornholm' },
+        { label: 'DEU-SNS-2405', observed: '2026-11-09T06:15:00Z', type: 'surface', latitude: 54.1, longitude: 10.55, speedKnots: 4.3, confidence: 0.93, note: 'Nearly stopped, possible fishing' },
+        { label: 'DEU-SNS-2406', observed: '2026-11-09T05:30:00Z', type: 'surface', latitude: 55.02, longitude: 13.1, speedKnots: 11.0, confidence: 0.81, note: 'Closing on Bornholm' },
+        { label: 'DEU-SNS-2407', observed: '2026-11-09T06:00:00Z', type: 'subsurface', latitude: 54.41, longitude: 12.02, speedKnots: 7.4, confidence: 0.7, note: 'Correlated with the previous contact' },
+        { label: 'DEU-SNS-2408', observed: '2026-11-09T06:15:00Z', type: 'surface', latitude: 53.95, longitude: 11.4, speedKnots: 9.8, confidence: 0.88, note: 'Wismar Bay, westbound' },
+      ],
+    },
+  },
+  {
+    id: 'deu-meteo-baltico',
+    fornitoreId: 'DEU',
+    titolo: 'Operational weather bulletin for the southern Baltic',
+    sintesi: 'Wind, visibility, and sea state at the German Baltic stations. An open dataset, set beside the sensors.',
+    dominio: 'Operational weather',
+    pubblicatoIl: '2025-10-01',
+    livello: 'open',
+    condizioni: 'Open dataset. Use it directly, citing Germany. It does not include contacts from the sensor network.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every hour',
+      coperturaSpaziale: 'Stations at Kiel, Fehmarn, Rostock, and Gedser',
+      inizioTemporale: '2021-01-01',
+      lingua: 'German',
+      responsabile: 'German Navy operational weather service',
+      qualita: 'Station observations, suited to context and not to the conduct of a single unit.',
+      campi: campi(
+        ['station', 'Weather station'],
+        ['windKnots', 'Mean wind', 'knots'],
+        ['visibilityKm', 'Visibility', 'km'],
+        ['seaState', 'Sea state'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open bulletin: the Netherlands, like anyone in the catalog, can use it without asking permission.',
+      record: [
+        { station: 'Kiel', observed: '2026-11-09T06:00:00Z', windKnots: 11, visibilityKm: 15, seaState: 'slight' },
+        { station: 'Fehmarn', observed: '2026-11-09T06:00:00Z', windKnots: 16, visibilityKm: 10, seaState: 'moderate' },
+        { station: 'Rostock', observed: '2026-11-09T06:00:00Z', windKnots: 13, visibilityKm: 14, seaState: 'slight' },
+        { station: 'Gedser', observed: '2026-11-09T06:00:00Z', windKnots: 19, visibilityKm: 8, seaState: 'rough' },
+      ],
+    },
+  },
+  {
+    id: 'ita-radar-med',
+    fornitoreId: 'ITA',
+    titolo: 'Central Mediterranean radar picture',
+    sintesi: 'Aggregated radar tracks in the central Mediterranean, under an Italian decision.',
+    dominio: 'Air and maritime defence',
+    pubblicatoIl: '2026-04-28',
+    livello: 'restricted',
+    condizioni: 'Italy approves only requests with a collective-defence purpose and a precise area. The track is not passed to third parties.',
+    finalita: ['collective defence', 'air and maritime picture'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 10 minutes',
+      coperturaSpaziale: 'Central Mediterranean, national sectors',
+      inizioTemporale: '2024-06-01',
+      lingua: 'Italian',
+      responsabile: 'Aerospace operations command',
+      qualita: 'Fused tracks. Altitude is rounded.',
+      campi: campi(
+        ['sector', 'Radar sector'],
+        ['tracks', 'Number of tracks in the sector', 'tracks'],
+        ['altitude', 'Rounded mean altitude', 'feet'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Italian restricted extract. It does not leave without a grant.',
+      record: [
+        { sector: 'Southern Adriatic', observed: '2026-11-09T06:40:00Z', tracks: 3, altitude: 18000, note: 'Civil routes excluded' },
+        { sector: 'Strait of Sicily', observed: '2026-11-09T06:40:00Z', tracks: 5, altitude: 24000, note: 'Two low-altitude tracks' },
+        { sector: 'Southern Tyrrhenian', observed: '2026-11-09T06:40:00Z', tracks: 2, altitude: 21000, note: 'Within the norm' },
+      ],
+    },
+  },
+  {
+    id: 'ita-avvisi-idrografici',
+    fornitoreId: 'ITA',
+    titolo: 'Hydrographic notices for national ports',
+    sintesi: 'Notices on depths and aids to navigation in the Italian ports listed.',
+    dominio: 'Hydrography',
+    pubblicatoIl: '2025-07-14',
+    livello: 'open',
+    condizioni: 'Open dataset. It is a notice for the safety of navigation, not a military plan.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'when a notice is published',
+      coperturaSpaziale: 'Taranto, Augusta, and La Spezia',
+      inizioTemporale: '2020-01-01',
+      lingua: 'Italian',
+      responsabile: 'Navy hydrographic institute',
+      qualita: 'Official notices already issued, republished in the catalog.',
+      campi: campi(
+        ['site', 'Port or roadstead'],
+        ['notice', 'Short text of the notice'],
+        ['levelMeters', 'Reported clearance or depth', 'm'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open notices, usable at once.',
+      record: [
+        { site: 'Taranto', observed: '2026-11-08T16:00:00Z', notice: 'Light buoy out of position', levelMeters: 14.2 },
+        { site: 'Augusta', observed: '2026-11-07T09:20:00Z', notice: 'Dredging on the east side', levelMeters: 11.5 },
+        { site: 'La Spezia', observed: '2026-11-09T07:10:00Z', notice: 'No new notice', levelMeters: 12.8 },
+      ],
+    },
+  },
+  {
+    id: 'nld-porti-reno',
+    fornitoreId: 'NLD',
+    titolo: 'Port movements on the Rhine–Scheldt',
+    sintesi: 'Arrivals and departures at the Dutch delta nodes, in the clear.',
+    dominio: 'Ports',
+    pubblicatoIl: '2026-01-09',
+    livello: 'open',
+    condizioni: 'Open data published by the Netherlands. It does not describe restricted cargo.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every hour',
+      coperturaSpaziale: 'Rotterdam, Amsterdam, and Antwerp via the Scheldt (Dutch side)',
+      inizioTemporale: '2022-04-01',
+      lingua: 'Dutch',
+      responsabile: 'Coastguard, data office',
+      qualita: 'Hourly counts of civil traffic.',
+      campi: campi(
+        ['port', 'Port'],
+        ['arrivals', 'Arrivals in the hour', 'ships'],
+        ['departures', 'Departures in the hour', 'ships'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open bulletin from the Netherlands.',
+      record: [
+        { port: 'Rotterdam', observed: '2026-11-09T07:00:00Z', arrivals: 22, departures: 19, note: 'Morning peak' },
+        { port: 'Amsterdam', observed: '2026-11-09T07:00:00Z', arrivals: 8, departures: 7, note: 'Within the norm' },
+        { port: 'Dutch Scheldt', observed: '2026-11-09T07:00:00Z', arrivals: 5, departures: 4, note: 'One convoy inbound' },
+      ],
+    },
+  },
+  {
+    id: 'nld-corridoi',
+    fornitoreId: 'NLD',
+    titolo: 'Land corridor capacity',
+    sintesi: 'Remaining capacity on Dutch road and rail corridors toward Germany.',
+    dominio: 'Land logistics',
+    pubblicatoIl: '2026-05-19',
+    livello: 'restricted',
+    condizioni: 'The Netherlands decides the requests. Capacity is not published beyond the authorized nation.',
+    finalita: ['logistics planning', 'allied transit'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 12 hours',
+      coperturaSpaziale: 'Corridors toward the German border',
+      inizioTemporale: '2025-02-01',
+      lingua: 'Dutch',
+      responsabile: 'Dutch logistics command',
+      qualita: 'Estimated remaining capacity, not a booking for a convoy.',
+      campi: campi(
+        ['route', 'Corridor'],
+        ['status', 'Open, reduced, or saturated'],
+        ['note', 'Constraint on the stretch'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Dutch restricted extract.',
+      record: [
+        { route: 'Rotterdam–Arnhem', observed: '2026-11-09T04:00:00Z', status: 'open', note: 'Ample remaining capacity' },
+        { route: 'Eindhoven–Venlo', observed: '2026-11-09T04:00:00Z', status: 'reduced', note: 'Daytime works' },
+        { route: 'Betuwe railway', observed: '2026-11-09T04:00:00Z', status: 'open', note: 'Night windows free' },
+      ],
+    },
+  },
+  {
+    id: 'nor-boe-artiche',
+    fornitoreId: 'NOR',
+    titolo: 'Arctic weather-ocean buoys',
+    sintesi: 'Wind and sea readings from Norwegian buoys beyond the Arctic Circle.',
+    dominio: 'Operational weather',
+    pubblicatoIl: '2025-08-30',
+    livello: 'open',
+    condizioni: 'Open environmental observation.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every hour',
+      coperturaSpaziale: 'Norwegian Sea and the southern Barents',
+      inizioTemporale: '2019-01-01',
+      lingua: 'Norwegian',
+      responsabile: 'Meteorological institute, series shared with Defence',
+      qualita: 'Instrument reading from the buoy. Hours can be missing because of ice.',
+      campi: campi(
+        ['station', 'Buoy'],
+        ['windKnots', 'Wind', 'knots'],
+        ['seaState', 'Sea state'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open buoy readings.',
+      record: [
+        { station: 'Bear Island buoy', observed: '2026-11-09T05:00:00Z', windKnots: 22, seaState: 'very rough', visibilityKm: 6 },
+        { station: 'Tromsø west buoy', observed: '2026-11-09T05:00:00Z', windKnots: 15, seaState: 'moderate', visibilityKm: 11 },
+        { station: 'Lofoten buoy', observed: '2026-11-09T05:00:00Z', windKnots: 12, seaState: 'slight', visibilityKm: 18 },
+      ],
+    },
+  },
+  {
+    id: 'nor-radar-nord',
+    fornitoreId: 'NOR',
+    titolo: 'Radar tracks in the Norwegian Arctic',
+    sintesi: 'Count of tracks in the northern radar sectors, with no identification.',
+    dominio: 'Air defence',
+    pubblicatoIl: '2026-02-17',
+    livello: 'restricted',
+    condizioni: 'Norway authorizes the count by sector. It does not release the individual track.',
+    finalita: ['collective defence', 'air picture'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 15 minutes',
+      coperturaSpaziale: 'Finnmark, Troms, and the adjacent Barents Sea',
+      inizioTemporale: '2024-09-01',
+      lingua: 'Norwegian',
+      responsabile: 'Northern air control centre',
+      qualita: 'Fused counts. Known civil tracks are already excluded.',
+      campi: campi(
+        ['sector', 'Sector'],
+        ['tracks', 'Tracks in the sector', 'tracks'],
+        ['note', 'Controller note'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Restricted counts, only with a Norwegian grant.',
+      record: [
+        { sector: 'Eastern Finnmark', observed: '2026-11-09T06:20:00Z', tracks: 2, note: 'High altitude' },
+        { sector: 'Troms coast', observed: '2026-11-09T06:20:00Z', tracks: 1, note: 'Moving away' },
+        { sector: 'Southern Barents', observed: '2026-11-09T06:20:00Z', tracks: 0, note: 'No new track' },
+      ],
+    },
+  },
+  {
+    id: 'pol-sensori-frontiera',
+    fornitoreId: 'POL',
+    titolo: 'Summary of sensors on the eastern border',
+    sintesi: 'Categories of activity detected by the border sensors, without the raw detail.',
+    dominio: 'Land sensors',
+    pubblicatoIl: '2026-06-02',
+    livello: 'restricted',
+    condizioni: 'Poland decides request by request. The extract is a summary, not the sensor feed.',
+    finalita: ['collective defence', 'border watch'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 30 minutes',
+      coperturaSpaziale: 'Eastern sectors indicated by the command',
+      inizioTemporale: '2025-03-01',
+      lingua: 'Polish',
+      responsabile: 'Border sensor command',
+      qualita: 'Automatic classification reviewed by an operator. It is not an identification.',
+      campi: campi(
+        ['sector', 'Border sector'],
+        ['category', 'Prevailing category'],
+        ['note', 'Operator note'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Restricted summary. The raw data stays in Poland.',
+      record: [
+        { sector: 'Northern sector', observed: '2026-11-09T03:30:00Z', category: 'vehicle movement', note: 'Within the weekly average' },
+        { sector: 'Central sector', observed: '2026-11-09T03:30:00Z', category: 'no relevant activity', note: 'Network intact' },
+        { sector: 'Southern sector', observed: '2026-11-09T03:30:00Z', category: 'sporadic activity', note: 'One uncorrelated passage' },
+      ],
+    },
+  },
+  {
+    id: 'pol-vistola',
+    fornitoreId: 'POL',
+    titolo: 'Water levels on the Vistula',
+    sintesi: 'River levels at the sites that affect bridges and transits.',
+    dominio: 'Hydrography',
+    pubblicatoIl: '2025-05-05',
+    livello: 'open',
+    condizioni: 'Open data for the safety of transits. It is not a movement plan.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 3 hours',
+      coperturaSpaziale: 'Warsaw, Toruń, and Gdansk (mouth)',
+      inizioTemporale: '2018-01-01',
+      lingua: 'Polish',
+      responsabile: 'Hydrological service, series republished by the data office',
+      qualita: 'Observed level, comparable with the site’s attention threshold.',
+      campi: campi(
+        ['site', 'Gauge'],
+        ['levelMeters', 'Level', 'm'],
+        ['notice', 'Threshold'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open levels.',
+      record: [
+        { site: 'Warsaw', observed: '2026-11-09T06:00:00Z', levelMeters: 2.86, notice: 'below the threshold' },
+        { site: 'Toruń', observed: '2026-11-09T06:00:00Z', levelMeters: 4.12, notice: 'within the norm' },
+        { site: 'Gdansk mouth', observed: '2026-11-09T06:00:00Z', levelMeters: 1.1, notice: 'tide rising' },
+      ],
+    },
+  },
+  {
+    id: 'esp-quadro-med',
+    fornitoreId: 'ESP',
+    titolo: 'Western Mediterranean maritime picture',
+    sintesi: 'Aggregated contacts in the western Mediterranean under Spanish responsibility.',
+    dominio: 'Maritime surveillance',
+    pubblicatoIl: '2026-07-08',
+    livello: 'restricted',
+    condizioni: 'Spain releases the picture only to an authorized nation and for a stated purpose.',
+    finalita: ['common operational picture', 'collective defence'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 20 minutes',
+      coperturaSpaziale: 'Western Mediterranean, Spanish sectors',
+      inizioTemporale: '2024-05-01',
+      lingua: 'Spanish',
+      responsabile: 'Maritime surveillance centre',
+      qualita: 'Fused contacts. Identity, when known, does not enter this extract.',
+      campi: campi(
+        ['sector', 'Sector'],
+        ['tracks', 'Contacts in the sector', 'contacts'],
+        ['note', 'Centre note'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Spanish restricted picture.',
+      record: [
+        { sector: 'Alboran', observed: '2026-11-09T06:50:00Z', tracks: 7, note: 'Commercial traffic prevails' },
+        { sector: 'Southern Balearics', observed: '2026-11-09T06:50:00Z', tracks: 3, note: 'One contact stopped' },
+        { sector: 'Off Valencia', observed: '2026-11-09T06:50:00Z', tracks: 4, note: 'Within the norm' },
+      ],
+    },
+  },
+  {
+    id: 'esp-avvisi-atlantico',
+    fornitoreId: 'ESP',
+    titolo: 'Coastal warnings for the Iberian Atlantic',
+    sintesi: 'Wind and sea warnings on the Spanish Atlantic coast.',
+    dominio: 'Operational weather',
+    pubblicatoIl: '2025-09-15',
+    livello: 'open',
+    condizioni: 'Open warnings for navigation.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 6 hours',
+      coperturaSpaziale: 'Galicia, Cadiz, and the eastern Canaries',
+      inizioTemporale: '2021-06-01',
+      lingua: 'Spanish',
+      responsabile: 'Maritime weather service',
+      qualita: 'Area warning, not a point observation of a port.',
+      campi: campi(
+        ['area', 'Stretch of coast'],
+        ['notice', 'Warning in force'],
+        ['windKnots', 'Forecast wind', 'knots'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open warnings.',
+      record: [
+        { area: 'Galicia', observed: '2026-11-09T00:00:00Z', notice: 'rough sea', windKnots: 21 },
+        { area: 'Cadiz', observed: '2026-11-09T00:00:00Z', notice: 'none', windKnots: 12 },
+        { area: 'Eastern Canaries', observed: '2026-11-09T00:00:00Z', notice: 'sustained trade wind', windKnots: 18 },
+      ],
+    },
+  },
+  {
+    id: 'gbr-ais-nord',
+    fornitoreId: 'GBR',
+    titolo: 'North Sea AIS picture',
+    sintesi: 'Cooperating AIS contacts in the central North Sea, already broadcast in the clear by the ships.',
+    dominio: 'Maritime traffic',
+    pubblicatoIl: '2025-06-18',
+    livello: 'open',
+    condizioni: 'Open data because cooperating AIS is already public. It does not include contacts that are not transmitting.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 10 minutes',
+      coperturaSpaziale: 'Central North Sea',
+      inizioTemporale: '2023-01-01',
+      lingua: 'English',
+      responsabile: 'British coastguard, catalog series',
+      qualita: 'Received AIS messages only. A ship that is not transmitting does not appear.',
+      campi: campi(
+        ['label', 'Catalog code of the AIS contact'],
+        ['type', 'Declared type'],
+        ['latitude', 'Latitude', 'degrees'],
+        ['longitude', 'Longitude', 'degrees'],
+        ['speedKnots', 'Speed', 'knots'],
+      ),
+    },
+    estratto: {
+      vista: 'map',
+      descrizione: 'Open AIS picture: consult it with no request.',
+      record: [
+        { label: 'GBR-AIS-501', observed: '2026-11-09T06:30:00Z', type: 'cargo', latitude: 55.4, longitude: 1.2, speedKnots: 13.2, note: 'Southbound' },
+        { label: 'GBR-AIS-508', observed: '2026-11-09T06:30:00Z', type: 'fishing vessel', latitude: 56.1, longitude: 0.4, speedKnots: 3.5, note: 'Fishing' },
+        { label: 'GBR-AIS-514', observed: '2026-11-09T06:30:00Z', type: 'cargo', latitude: 54.8, longitude: 2.1, speedKnots: 14.0, note: 'Westbound' },
+      ],
+    },
+  },
+  {
+    id: 'gbr-basi-aeree',
+    fornitoreId: 'GBR',
+    titolo: 'Availability of air-support bases',
+    sintesi: 'Reception windows at the British bases listed for allied support.',
+    dominio: 'Air support',
+    pubblicatoIl: '2026-03-03',
+    livello: 'restricted',
+    condizioni: 'The United Kingdom approves each request and states which bases fall inside the grant.',
+    finalita: ['air support', 'resupply'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every day',
+      coperturaSpaziale: 'Support bases in the United Kingdom listed by the command',
+      inizioTemporale: '2025-01-01',
+      lingua: 'English',
+      responsabile: 'Air support command',
+      qualita: 'Availability declared for the day, not an assigned slot.',
+      campi: campi(
+        ['site', 'Base'],
+        ['status', 'Available, limited, or closed'],
+        ['note', 'Constraint for the day'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Restricted availability.',
+      record: [
+        { site: 'Eastern base', observed: '2026-11-09T06:00:00Z', status: 'available', note: 'Afternoon window' },
+        { site: 'Northern base', observed: '2026-11-09T06:00:00Z', status: 'limited', note: 'One runway in exclusive use' },
+        { site: 'Southwestern base', observed: '2026-11-09T06:00:00Z', status: 'available', note: 'Refuelling possible' },
+      ],
+    },
+  },
+  {
+    id: 'usa-corridoi-atlantico',
+    fornitoreId: 'USA',
+    titolo: 'Transatlantic logistics corridors',
+    sintesi: 'Status of reinforcement corridors across the Atlantic, at route level.',
+    dominio: 'Logistics',
+    pubblicatoIl: '2026-08-01',
+    livello: 'restricted',
+    condizioni: 'The United States grants use of the route named in the request and can revoke it.',
+    finalita: ['reinforcement', 'logistics planning'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every day',
+      coperturaSpaziale: 'Transatlantic reinforcement routes',
+      inizioTemporale: '2025-06-01',
+      lingua: 'English',
+      responsabile: 'Transportation command',
+      qualita: 'Corridor status, not a cargo manifest.',
+      campi: campi(
+        ['route', 'Route'],
+        ['status', 'Open, reduced, or suspended'],
+        ['note', 'Planning note'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Restricted corridor status.',
+      record: [
+        { route: 'East coast–northern Europe', observed: '2026-11-09T00:00:00Z', status: 'open', note: 'Windows for this week confirmed' },
+        { route: 'East coast–Mediterranean', observed: '2026-11-09T00:00:00Z', status: 'reduced', note: 'One ship in maintenance' },
+        { route: 'Support air bridge', observed: '2026-11-09T00:00:00Z', status: 'open', note: 'Ordinary capacity' },
+      ],
+    },
+  },
+  {
+    id: 'usa-meteo-atlantico',
+    fornitoreId: 'USA',
+    titolo: 'Weather warnings for Atlantic routes',
+    sintesi: 'Wind and sea warnings on the Atlantic routes used by traffic in the clear.',
+    dominio: 'Operational weather',
+    pubblicatoIl: '2025-04-04',
+    livello: 'open',
+    condizioni: 'Open warning. It does not describe unit movement.',
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'every 6 hours',
+      coperturaSpaziale: 'North Atlantic, three route bands',
+      inizioTemporale: '2020-01-01',
+      lingua: 'English',
+      responsabile: 'Meteorological service, catalog series',
+      qualita: 'Band warning. It is not a recommended route.',
+      campi: campi(
+        ['area', 'Route band'],
+        ['notice', 'Warning'],
+        ['windKnots', 'Wind', 'knots'],
+      ),
+    },
+    estratto: {
+      vista: 'table',
+      descrizione: 'Open warnings.',
+      record: [
+        { area: 'Northern band', observed: '2026-11-09T00:00:00Z', notice: 'gale easing', windKnots: 34 },
+        { area: 'Central band', observed: '2026-11-09T00:00:00Z', notice: 'none', windKnots: 17 },
+        { area: 'Southern band', observed: '2026-11-09T00:00:00Z', notice: 'visibility reduced in places', windKnots: 14 },
+      ],
+    },
+  },
+];
+
+function prodottoDrone(id, fornitoreId, settore) {
+  return {
+    id,
+    fornitoreId,
+    titolo: `Tactical drone over the ${settore} NATO exercise`,
+    sintesi: `Live rotary-wing feed from the ${settore} sector of the NATO exercise. The stored document is the current slice and a short ground track, not the event history.`,
+    dominio: 'Tactical drone',
+    pubblicatoIl: '2026-11-01',
+    livello: 'restricted',
+    tipo: 'drone',
+    condizioni: 'The publishing nation remains the owner. Headquarters may share the live feed with one member. Sharing does not change the publisher.',
+    finalita: ['NATO exercise', 'common operational picture'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'live',
+      coperturaSpaziale: `${settore} sector of the NATO exercise, local UTM grid`,
+      inizioTemporale: '2026-11-01',
+      lingua: 'English',
+      responsabile: `${settore} exercise drone cell`,
+      qualita: 'One live drone. eventCount is a counter. The ground track is about a dozen detections of one land vehicle.',
+      campi: campi(
+        ['battery', 'Battery remaining', 'percent'],
+        ['speed', 'Ground speed', 'm/s'],
+        ['heading', 'Heading', 'degrees'],
+        ['aircraftAltitude', 'Altitude above the exercise grid', 'm'],
+        ['status', 'Mission status'],
+        ['thermal', 'Ambient, ground, and humidity from the thermal payload'],
+        ['health', 'Propulsion health'],
+        ['detection', 'Last detection of the tracked land vehicle'],
+      ),
+    },
+  };
+}
+
+const droniGrezzi = [
+  prodottoDrone('deu-drone-esercizio', 'DEU', 'German'),
+  prodottoDrone('fra-drone-esercizio', 'FRA', 'French'),
+  prodottoDrone('ita-drone-esercizio', 'ITA', 'Italian'),
+  prodottoDrone('tur-drone-esercizio', 'TUR', 'Turkish'),
+];
+
+const MEMBRI = [
+  'ALB', 'BEL', 'BGR', 'CAN', 'HRV', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC',
+  'HUN', 'ISL', 'ITA', 'LVA', 'LTU', 'LUX', 'MNE', 'NLD', 'MKD', 'NOR', 'POL', 'PRT',
+  'ROU', 'SVK', 'SVN', 'ESP', 'SWE', 'TUR', 'GBR', 'USA',
+];
+
+export function costruisciSeme() {
+  const fornitori = nazioni
+    .map(fornitore)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'en'));
+  const perCodice = new Map(fornitori.map((voce) => [voce.codice, voce]));
+  const prodotti = [];
+  const estratti = [];
+  const droni = [];
+
+  for (const grezzo of [...prodottiGrezzi, ...droniGrezzi]) {
+    const nazione = perCodice.get(grezzo.fornitoreId);
+    if (!nazione) {
+      throw new Error(`Missing provider for ${grezzo.id}`);
+    }
+    prodotti.push({
+      _id: grezzo.id,
+      schemaVersion: versione(),
+      fornitoreId: nazione.codice,
+      fornitore: {
+        codice: nazione.codice,
+        nome: nazione.nome,
+        bandiera: nazione.bandiera,
+      },
+      titolo: grezzo.titolo,
+      sintesi: grezzo.sintesi,
+      dominio: grezzo.dominio,
+      metadati: grezzo.metadati,
+      politicaAccesso: politica(grezzo.livello, grezzo.condizioni, grezzo.finalita),
+      pubblicatoIl: new Date(`${grezzo.pubblicatoIl}T00:00:00Z`),
+      ...(grezzo.tipo === 'drone' ? { tipo: 'drone' } : {}),
+    });
+    if (grezzo.tipo === 'drone') {
+      droni.push(documentoDrone({
+        callsign: grezzo.fornitoreId,
+        prodottoId: grezzo.id,
+      }));
+      continue;
+    }
+    estratti.push({
+      _id: grezzo.id,
+      schemaVersion: versione(),
+      prodottoId: grezzo.id,
+      descrizione: grezzo.estratto.descrizione,
+      vista: grezzo.estratto.vista,
+      record: grezzo.estratto.record,
+    });
+  }
+
+  if (fornitori.length !== MEMBRI.length || MEMBRI.some((codice) => !perCodice.has(codice))) {
+    throw new Error('The catalog must list every current NATO member, and no one else.');
+  }
+  if (prodotti.some((prodotto) => prodotto.fornitoreId === 'PRT')) {
+    throw new Error('Portugal publishes nothing.');
+  }
+  const turchia = prodotti.filter((prodotto) => prodotto.fornitoreId === 'TUR');
+  if (turchia.length !== 1 || turchia[0].tipo !== 'drone') {
+    throw new Error('Turkey publishes only its tactical-drone product.');
+  }
+
+  const storia = prodotti.find((prodotto) => prodotto._id === STORIA.prodottoId);
+  if (!storia || storia.politicaAccesso.livello !== 'restricted' || storia.fornitoreId !== 'DEU') {
+    throw new Error('The story product is not Germany’s restricted dataset.');
+  }
+  if (!perCodice.has('NLD') || !estratti.some((estratto) => estratto._id === STORIA.prodottoId)) {
+    throw new Error('The Germany → Netherlands story is incomplete.');
+  }
+
+  for (const drone of droni) {
+    const pista = drone.payload.groundDetections;
+    const stessoOggetto = new Set(pista.map((punto) => punto.objectId));
+    if (pista.length !== 12 || stessoOggetto.size !== 1) {
+      throw new Error(`${drone._id} needs one vehicle and a 12-point track.`);
+    }
+    if (drone.eventCount !== 17178 || drone.platform.callsign !== drone._id) {
+      throw new Error(`${drone._id} does not keep the canonical counter and callsign.`);
+    }
+  }
+  if (droni.map((drone) => drone.platform.callsign).sort().join() !== 'DEU,FRA,ITA,TUR') {
+    throw new Error('The live drones must be Germany, France, Italy, and Turkey.');
+  }
+
+  return { fornitori, prodotti, estratti, droni };
+}
