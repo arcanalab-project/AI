@@ -3,15 +3,34 @@ kind: Namespace
 metadata:
   name: nato-catalog
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
   name: mongo
   namespace: nato-catalog
   labels:
     app: mongo
 spec:
-  replicas: 1
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: mongo
+  ports:
+    - name: mongo
+      port: 27017
+      targetPort: mongo
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+  namespace: nato-catalog
+  labels:
+    app: mongo
+spec:
+  serviceName: mongo
+  replicas: 3
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       app: mongo
@@ -20,9 +39,15 @@ spec:
       labels:
         app: mongo
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
         - name: mongo
           image: mongo:7.0
+          args:
+            - --replSet
+            - rs0
+            - --bind_ip_all
           ports:
             - name: mongo
               containerPort: 27017
@@ -44,20 +69,43 @@ spec:
         - name: data
           emptyDir: {}
 ---
-apiVersion: v1
-kind: Service
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: mongo
+  name: mongo-replica-init
   namespace: nato-catalog
-  labels:
-    app: mongo
 spec:
-  selector:
-    app: mongo
-  ports:
-    - name: mongo
-      port: 27017
-      targetPort: mongo
+  backoffLimit: 30
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init
+          image: mongo:7.0
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -eu
+              for host in mongo-0.mongo mongo-1.mongo mongo-2.mongo; do
+                until mongosh --quiet --host "$host" --eval 'db.adminCommand({ ping: 1 })'; do
+                  sleep 2
+                done
+              done
+              mongosh --quiet --host mongo-0.mongo --eval '
+                try {
+                  if (rs.status().ok) quit(0);
+                } catch (e) {}
+                const result = rs.initiate({
+                  _id: "rs0",
+                  members: [
+                    { _id: 0, host: "mongo-0.mongo:27017" },
+                    { _id: 1, host: "mongo-1.mongo:27017" },
+                    { _id: 2, host: "mongo-2.mongo:27017" }
+                  ]
+                });
+                if (!result.ok) quit(1);
+              '
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -67,7 +115,7 @@ metadata:
   labels:
     app: nato-catalog
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: nato-catalog
@@ -76,6 +124,15 @@ spec:
       labels:
         app: nato-catalog
     spec:
+      initContainers:
+        - name: wait-for-mongo
+          image: mongo:7.0
+          command: ["bash", "-c"]
+          args:
+            - |
+              until mongosh --quiet "mongodb://mongo-0.mongo:27017,mongo-1.mongo:27017,mongo-2.mongo:27017/nato_catalog?replicaSet=rs0" --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)'; do
+                sleep 2
+              done
       containers:
         - name: catalog
           image: nato-catalog:latest
@@ -89,7 +146,7 @@ spec:
             - name: BIND_HOST
               value: "0.0.0.0"
             - name: MONGODB_URI
-              value: mongodb://mongo:27017/nato_catalog
+              value: mongodb://mongo-0.mongo:27017,mongo-1.mongo:27017,mongo-2.mongo:27017/nato_catalog?replicaSet=rs0
             - name: MONGODB_DB
               value: nato_catalog
           readinessProbe:

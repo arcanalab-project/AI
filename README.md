@@ -32,7 +32,7 @@ kubectl apply -f k8s/nato-catalog.yaml
 kubectl -n nato-catalog port-forward svc/nato-catalog 3000:3000
 ```
 
-Open http://localhost:3000. The catalog reaches MongoDB at `mongodb://mongo:27017/nato_catalog`.
+Open http://localhost:3000. The catalog is one pod. MongoDB is a replica set of three pods, and the catalog uses database `nato_catalog` at `mongodb://mongo-0.mongo:27017,mongo-1.mongo:27017,mongo-2.mongo:27017/nato_catalog?replicaSet=rs0`.
 
 One process, short queries, one local mongod: the pool stays small on purpose (`maxPoolSize` 10, `minPoolSize` 1). See `server/db.js`.
 
