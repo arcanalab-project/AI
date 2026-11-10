@@ -10,7 +10,9 @@ export async function seminaSeVuoto(db) {
 }
 
 export async function ripristinaSeme(db) {
+  await db.collection('condivisioni').deleteMany({});
   await db.collection('richiesteAccesso').deleteMany({});
+  await db.collection('droni').deleteMany({});
   await db.collection('estratti').deleteMany({});
   await db.collection('prodotti').deleteMany({});
   await db.collection('fornitori').deleteMany({});
@@ -22,6 +24,7 @@ async function scriviSeme(db) {
   await db.collection('fornitori').insertMany(seme.fornitori);
   await db.collection('prodotti').insertMany(seme.prodotti);
   await db.collection('estratti').insertMany(seme.estratti);
+  await db.collection('droni').insertMany(seme.droni);
 }
 
 const eseguitoDiretto = process.argv[1] && process.argv[1].endsWith('seed.js');
@@ -35,6 +38,8 @@ if (eseguitoDiretto) {
       fornitori: await db.collection('fornitori').countDocuments(),
       prodotti: await db.collection('prodotti').countDocuments(),
       estratti: await db.collection('estratti').countDocuments(),
+      droni: await db.collection('droni').countDocuments(),
+      condivisioni: await db.collection('condivisioni').countDocuments(),
     };
     console.log(JSON.stringify(conteggi));
     process.exit(0);

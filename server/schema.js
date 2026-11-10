@@ -94,6 +94,7 @@ const prodottoSchema = {
     titolo: stringa,
     sintesi: testo,
     dominio: stringa,
+    tipo: { enum: ['dataset', 'drone'] },
     metadati: {
       bsonType: 'object',
       required: [
@@ -222,11 +223,200 @@ const richiestaSchema = {
   },
 };
 
+const numero = { bsonType: 'number' };
+const istante = { bsonType: 'string', minLength: 10, maxLength: 40 };
+
+const posizioneSchema = {
+  bsonType: 'object',
+  required: ['x', 'y', 'z', 'coordinateSystem', 'datum'],
+  additionalProperties: false,
+  properties: {
+    x: numero,
+    y: numero,
+    z: numero,
+    coordinateSystem: { bsonType: 'string' },
+    datum: { bsonType: 'string' },
+  },
+};
+
+const rilevamentoSchema = {
+  bsonType: 'object',
+  required: ['objectId', 'reportId', 'classificationPath', 'location', 'confidence', 'sourceNodeId', 'sourceName', 'updatedAt'],
+  additionalProperties: false,
+  properties: {
+    objectId: stringa,
+    reportId: stringa,
+    classificationPath: { bsonType: 'array', minItems: 1, maxItems: 6, items: stringa },
+    location: posizioneSchema,
+    confidence: { bsonType: 'number', minimum: 0, maximum: 1 },
+    sourceNodeId: stringa,
+    sourceName: stringa,
+    updatedAt: istante,
+  },
+};
+
+const droneSchema = {
+  bsonType: 'object',
+  required: [
+    '_id',
+    'prodottoId',
+    'eventCount',
+    'flight',
+    'mission',
+    'payload',
+    'platform',
+    'propulsion',
+    'sourceFormats',
+    'sourceMap',
+    'sourceState',
+    'synthetic',
+    'updatedAt',
+    'lastEventId',
+    'lastMessageType',
+    'lastSource',
+  ],
+  additionalProperties: false,
+  properties: {
+    _id: { bsonType: 'string', minLength: 3, maxLength: 8 },
+    prodottoId: { bsonType: 'string', minLength: 3, maxLength: 80 },
+    eventCount: { bsonType: 'number', minimum: 0 },
+    flight: {
+      bsonType: 'object',
+      required: ['position', 'groundSpeedMps', 'headingDeg', 'verticalSpeedMps', 'batteryPct', 'mode', 'updatedAt'],
+      additionalProperties: false,
+      properties: {
+        position: posizioneSchema,
+        groundSpeedMps: numero,
+        headingDeg: numero,
+        verticalSpeedMps: numero,
+        batteryPct: numero,
+        mode: stringa,
+        updatedAt: istante,
+      },
+    },
+    mission: {
+      bsonType: 'object',
+      required: ['missionId', 'name', 'status'],
+      additionalProperties: false,
+      properties: {
+        missionId: stringa,
+        name: stringa,
+        status: stringa,
+      },
+    },
+    payload: {
+      bsonType: 'object',
+      required: ['thermal', 'groundDetections', 'lastDetection'],
+      additionalProperties: false,
+      properties: {
+        thermal: {
+          bsonType: 'object',
+          required: ['ambientC', 'groundSurfaceC', 'humidityPct', 'updatedAt'],
+          additionalProperties: false,
+          properties: {
+            ambientC: numero,
+            groundSurfaceC: numero,
+            humidityPct: numero,
+            updatedAt: istante,
+          },
+        },
+        groundDetections: {
+          bsonType: 'array',
+          minItems: 1,
+          maxItems: 12,
+          items: rilevamentoSchema,
+        },
+        lastDetection: rilevamentoSchema,
+      },
+    },
+    platform: {
+      bsonType: 'object',
+      required: ['type', 'callsign'],
+      additionalProperties: false,
+      properties: {
+        type: stringa,
+        callsign: stringa,
+      },
+    },
+    propulsion: {
+      bsonType: 'object',
+      required: ['motorRpm', 'motorTemperatureC', 'vibrationMmS', 'health', 'updatedAt'],
+      additionalProperties: false,
+      properties: {
+        motorRpm: numero,
+        motorTemperatureC: numero,
+        vibrationMmS: numero,
+        health: stringa,
+        updatedAt: istante,
+      },
+    },
+    sourceFormats: { bsonType: 'array', minItems: 1, maxItems: 6, items: stringa },
+    sourceMap: {
+      bsonType: 'object',
+      minProperties: 1,
+      additionalProperties: {
+        bsonType: 'object',
+        required: ['source', 'platformId'],
+        additionalProperties: false,
+        properties: {
+          source: stringa,
+          platformId: stringa,
+        },
+      },
+    },
+    sourceState: {
+      bsonType: 'object',
+      required: ['flight', 'engine', 'detection', 'thermal'],
+      additionalProperties: false,
+      properties: {
+        flight: { bsonType: 'object' },
+        engine: { bsonType: 'object' },
+        detection: { bsonType: 'object' },
+        thermal: { bsonType: 'object' },
+      },
+    },
+    synthetic: { bsonType: 'bool' },
+    updatedAt: istante,
+    lastEventId: stringa,
+    lastMessageType: stringa,
+    lastSource: stringa,
+  },
+};
+
+const condivisioneSchema = {
+  bsonType: 'object',
+  required: [
+    '_id',
+    'schemaVersion',
+    'prodottoId',
+    'titoloProdotto',
+    'proprietarioId',
+    'nomeProprietario',
+    'destinatarioId',
+    'nomeDestinatario',
+    'condivisoIl',
+  ],
+  additionalProperties: false,
+  properties: {
+    _id: { bsonType: 'string', minLength: 3, maxLength: 90 },
+    schemaVersion: { bsonType: 'int', minimum: 1 },
+    prodottoId: { bsonType: 'string', minLength: 3, maxLength: 80 },
+    titoloProdotto: stringa,
+    proprietarioId: { bsonType: 'string', minLength: 3, maxLength: 3 },
+    nomeProprietario: stringa,
+    destinatarioId: { bsonType: 'string', minLength: 3, maxLength: 3 },
+    nomeDestinatario: stringa,
+    condivisoIl: { bsonType: 'date' },
+  },
+};
+
 export async function ensureSchema(db) {
   await ensureCollection(db, 'fornitori', fornitoreSchema);
   await ensureCollection(db, 'prodotti', prodottoSchema);
   await ensureCollection(db, 'estratti', estrattoSchema);
   await ensureCollection(db, 'richiesteAccesso', richiestaSchema);
+  await ensureCollection(db, 'droni', droneSchema);
+  await ensureCollection(db, 'condivisioni', condivisioneSchema);
 
   // Indexes match the real queries: nation dossier, owner queue, and the
   // request history of a requester/product pair. No overlapping indexes
@@ -239,5 +429,10 @@ export async function ensureSchema(db) {
   await db.collection('richiesteAccesso').createIndex(
     { richiedenteId: 1, prodottoId: 1, richiestaIl: -1 },
     { name: 'richiedente_prodotto_data' },
+  );
+  await db.collection('droni').createIndex({ prodottoId: 1 }, { unique: true, name: 'prodottoId' });
+  await db.collection('condivisioni').createIndex(
+    { destinatarioId: 1, prodottoId: 1 },
+    { unique: true, name: 'destinatario_prodotto' },
   );
 }

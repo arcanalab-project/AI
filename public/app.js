@@ -42,6 +42,7 @@ const COLONNE = {
   transits: 'Transits',
   tracks: 'Tracks',
   altitude: 'Altitude (feet)',
+  aircraftAltitude: 'Altitude',
   coverage: 'Coverage',
   levelMeters: 'Level (m)',
   notice: 'Notice',
@@ -149,9 +150,37 @@ function impostaAttore(codice, percorso) {
 }
 
 let tokenRender = 0;
+let timerLive = 0;
+
+function fermaLive() {
+  if (timerLive) clearInterval(timerLive);
+  timerLive = 0;
+}
+
+function avviaLive() {
+  fermaLive();
+  if (!document.querySelector('[data-live-prodotto]')) return;
+  timerLive = setInterval(() => {
+    aggiornaLive().catch(() => {});
+  }, 2000);
+}
+
+async function aggiornaLive() {
+  const nodi = [...document.querySelectorAll('[data-live-prodotto]')];
+  if (!nodi.length) {
+    fermaLive();
+    return;
+  }
+  await Promise.all(nodi.map(async (nodo) => {
+    const dati = await api(`/api/droni/${nodo.getAttribute('data-live-prodotto')}`);
+    const corpo = nodo.querySelector('.fetta-corpo');
+    if (corpo) corpo.innerHTML = htmlFetta(dati.drone);
+  }));
+}
 
 async function render() {
   const token = ++tokenRender;
+  fermaLive();
   const contenuto = document.querySelector('#contenuto');
   contenuto.innerHTML = '<p class="caricamento">Loading…</p>';
   try {
@@ -162,6 +191,7 @@ async function render() {
     document.querySelector('#selettore-attore').value = state.actor;
     segnaNavigazione();
     dipingiStoria();
+    avviaLive();
   } catch (errore) {
     if (token !== tokenRender) return;
     contenuto.innerHTML = `<p class="errore">${esc(errore.message)}</p>`;
@@ -201,11 +231,11 @@ function segnaNavigazione() {
 }
 
 function vistaEsempio() {
-  document.title = 'Example scenario — Federated catalog';
+  document.title = 'Example scenario — NATO headquarters';
   return `<section class="esempio">
     <p class="sopra">Example scenario</p>
-    <h1>From Germany to the Netherlands</h1>
-    <p class="lede">Germany has already published “Contacts from the southern Baltic sensor network”. The policy is restricted, so the Netherlands can read the description and then has to ask before the records appear. Follow the six steps in order.</p>
+    <h1>From Germany to the Netherlands, then Turkey to Portugal</h1>
+    <p class="lede">Germany has already published “Contacts from the southern Baltic sensor network”. The policy is restricted, so the Netherlands can read the description and then has to ask before the records appear. After that path, headquarters shares only Turkey’s tactical drone with Portugal. Portugal publishes nothing and does not become the publisher.</p>
     <p>If this path has already been run, click <strong>Reset demonstration data</strong> at the bottom of the page first. That clears requests and starts the story again.</p>
     <ol class="passi-esempio">
       <li>
@@ -220,7 +250,7 @@ function vistaEsempio() {
         <span class="numero" aria-hidden="true">2</span>
         <div>
           <h2>Discover the dataset</h2>
-          <p><span class="passo-etichetta">Click</span> <strong>Nations</strong>, then <strong>Germany</strong>.</p>
+          <p><span class="passo-etichetta">Click</span> <strong>Headquarters</strong>, then <strong>Germany</strong>.</p>
           <p><span class="passo-etichetta">You should see</span> Germany’s provider page. Among the published products is <strong>Contacts from the southern Baltic sensor network</strong>, marked <strong>Restricted</strong>, with the note “demo path”.</p>
         </div>
       </li>
@@ -256,51 +286,145 @@ function vistaEsempio() {
           <p><span class="passo-etichetta">You should see</span> the use page: “Using the extract”, an active grant from Germany, a map of the contacts, and a table. The table includes <strong>DEU-SNS-2401</strong>, and the counts separate surface contacts from subsurface contacts. Those records were not visible before Germany approved.</p>
         </div>
       </li>
+      <li>
+        <span class="numero" aria-hidden="true">7</span>
+        <div>
+          <h2>Open Turkey’s live drone</h2>
+          <p><span class="passo-etichetta">Click</span> <strong>Headquarters</strong>, then <strong>Turkey</strong>.</p>
+          <p><span class="passo-etichetta">You should see</span> one published product, “Tactical drone over the Turkish NATO exercise”, and a live slice: battery, speed, heading, altitude, mission status, thermal readings, propulsion health, the last detection, and a short track of one land vehicle. Those figures change while the page stays open. The event counter is a number, not a list of events.</p>
+        </div>
+      </li>
+      <li>
+        <span class="numero" aria-hidden="true">8</span>
+        <div>
+          <h2>Share it with Portugal</h2>
+          <p><span class="passo-etichetta">Click</span> the Turkish drone product. Under <strong>Share</strong>, choose <strong>Portugal</strong> as the recipient country and click <strong>Confirm share</strong>.</p>
+          <p><span class="passo-etichetta">You should see</span> “Shared with Portugal. Turkey remains the publisher.” Germany’s drone is not part of this share.</p>
+        </div>
+      </li>
+      <li>
+        <span class="numero" aria-hidden="true">9</span>
+        <div>
+          <h2>Portugal receives it and opens it</h2>
+          <p><span class="passo-etichetta">Click</span> <strong>Acting as</strong> and choose <strong>Portugal</strong>. Then click <strong>Headquarters</strong>, then <strong>Portugal</strong>, then <strong>Open</strong> on the received product.</p>
+          <p><span class="passo-etichetta">You should see</span> that Portugal has not published a dataset, and under Received the Turkish drone. The open page names Turkey as the publisher and shows the same live slice. Portugal still publishes nothing.</p>
+        </div>
+      </li>
     </ol>
   </section>`;
 }
 
+function formattaNumero(valore, cifre = 1) {
+  const numero = Number(valore);
+  if (!Number.isFinite(numero)) return '—';
+  return new Intl.NumberFormat('en', {
+    maximumFractionDigits: cifre,
+    minimumFractionDigits: cifre === 0 ? 0 : 0,
+  }).format(numero);
+}
+
+function svgTraccia(punti) {
+  const xs = punti.map((punto) => punto.location.x);
+  const ys = punti.map((punto) => punto.location.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const larghezza = 640;
+  const altezza = 160;
+  const spanX = Math.max(maxX - minX, 1);
+  const spanY = Math.max(maxY - minY, 1);
+  const x = (valore) => ((valore - minX) / spanX) * (larghezza - 36) + 18;
+  const y = (valore) => ((maxY - valore) / spanY) * (altezza - 36) + 18;
+  const linea = punti.map((punto, indice) => `${indice === 0 ? 'M' : 'L'}${x(punto.location.x).toFixed(1)} ${y(punto.location.y).toFixed(1)}`).join(' ');
+  const ultimo = punti[punti.length - 1];
+  return `<div class="mappa-wrap"><svg class="mappa traccia" viewBox="0 0 ${larghezza} ${altezza}" role="img" aria-label="Short ground track of one land vehicle">
+    <rect width="${larghezza}" height="${altezza}" fill="#e6e8ed"></rect>
+    <path d="${linea}" fill="none" stroke="#0033A0" stroke-width="2"></path>
+    <circle cx="${x(ultimo.location.x).toFixed(1)}" cy="${y(ultimo.location.y).toFixed(1)}" r="5"></circle>
+  </svg></div>`;
+}
+
+function htmlFetta(drone) {
+  const volo = drone.flight;
+  const termico = drone.payload.thermal;
+  const ultimo = drone.payload.lastDetection;
+  const classe = (ultimo.classificationPath || []).join(' / ');
+  return `<div class="statistiche">
+      <div><strong data-batteria>${esc(formattaNumero(volo.batteryPct))}</strong>battery %</div>
+      <div><strong>${esc(formattaNumero(volo.groundSpeedMps))}</strong>speed m/s</div>
+      <div><strong>${esc(formattaNumero(volo.headingDeg))}</strong>heading °</div>
+      <div><strong>${esc(formattaNumero(volo.position.z))}</strong>altitude m</div>
+      <div><strong>${esc(drone.mission.status)}</strong>mission</div>
+      <div><strong>${esc(drone.propulsion.health)}</strong>propulsion</div>
+      <div><strong data-eventi>${esc(formattaNumero(drone.eventCount, 0))}</strong>events counted</div>
+    </div>
+    <p>Aircraft UTM ${esc(formattaNumero(volo.position.x, 1))}, ${esc(formattaNumero(volo.position.y, 1))} · callsign ${esc(drone.platform.callsign)}</p>
+    <p class="ruolo">Thermal</p>
+    <p>Ambient ${esc(formattaNumero(termico.ambientC))} °C · ground ${esc(formattaNumero(termico.groundSurfaceC))} °C · humidity ${esc(formattaNumero(termico.humidityPct, 0))}%</p>
+    <p class="ruolo">Last detection</p>
+    <p>${esc(classe)} · confidence ${esc(formattaNumero(ultimo.confidence, 2))} · UTM ${esc(formattaNumero(ultimo.location.x, 1))}, ${esc(formattaNumero(ultimo.location.y, 1))}</p>
+    <p class="ruolo">Ground track · ${esc(String(drone.payload.groundDetections.length))} points · one vehicle ${esc(ultimo.objectId)}</p>
+    ${svgTraccia(drone.payload.groundDetections)}`;
+}
+
+function pannelloLive(drone, prodotto) {
+  if (!drone || !prodotto) return '';
+  return `<section class="fetta" data-live-prodotto="${esc(prodotto.id)}">
+    <p class="ruolo">Live tactical drone · ${esc(drone.platform.callsign)}</p>
+    <h2>${esc(prodotto.titolo)}</h2>
+    <p>Publisher ${esc(prodotto.fornitore.bandiera)} ${esc(prodotto.fornitore.nome)}. This slice fits the page. The event counter is not a stored history.</p>
+    <div class="fetta-corpo">${htmlFetta(drone)}</div>
+  </section>`;
+}
+
 async function vistaHome() {
-  const dati = await api('/api/fornitori');
-  state.fornitori = dati.fornitori;
+  const [nazioni, catalogo] = await Promise.all([
+    api('/api/fornitori'),
+    api('/api/prodotti'),
+  ]);
+  state.fornitori = nazioni.fornitori;
   riempiSelettore();
-  document.title = 'Data-providing nations — Federated catalog';
-  const schede = dati.fornitori.map((nazione) => {
-    const evidenza = nazione.codice === 'DEU' ? ' evidenza' : '';
+  document.title = 'NATO headquarters — Federated catalog';
+  const schede = nazioni.fornitori.map((nazione) => {
     const conteggi = nazione.conteggi || { totale: 0, aperti: 0, riservati: 0 };
-    return `<article class="scheda${evidenza}">
+    const conteggio = conteggi.totale === 0
+      ? '<span class="badge neutro">Publishes nothing</span>'
+      : `<span class="badge neutro">${conteggi.totale} ${conteggi.totale === 1 ? 'product' : 'products'}</span>
+         <span class="badge aperto">${conteggi.aperti} open</span>
+         <span class="badge riservato">${conteggi.riservati} restricted</span>`;
+    return `<article class="scheda nazione">
       <a href="/nazioni/${esc(nazione.codice)}" data-link>
         <span class="bandiera" aria-hidden="true">${esc(nazione.bandiera)}</span>
-        <p class="ruolo">Data provider</p>
         <h2>${esc(nazione.nome)}</h2>
-        <p class="sintesi">${esc(nazione.profilo.sintesi)}</p>
-        <p class="conteggi">
-          <span class="badge neutro">${conteggi.totale} products</span>
-          <span class="badge aperto">${conteggi.aperti} open</span>
-          <span class="badge riservato">${conteggi.riservati} restricted</span>
-        </p>
+        <p class="conteggi">${conteggio}</p>
       </a>
     </article>`;
   }).join('');
+  const righe = catalogo.prodotti.map((prodotto) => `<a class="riga" href="/prodotti/${esc(prodotto.id)}" data-link>
+      <span class="badge ${classeLivello(prodotto.livello)}">${etichettaLivello(prodotto.livello)}</span>
+      <strong>${esc(prodotto.titolo)}</strong>
+      <em>${esc(prodotto.fornitore.bandiera)} ${esc(prodotto.fornitore.nome)} · ${esc(prodotto.dominio)}</em>
+      <span>${esc(prodotto.sintesi)}</span>
+    </a>`).join('');
   return `<section>
-    <p class="sopra">Discovery across nations</p>
-    <h1>Countries are providers, not products</h1>
-    <p class="lede">Each participating nation has its own profile and publishes several data products. You discover metadata and access policies. The data stays with the publisher: an open dataset can be used at once, a restricted one only after the owner approves a request.</p>
-    <ul class="principi">
-      <li><strong>Federated discovery</strong> Metadata is consulted across nations. The extract does not travel with the dossier.</li>
-      <li><strong>National sovereignty</strong> The owner decides on restricted data, and can revoke a grant already given.</li>
-      <li><strong>Controlled sharing</strong> The server releases records only when the policy, at that moment, allows it.</li>
-    </ul>
-    <h2>Nations in the catalog</h2>
+    <p class="sopra">NATO headquarters</p>
+    <h1>Every member, and everything it published</h1>
+    <p class="lede">Each country is a provider and keeps ownership of what it publishes. This dashboard lists all ${nazioni.fornitori.length} NATO members and every published product. Open a country to see that country’s own publications. Portugal publishes nothing. A restricted extract still opens only for the owner, an approved grant, or a country headquarters has shared it with.</p>
+    <h2>Member countries</h2>
     <div class="griglia">${schede}</div>
+    <h2>Every published product</h2>
+    <div class="elenco-prodotti">${righe}</div>
   </section>`;
 }
 
 async function vistaNazione(codice) {
   const dati = await api(`/api/fornitori/${codice}`);
   const nazione = dati.fornitore;
-  document.title = `${nazione.nome} — Federated catalog`;
+  document.title = `${nazione.nome} — NATO headquarters`;
   const storiaId = state.storia?.prodottoId;
+  const perId = new Map(dati.prodotti.map((prodotto) => [prodotto.id, prodotto]));
+  const live = (dati.droni || []).map((drone) => pannelloLive(drone, perId.get(drone.prodottoId))).join('');
   const righe = dati.prodotti
     .slice()
     .sort((a, b) => {
@@ -318,8 +442,19 @@ async function vistaNazione(codice) {
         <span>${esc(prodotto.sintesi)}</span>
       </a>`;
     }).join('');
+  const pubblicati = righe || '<p class="vuoto">This nation has not published a dataset.</p>';
+  const ricevuti = (dati.ricevuti || []).map((voce) => `<article class="ricevuto">
+      <p class="ruolo">Received · publisher ${esc(voce.prodotto.fornitore.bandiera)} ${esc(voce.prodotto.fornitore.nome)}</p>
+      <h3>${esc(voce.prodotto.titolo)}</h3>
+      <p>${esc(voce.prodotto.fornitore.nome)} remains the publisher. ${esc(nazione.nome)} did not publish this product.</p>
+      <p><a class="bottone" href="/prodotti/${esc(voce.prodotto.id)}/uso" data-link>Open</a></p>
+      ${pannelloLive(voce.drone, voce.prodotto)}
+    </article>`).join('');
+  const sezioneRicevuti = ricevuti
+    ? `<h2>Received</h2>${ricevuti}`
+    : '';
   return `<section>
-    <p class="briciole"><a href="/" data-link>Nations</a> / ${esc(nazione.nome)}</p>
+    <p class="briciole"><a href="/" data-link>Headquarters</a> / ${esc(nazione.nome)}</p>
     <p class="bandiera" aria-hidden="true">${esc(nazione.bandiera)}</p>
     <p class="ruolo">Data provider · ${esc(nazione.profilo.nomeUfficiale)}</p>
     <h1>${esc(nazione.nome)}</h1>
@@ -338,8 +473,10 @@ async function vistaNazione(codice) {
         <span class="badge neutro">Jurisdiction ${esc(nazione.sovranita.giurisdizione)}</span>
       </blockquote>
     </div>
+    ${live}
     <h2>Published products</h2>
-    <div class="elenco-prodotti">${righe}</div>
+    <div class="elenco-prodotti">${pubblicati}</div>
+    ${sezioneRicevuti}
   </section>`;
 }
 
@@ -367,6 +504,9 @@ function pannelloAccesso(prodotto, accesso) {
         <a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Open your extract</a>
         <a class="bottone secondario" href="/richieste" data-link>See requests</a>
       </div>`;
+  } else if (accesso.motivo === 'share') {
+    corpo = `<p>Headquarters shared this product with you. ${esc(nome)} remains the publisher.</p>
+      <p><a class="bottone" href="/prodotti/${esc(prodotto.id)}/uso" data-link>Open the shared feed</a></p>`;
   } else if (!accesso.richiesta || accesso.richiesta.stato === 'denied' || accesso.richiesta.stato === 'revoked') {
     const precedente = accesso.richiesta
       ? `<p>Previous status: ${esc(STATI[accesso.richiesta.stato] || accesso.richiesta.stato)}. ${esc(accesso.richiesta.decisione?.nota || '')}</p>`
@@ -399,6 +539,32 @@ function pannelloAccesso(prodotto, accesso) {
   </aside>`;
 }
 
+function moduloCondivisione(prodotto, condivisioni) {
+  if (prodotto.tipo !== 'drone') return '';
+  const opzioni = state.fornitori
+    .filter((nazione) => nazione.codice !== prodotto.fornitore.codice)
+    .map((nazione) => {
+      const selezionato = prodotto.id === 'tur-drone-esercizio' && nazione.codice === 'PRT' ? ' selected' : '';
+      return `<option value="${esc(nazione.codice)}"${selezionato}>${esc(nazione.bandiera)} ${esc(nazione.nome)}</option>`;
+    })
+    .join('');
+  const elenco = (condivisioni || []).length
+    ? `<ul>${condivisioni.map((voce) => `<li>Shared with ${esc(voce.nomeDestinatario)}. ${esc(voce.nomeProprietario)} remains the publisher.</li>`).join('')}</ul>`
+    : '<p>Not shared yet.</p>';
+  return `<section class="condividi">
+    <p class="ruolo">Headquarters share</p>
+    <h2>Share</h2>
+    <p>Choose the recipient country and confirm. ${esc(prodotto.fornitore.nome)} remains the publisher.</p>
+    ${elenco}
+    <form data-form="condivisione" data-prodotto="${esc(prodotto.id)}">
+      <label>Recipient country
+        <select name="destinatarioId" required aria-label="Recipient country">${opzioni}</select>
+      </label>
+      <button type="submit">Confirm share</button>
+    </form>
+  </section>`;
+}
+
 async function vistaProdotto(id) {
   const dati = await api(`/api/prodotti/${id}`);
   const prodotto = dati.prodotto;
@@ -406,7 +572,7 @@ async function vistaProdotto(id) {
   document.title = `${prodotto.titolo} — Federated catalog`;
   const fine = meta.fineTemporale ? esc(meta.fineTemporale) : 'ongoing';
   return `<article class="dossier">
-    <p class="briciole"><a href="/" data-link>Nations</a> / <a href="/nazioni/${esc(prodotto.fornitore.codice)}" data-link>${esc(prodotto.fornitore.bandiera)} ${esc(prodotto.fornitore.nome)}</a></p>
+    <p class="briciole"><a href="/" data-link>Headquarters</a> / <a href="/nazioni/${esc(prodotto.fornitore.codice)}" data-link>${esc(prodotto.fornitore.bandiera)} ${esc(prodotto.fornitore.nome)}</a></p>
     <p class="dominio">${esc(prodotto.dominio)}</p>
     <h1>${esc(prodotto.titolo)}</h1>
     <p class="lede">${esc(prodotto.sintesi)}</p>
@@ -427,7 +593,10 @@ async function vistaProdotto(id) {
         <h3>Fields</h3>
         ${campiTabella(meta.campi)}
       </section>
-      ${pannelloAccesso(prodotto, dati.accesso)}
+      <div>
+        ${moduloCondivisione(prodotto, dati.condivisioni)}
+        ${pannelloAccesso(prodotto, dati.accesso)}
+      </div>
     </div>
   </article>`;
 }
@@ -452,7 +621,7 @@ function mappa(record) {
     return `<g><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="6"></circle><text x="${(sx + 9).toFixed(1)}" y="${(sy - 8).toFixed(1)}">${esc(sigla)}</text></g>`;
   }).join('');
   return `<div class="mappa-wrap"><svg class="mappa" viewBox="0 0 ${larghezza} ${altezza}" role="img" aria-label="Position of the authorized contacts">
-    <rect width="${larghezza}" height="${altezza}" fill="#e7eef2"></rect>
+    <rect width="${larghezza}" height="${altezza}" fill="#e6e8ed"></rect>
     <text x="24" y="28">Extract area</text>
     ${segni}
   </svg></div>`;
@@ -483,10 +652,24 @@ function testoUso(dati) {
   if (motivo === 'owner') {
     return 'You are reading an extract from your own country. It stays under your sovereignty, and no grant to another nation is recorded.';
   }
+  if (motivo === 'share') {
+    return `Headquarters shared this feed with you. ${dati.prodotto.fornitore.nome} remains the publisher.`;
+  }
   return `Active grant from ${dati.prodotto.fornitore.nome}. The owner can revoke it from the request queue: these records are then no longer delivered.`;
 }
 
+function paginaDrone(dati) {
+  return `<article>
+    <p class="briciole"><a href="/prodotti/${esc(dati.prodotto.id)}" data-link>Product dossier</a></p>
+    <p class="dominio">Using the feed · publisher ${esc(dati.prodotto.fornitore.bandiera)} ${esc(dati.prodotto.fornitore.nome)}</p>
+    <h1>${esc(dati.prodotto.titolo)}</h1>
+    <p class="lede">${esc(testoUso(dati))}</p>
+    ${pannelloLive(dati.drone, dati.prodotto)}
+  </article>`;
+}
+
 function paginaUso(dati) {
+  if (dati.drone) return paginaDrone(dati);
   const record = dati.estratto.record || [];
   const superficie = record.filter((voce) => voce.type === 'surface').length;
   const sotto = record.filter((voce) => voce.type === 'subsurface').length;
@@ -697,10 +880,10 @@ document.addEventListener('click', (evento) => {
   const ripristino = evento.target.closest('[data-azione="ripristina"]');
   if (ripristino) {
     evento.preventDefault();
-    if (!window.confirm('Reset the demonstration data? Requests already entered will be deleted.')) return;
+    if (!window.confirm('Reset the demonstration data? Requests and headquarters shares will be deleted.')) return;
     conOccupazione(async () => {
       await api('/api/demo/ripristino', { method: 'POST', body: '{}' });
-      messaggio('Demonstration data restored. The Germany → Netherlands story starts over.');
+      messaggio('Demonstration data restored. Requests and headquarters shares start over.');
       await go('/');
     }).catch((errore) => messaggio(errore.message));
     return;
@@ -716,6 +899,19 @@ document.addEventListener('click', (evento) => {
 document.addEventListener('submit', (evento) => {
   const form = evento.target;
   if (!(form instanceof HTMLFormElement)) return;
+  if (form.dataset.form === 'condivisione') {
+    evento.preventDefault();
+    const destinatarioId = String(new FormData(form).get('destinatarioId') || '').trim();
+    conOccupazione(async () => {
+      const dati = await api(`/api/prodotti/${form.dataset.prodotto}/condivisioni`, {
+        method: 'POST',
+        body: JSON.stringify({ destinatarioId }),
+      });
+      messaggio(`Shared with ${dati.condivisione.nomeDestinatario}. ${dati.condivisione.nomeProprietario} remains the publisher.`);
+      await render();
+    }).catch((errore) => messaggio(errore.message));
+    return;
+  }
   if (form.dataset.form === 'richiesta') {
     evento.preventDefault();
     const finalita = String(new FormData(form).get('finalita') || '').trim();

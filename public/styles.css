@@ -1,21 +1,21 @@
 :root {
-  --inchiostro: #1a2332;
-  --inchiostro-soft: #3d4a5c;
-  --navy: #0f2744;
-  --navy-2: #1b3d63;
-  --ottone: #8d6a2f;
-  --ottone-chiaro: #c4a15a;
-  --carta: #f3efe6;
-  --carta-2: #fffdf8;
-  --linea: #e4d9c8;
-  --aperto: #1b5e3b;
-  --aperto-bg: #e6f3eb;
-  --riservato: #8a3b2c;
-  --riservato-bg: #f8ece7;
-  --attesa: #8a5a12;
-  --attesa-bg: #f8f1dc;
-  --errore: #8a2430;
-  --ombra: 0 12px 32px rgba(15, 39, 68, 0.06);
+  --inchiostro: #00205B;
+  --inchiostro-soft: #0033A0;
+  --navy: #00205B;
+  --navy-2: #0033A0;
+  --ottone: #0033A0;
+  --ottone-chiaro: #0033A0;
+  --carta: #e6e8ed;
+  --carta-2: #ffffff;
+  --linea: #d0d3d8;
+  --aperto: #0033A0;
+  --aperto-bg: #e6e8ed;
+  --riservato: #00205B;
+  --riservato-bg: #e6e8ed;
+  --attesa: #0033A0;
+  --attesa-bg: #ffffff;
+  --errore: #00205B;
+  --ombra: 0 12px 32px rgba(0, 32, 91, 0.08);
   --sans: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
   --serif: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
   --max: 1120px;
@@ -28,9 +28,7 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   color: var(--inchiostro);
-  background:
-    radial-gradient(1200px 400px at 10% -10%, rgba(196, 161, 90, 0.18), transparent 50%),
-    var(--carta);
+  background: var(--carta);
   font-family: var(--sans);
   font-size: 17px;
   line-height: 1.5;
@@ -63,7 +61,7 @@ button, select, textarea {
   gap: 1.5rem;
   padding: 0.85rem 1.5rem;
   background: var(--navy);
-  color: #f6f1e6;
+  color: #ffffff;
 }
 
 .marca {
@@ -98,7 +96,7 @@ button, select, textarea {
   grid-template-columns: 1fr 1fr;
   gap: 3px;
   padding: 4px;
-  border: 1px solid rgba(196, 161, 90, 0.7);
+  border: 1px solid #ffffff;
 }
 
 .segno::before,
@@ -112,7 +110,7 @@ button, select, textarea {
 .nav { display: flex; gap: 1rem; }
 
 .nav a {
-  color: #f6f1e6;
+  color: #ffffff;
   text-decoration: none;
   border-bottom: 1px solid transparent;
 }
@@ -135,7 +133,7 @@ button, select, textarea {
   letter-spacing: 0;
   font-size: 0.95rem;
   color: var(--inchiostro);
-  background: #fffdf8;
+  background: #ffffff;
   border: 0;
   border-radius: 2px;
   padding: 0.35rem 0.5rem;
@@ -151,8 +149,8 @@ button, select, textarea {
   margin: 0.75rem auto 0;
   max-width: var(--max);
   padding: 0.7rem 1rem;
-  background: #fff8e8;
-  border: 1px solid #ead7a4;
+  background: #ffffff;
+  border: 1px solid #0033A0;
 }
 
 .storia {
@@ -194,21 +192,21 @@ button, select, textarea {
 .passi li {
   padding: 0.45rem 0.6rem;
   border: 1px solid var(--linea);
-  background: #faf7f1;
+  background: #e6e8ed;
 }
 
 .passi li strong { display: block; font-size: 0.92rem; }
 
 .passi li span { display: block; color: var(--inchiostro-soft); font-size: 0.82rem; }
 
-.passi .fatto { background: var(--aperto-bg); border-color: #b7d7c4; }
+.passi .fatto { background: #ffffff; border-color: #0033A0; }
 
-.passi .corso { background: var(--attesa-bg); border-color: #ead7a4; }
+.passi .corso { background: #ffffff; border-color: #00205B; }
 
 .azione, button, .bottone {
   border: 0;
   background: var(--navy);
-  color: #f6f1e6;
+  color: #ffffff;
   padding: 0.7rem 0.95rem;
   cursor: pointer;
   text-decoration: none;
@@ -316,7 +314,7 @@ h1 { font-size: clamp(2rem, 4vw, 3.1rem); line-height: 1.12; margin: 0 0 0.6rem;
 
 .badge.riservato, .conteggi .riservato { color: var(--riservato); background: var(--riservato-bg); border-color: transparent; }
 
-.badge.neutro { color: var(--inchiostro-soft); background: #f3efe6; border-color: transparent; }
+.badge.neutro { color: var(--inchiostro); background: #e6e8ed; border-color: transparent; }
 
 .profilo {
   display: grid;
@@ -435,8 +433,8 @@ textarea {
 .carta-richiesta h3 { margin: 0.35rem 0; font-size: 1.15rem; }
 
 .mappa-wrap {
-  background: #e7eef2;
-  border: 1px solid #c9d7e2;
+  background: #e6e8ed;
+  border: 1px solid #d0d3d8;
   margin: 0.8rem 0 1rem;
 }
 
@@ -463,8 +461,8 @@ textarea {
 .statistiche strong { display: block; font-family: var(--serif); font-size: 1.3rem; }
 
 .chiuso {
-  border: 1px solid #e3c2ba;
-  background: var(--riservato-bg);
+  border: 1px solid #00205B;
+  background: #ffffff;
   padding: 1rem;
 }
 
@@ -513,13 +511,36 @@ textarea {
 
 .passi-esempio p { margin: 0.35rem 0 0; }
 
+.barra .sopra,
+.attore { color: #ffffff; }
+
+.scheda.nazione h2 { font-size: 1.2rem; }
+
+.fetta, .ricevuto, .condividi {
+  background: #ffffff;
+  border: 1px solid #d0d3d8;
+  padding: 1rem;
+  margin: 0 0 0.9rem;
+}
+
+.fetta h2, .ricevuto h3 { margin: 0.2rem 0 0.4rem; }
+
+form select {
+  padding: 0.45rem;
+  border: 1px solid #d0d3d8;
+  background: #ffffff;
+  color: #00205B;
+}
+
+.vuoto { color: #00205B; }
+
 .numero {
   width: 2rem;
   height: 2rem;
   display: grid;
   place-items: center;
   background: var(--navy);
-  color: #f6f1e6;
+  color: #ffffff;
   font-family: var(--serif);
   font-size: 1.05rem;
 }

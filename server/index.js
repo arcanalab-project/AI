@@ -5,6 +5,7 @@ import { api } from './routes.js';
 import { connetti, nomeDatabase, uriOscurata } from './db.js';
 import { ensureSchema } from './schema.js';
 import { seminaSeVuoto } from './seed.js';
+import { avviaAggiornamentoDroni } from './live.js';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(directory, '..', 'public');
@@ -27,6 +28,7 @@ try {
   const db = await connetti();
   await ensureSchema(db);
   const seminato = await seminaSeVuoto(db);
+  avviaAggiornamentoDroni(db);
   app.listen(port, '127.0.0.1', () => {
     const seme = seminato ? ' Initial seed inserted.' : '';
     console.log(`Catalog at http://localhost:${port} — MongoDB ${uriOscurata()} / ${nomeDatabase()}.${seme}`);

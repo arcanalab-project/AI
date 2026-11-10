@@ -1,6 +1,6 @@
 # Federated data catalog
 
-Nations are providers, not products. Each one has a profile and publishes several datasets. Every dataset has metadata and an access policy. Discovery is shared. A restricted extract leaves only when the owner approves, and it closes again if the owner revokes.
+The portal is the NATO headquarters dashboard. Every current member is a provider, not a product. A member may publish several datasets, or none. Portugal publishes none. Discovery is shared. A restricted extract leaves only when the owner approves, when headquarters shares a drone feed with that nation, or when the viewer is the publisher. Sharing does not change the publisher.
 
 The interface is in English. The catalog reads and writes MongoDB.
 
@@ -29,18 +29,22 @@ One process, short queries, one local mongod: the pool stays small on purpose (`
 
 Germany publishes “Contacts from the southern Baltic sensor network”, a restricted product. The Netherlands discovers it, reads the metadata, and requests access. Germany approves. The Netherlands uses the extract on the use page (map and table). The German weather bulletin is open and can be used with no request.
 
-“Acting as” at the top switches the nation. The same path is in the “From Germany to the Netherlands” banner. The **Example** tab writes the six clicks in order: act as the Netherlands, open Germany’s sensors, read the metadata, request access, approve as Germany, then use the extract. “Reset demonstration data” clears requests and reloads the seed.
+Italy, France, Turkey, and Germany each also publish one live tactical-drone feed. The document is the current slice and a short ground track of about 12 points. `eventCount` is a counter. The server nudges the feed on an interval. Headquarters shares only Turkey’s drone with Portugal. Portugal can then open it. Turkey remains the publisher, and Portugal still publishes nothing.
+
+“Acting as” at the top switches the nation. The same sensor path is in the “From Germany to the Netherlands” banner. The **Example** tab writes the sensor clicks and then the Turkey → Portugal share. “Reset demonstration data” clears requests and shares and reloads the seed.
 
 ## Model
 
-Four collections, with JSON Schema validation:
+Six collections, with JSON Schema validation:
 
-- `fornitori` — nation profile and sovereignty statement
-- `prodotti` — title, domain, metadata, and access policy on the same document, because the dossier shows them together. The provider’s name is copied onto the product
-- `estratti` — the records, one per product, in a separate collection: discovery does not read them, and the server releases them only after the policy check
+- `fornitori` — one document per current NATO member: profile and sovereignty statement
+- `prodotti` — title, domain, metadata, and access policy on the same document, because the dossier shows them together. The provider’s name is copied onto the product. A tactical drone sets `tipo` to `drone`
+- `estratti` — the records of an ordinary product, in a separate collection: discovery does not read them, and the server releases them only after the policy check
+- `droni` — one live document per tactical drone (Germany, France, Italy, Turkey), including flight, mission, payload, platform, propulsion, source formats, source map, and source state. The ground track stays short. `eventCount` is not an event log
 - `richiesteAccesso` — requests with their own state (pending, approved, denied, revoked). Title and names are copied onto the request for the queues
+- `condivisioni` — a headquarters share: product, publisher, and recipient. The publisher stays the owner
 
-Indexes: products by provider; requests by owner and status; requests by requester and product.
+Indexes: products by provider; requests by owner and status; requests by requester and product; drones by product; shares by recipient and product.
 
 ---
 

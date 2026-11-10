@@ -23,6 +23,20 @@ export async function leggiAttore(db, req, { obbligatorio = true } = {}) {
   return fornitore;
 }
 
+export function pubblicaCondivisione(condivisione) {
+  if (!condivisione) return null;
+  return {
+    id: condivisione._id,
+    prodottoId: condivisione.prodottoId,
+    titoloProdotto: condivisione.titoloProdotto,
+    proprietarioId: condivisione.proprietarioId,
+    nomeProprietario: condivisione.nomeProprietario,
+    destinatarioId: condivisione.destinatarioId,
+    nomeDestinatario: condivisione.nomeDestinatario,
+    condivisoIl: condivisione.condivisoIl.toISOString(),
+  };
+}
+
 export function pubblicaRichiesta(richiesta) {
   if (!richiesta) return null;
   return {
@@ -69,6 +83,19 @@ export async function statoAccesso(db, prodotto, attore) {
   });
   if (approvata) {
     return { consentito: true, motivo: 'grant', richiesta: pubblicaRichiesta(approvata) };
+  }
+  const condivisa = await db.collection('condivisioni').findOne({
+    destinatarioId: attore._id,
+    prodottoId: prodotto._id,
+  });
+  if (condivisa) {
+    const ultimaCondivisa = await ultimaRichiesta(db, attore._id, prodotto._id);
+    return {
+      consentito: true,
+      motivo: 'share',
+      richiesta: pubblicaRichiesta(ultimaCondivisa),
+      condivisione: pubblicaCondivisione(condivisa),
+    };
   }
   const ultima = await ultimaRichiesta(db, attore._id, prodotto._id);
   return {

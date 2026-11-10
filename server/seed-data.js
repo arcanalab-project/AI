@@ -1,4 +1,5 @@
 import { Int32 } from 'mongodb';
+import { documentoDrone } from './drone.js';
 
 export const STORIA = {
   prodottoId: 'deu-sensori-baltico',
@@ -51,7 +52,7 @@ const nazioni = [
     bandiera: '🇫🇷',
     nomeUfficiale: 'French Republic',
     capitale: 'Paris',
-    sintesi: 'Publishes optical satellite coverage and the status of Channel ports.',
+    sintesi: 'Publishes optical satellite coverage, the status of Channel ports, and a live tactical-drone feed from its NATO exercise.',
     ufficio: 'Data service of the Ministry of the Armed Forces',
     email: 'catalog@data.defence.france.example',
     dichiarazione: 'France separates what anyone may consult from what requires its own decision.',
@@ -63,7 +64,7 @@ const nazioni = [
     bandiera: '🇩🇪',
     nomeUfficiale: 'Federal Republic of Germany',
     capitale: 'Berlin',
-    sintesi: 'Publishes contacts from the southern Baltic sensor network and an open operational weather bulletin.',
+    sintesi: 'Publishes contacts from the southern Baltic sensor network, an open operational weather bulletin, and a live tactical-drone feed from its NATO exercise.',
     ufficio: 'Bundeswehr data authority',
     email: 'catalog@data.bundeswehr.example',
     dichiarazione: 'Germany remains the owner of its products. A grant is specific, justified, and revocable.',
@@ -75,7 +76,7 @@ const nazioni = [
     bandiera: '🇮🇹',
     nomeUfficiale: 'Italian Republic',
     capitale: 'Rome',
-    sintesi: 'Publishes the central Mediterranean radar picture and hydrographic notices for national ports.',
+    sintesi: 'Publishes the central Mediterranean radar picture, hydrographic notices for national ports, and a live tactical-drone feed from its NATO exercise.',
     ufficio: 'Defence data office',
     email: 'catalog@data.defence.italy.example',
     dichiarazione: 'Italy does not transfer ownership of restricted data: it authorizes use only, and can close it.',
@@ -153,7 +154,64 @@ const nazioni = [
     dichiarazione: 'The United States does not transfer ownership of logistics corridors: it grants revocable use.',
     giurisdizione: 'US',
   },
+  membro('ALB', 'Albania', '🇦🇱', 'Republic of Albania', 'Tirana', 'AL'),
+  membro('BGR', 'Bulgaria', '🇧🇬', 'Republic of Bulgaria', 'Sofia', 'BG'),
+  membro('HRV', 'Croatia', '🇭🇷', 'Republic of Croatia', 'Zagreb', 'HR'),
+  membro('CZE', 'Czechia', '🇨🇿', 'Czech Republic', 'Prague', 'CZ'),
+  membro('EST', 'Estonia', '🇪🇪', 'Republic of Estonia', 'Tallinn', 'EE'),
+  membro('FIN', 'Finland', '🇫🇮', 'Republic of Finland', 'Helsinki', 'FI'),
+  membro('GRC', 'Greece', '🇬🇷', 'Hellenic Republic', 'Athens', 'GR'),
+  membro('HUN', 'Hungary', '🇭🇺', 'Hungary', 'Budapest', 'HU'),
+  membro('ISL', 'Iceland', '🇮🇸', 'Iceland', 'Reykjavik', 'IS'),
+  membro('LVA', 'Latvia', '🇱🇻', 'Republic of Latvia', 'Riga', 'LV'),
+  membro('LTU', 'Lithuania', '🇱🇹', 'Republic of Lithuania', 'Vilnius', 'LT'),
+  membro('LUX', 'Luxembourg', '🇱🇺', 'Grand Duchy of Luxembourg', 'Luxembourg', 'LU'),
+  membro('MNE', 'Montenegro', '🇲🇪', 'Montenegro', 'Podgorica', 'ME'),
+  membro('MKD', 'North Macedonia', '🇲🇰', 'Republic of North Macedonia', 'Skopje', 'MK'),
+  {
+    codice: 'PRT',
+    nome: 'Portugal',
+    bandiera: '🇵🇹',
+    nomeUfficiale: 'Portuguese Republic',
+    capitale: 'Lisbon',
+    sintesi: 'Publishes nothing. Headquarters can share another nation’s product with Portugal; Portugal receives it and remains a nation with no publications of its own.',
+    ufficio: 'Portuguese defence data office',
+    email: 'catalog@defence.portugal.example',
+    dichiarazione: 'Portugal publishes no dataset. A product shared with Portugal stays owned by the publishing nation.',
+    giurisdizione: 'PT',
+  },
+  membro('ROU', 'Romania', '🇷🇴', 'Romania', 'Bucharest', 'RO'),
+  membro('SVK', 'Slovakia', '🇸🇰', 'Slovak Republic', 'Bratislava', 'SK'),
+  membro('SVN', 'Slovenia', '🇸🇮', 'Republic of Slovenia', 'Ljubljana', 'SI'),
+  membro('SWE', 'Sweden', '🇸🇪', 'Kingdom of Sweden', 'Stockholm', 'SE'),
+  {
+    codice: 'TUR',
+    nome: 'Turkey',
+    bandiera: '🇹🇷',
+    nomeUfficiale: 'Republic of Turkey',
+    capitale: 'Ankara',
+    sintesi: 'Publishes one live tactical-drone feed watching its NATO exercise. Turkey remains the publisher if headquarters shares that feed.',
+    ufficio: 'Turkish defence data office',
+    email: 'catalog@defence.turkey.example',
+    dichiarazione: 'Turkey remains the owner of its drone feed. Headquarters may share use with another member without changing the publisher.',
+    giurisdizione: 'TR',
+  },
 ];
+
+function membro(codice, nome, bandiera, nomeUfficiale, capitale, giurisdizione) {
+  return {
+    codice,
+    nome,
+    bandiera,
+    nomeUfficiale,
+    capitale,
+    sintesi: `${nome} is listed in the headquarters catalog and has not published a dataset.`,
+    ufficio: `${nome} defence data office`,
+    email: `catalog@defence.${codice.toLowerCase()}.example`,
+    dichiarazione: `${nome} remains the owner of any restricted product it publishes later.`,
+    giurisdizione,
+  };
+}
 
 function fornitore(nazione) {
   return {
@@ -1024,6 +1082,53 @@ const prodottiGrezzi = [
   },
 ];
 
+function prodottoDrone(id, fornitoreId, settore) {
+  return {
+    id,
+    fornitoreId,
+    titolo: `Tactical drone over the ${settore} NATO exercise`,
+    sintesi: `Live rotary-wing feed from the ${settore} sector of the NATO exercise. The stored document is the current slice and a short ground track, not the event history.`,
+    dominio: 'Tactical drone',
+    pubblicatoIl: '2026-11-01',
+    livello: 'restricted',
+    tipo: 'drone',
+    condizioni: 'The publishing nation remains the owner. Headquarters may share the live feed with one member. Sharing does not change the publisher.',
+    finalita: ['NATO exercise', 'common operational picture'],
+    metadati: {
+      formato: 'JSON',
+      frequenzaAggiornamento: 'live',
+      coperturaSpaziale: `${settore} sector of the NATO exercise, local UTM grid`,
+      inizioTemporale: '2026-11-01',
+      lingua: 'English',
+      responsabile: `${settore} exercise drone cell`,
+      qualita: 'One live drone. eventCount is a counter. The ground track is about a dozen detections of one land vehicle.',
+      campi: campi(
+        ['battery', 'Battery remaining', 'percent'],
+        ['speed', 'Ground speed', 'm/s'],
+        ['heading', 'Heading', 'degrees'],
+        ['aircraftAltitude', 'Altitude above the exercise grid', 'm'],
+        ['status', 'Mission status'],
+        ['thermal', 'Ambient, ground, and humidity from the thermal payload'],
+        ['health', 'Propulsion health'],
+        ['detection', 'Last detection of the tracked land vehicle'],
+      ),
+    },
+  };
+}
+
+const droniGrezzi = [
+  prodottoDrone('deu-drone-esercizio', 'DEU', 'German'),
+  prodottoDrone('fra-drone-esercizio', 'FRA', 'French'),
+  prodottoDrone('ita-drone-esercizio', 'ITA', 'Italian'),
+  prodottoDrone('tur-drone-esercizio', 'TUR', 'Turkish'),
+];
+
+const MEMBRI = [
+  'ALB', 'BEL', 'BGR', 'CAN', 'HRV', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC',
+  'HUN', 'ISL', 'ITA', 'LVA', 'LTU', 'LUX', 'MNE', 'NLD', 'MKD', 'NOR', 'POL', 'PRT',
+  'ROU', 'SVK', 'SVN', 'ESP', 'SWE', 'TUR', 'GBR', 'USA',
+];
+
 export function costruisciSeme() {
   const fornitori = nazioni
     .map(fornitore)
@@ -1031,8 +1136,9 @@ export function costruisciSeme() {
   const perCodice = new Map(fornitori.map((voce) => [voce.codice, voce]));
   const prodotti = [];
   const estratti = [];
+  const droni = [];
 
-  for (const grezzo of prodottiGrezzi) {
+  for (const grezzo of [...prodottiGrezzi, ...droniGrezzi]) {
     const nazione = perCodice.get(grezzo.fornitoreId);
     if (!nazione) {
       throw new Error(`Missing provider for ${grezzo.id}`);
@@ -1052,7 +1158,15 @@ export function costruisciSeme() {
       metadati: grezzo.metadati,
       politicaAccesso: politica(grezzo.livello, grezzo.condizioni, grezzo.finalita),
       pubblicatoIl: new Date(`${grezzo.pubblicatoIl}T00:00:00Z`),
+      ...(grezzo.tipo === 'drone' ? { tipo: 'drone' } : {}),
     });
+    if (grezzo.tipo === 'drone') {
+      droni.push(documentoDrone({
+        callsign: grezzo.fornitoreId,
+        prodottoId: grezzo.id,
+      }));
+      continue;
+    }
     estratti.push({
       _id: grezzo.id,
       schemaVersion: versione(),
@@ -1063,11 +1177,15 @@ export function costruisciSeme() {
     });
   }
 
-  for (const voce of fornitori) {
-    const quanti = prodotti.filter((prodotto) => prodotto.fornitoreId === voce.codice).length;
-    if (quanti < 2) {
-      throw new Error(`${voce.codice} publishes ${quanti} products: at least two are required.`);
-    }
+  if (fornitori.length !== MEMBRI.length || MEMBRI.some((codice) => !perCodice.has(codice))) {
+    throw new Error('The catalog must list every current NATO member, and no one else.');
+  }
+  if (prodotti.some((prodotto) => prodotto.fornitoreId === 'PRT')) {
+    throw new Error('Portugal publishes nothing.');
+  }
+  const turchia = prodotti.filter((prodotto) => prodotto.fornitoreId === 'TUR');
+  if (turchia.length !== 1 || turchia[0].tipo !== 'drone') {
+    throw new Error('Turkey publishes only its tactical-drone product.');
   }
 
   const storia = prodotti.find((prodotto) => prodotto._id === STORIA.prodottoId);
@@ -1078,5 +1196,19 @@ export function costruisciSeme() {
     throw new Error('The Germany → Netherlands story is incomplete.');
   }
 
-  return { fornitori, prodotti, estratti };
+  for (const drone of droni) {
+    const pista = drone.payload.groundDetections;
+    const stessoOggetto = new Set(pista.map((punto) => punto.objectId));
+    if (pista.length !== 12 || stessoOggetto.size !== 1) {
+      throw new Error(`${drone._id} needs one vehicle and a 12-point track.`);
+    }
+    if (drone.eventCount !== 17178 || drone.platform.callsign !== drone._id) {
+      throw new Error(`${drone._id} does not keep the canonical counter and callsign.`);
+    }
+  }
+  if (droni.map((drone) => drone.platform.callsign).sort().join() !== 'DEU,FRA,ITA,TUR') {
+    throw new Error('The live drones must be Germany, France, Italy, and Turkey.');
+  }
+
+  return { fornitori, prodotti, estratti, droni };
 }
